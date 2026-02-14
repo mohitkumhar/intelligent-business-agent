@@ -1,10 +1,10 @@
 # BLOCKER: Missing required operator inputs
 
 **Assigned to:** Operator / Backend Owner
-**Status:** BLOCKED
+**Status:** BLOCKED (API Dependent Tasks)
 
 ## Description
-Per the Master Execution Instructions (Section 4), the following items are strictly required before any frontend code can be written or any PR created. NONE of them have been provided.
+Per the Master Execution Instructions (Section 4), the following items are strictly required before any **API-dependent frontend implementation can begin. Bootstrap PR creation is allowed.**
 
 ## Missing Items
 The following environment variables and documentation are missing:
@@ -21,10 +21,41 @@ The following environment variables and documentation are missing:
     *   `/chat/message`
     *   `/decisions/validate`
 
-## Impact
-**API-dependent implementation is blocked. Infrastructure setup continues.**
+## Allowed Work (NOT BLOCKED)
+- Repository bootstrap
+- .env.example creation
+- package.json scripts
+- CI workflow stub
+- App shell setup
+- Local environment verification
 
-Work on **Phase 0 - Environment & Baseline Setup** (Skeleton, CI, README) will proceed. Only API integration and contract verification steps are paused.
+## Blocked Work
+- Login/Signup UI
+- Business Setup UI
+- Chat Interface
+- Decision Validator Modal
+- Any API client or endpoint integration
 
-## Resolution Required
-The Operator must provide these values immediately. Once provided, the frontend team will verify connectivity and contract compliance before resuming Step A (Environment Verification).
+## Affected Phases
+- Phase 0: PARTIAL (Bootstrap allowed)
+- Phase 1–4: FULLY BLOCKED
+
+## Enforcement Rules
+- No UI components may be committed.
+- No API calls may be implemented.
+- No endpoint assumptions allowed.
+
+## Operator Delivery Format
+Provide:
+- API_BASE_URL
+- TEST_USER_EMAIL
+- TEST_USER_PASSWORD
+- OpenAPI file placed at `/docs/api-openapi.yaml`
+
+## Audit Metadata
+**Created By:** Antigravity Agent
+**Date:** 2026-02-14
+**Related Phase:** Phase 0
+
+## Escalation Policy
+If inputs are not provided within 24h, escalate to CTO review.
