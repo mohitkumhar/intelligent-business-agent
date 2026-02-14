@@ -1,0 +1,32 @@
+{
+  "name": "intelligent-business-agent",
+  "version": "1.0.0",
+  "description": "- AI Business Helper Chatbot for Small Business Owners",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "echo \"Linting...\"",
+    "test": "echo \"Testing...\"",
+    "e2e": "echo \"E2E Testing...\""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohitkumhar/intelligent-business-agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mohitkumhar/intelligent-business-agent/issues"
+  },
+  "homepage": "https://github.com/mohitkumhar/intelligent-business-agent#readme",
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}
