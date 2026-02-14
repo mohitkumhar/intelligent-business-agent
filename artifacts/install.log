@@ -1,0 +1,14 @@
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Γò¡ Warning ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓò«
+Γöé                                 Γöé
+Γöé   Ignored build scripts:        Γöé
+Γöé   esbuild@0.27.3.               Γöé
+Γöé   Run "pnpm approve-builds"     Γöé
+Γöé   to pick which dependencies    Γöé
+Γöé   should be allowed to run      Γöé
+Γöé   scripts.                      Γöé
+Γöé                                 Γöé
+Γò░ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓò»
+Done in 414ms using pnpm v10.28.2
