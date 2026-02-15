@@ -1,12 +1,83 @@
 {
-  "extends": "@typebot.io/tsconfig/react.json",
   "compilerOptions": {
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2022",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "lib": [
+      "esnext",
+      "dom",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/content-collections": ["./.content-collections/generated"]
-    },
-    "module": "ESNext"
+      "@/*": [
+        "./src/*"
+      ],
+      "@/content-collections": [
+        "./.content-collections/generated"
+      ],
+      "@typebot.io/billing/*": [
+        "./src/lib/packages/billing/src/*"
+      ],
+      "@typebot.io/conditions/*": [
+        "./src/lib/packages/conditions/src/*"
+      ],
+      "@typebot.io/config/*": [
+        "./src/lib/packages/config/src/*"
+      ],
+      "@typebot.io/emails/*": [
+        "./src/lib/packages/emails/*"
+      ],
+      "@typebot.io/env/*": [
+        "./src/lib/packages/env/src/*"
+      ],
+      "@typebot.io/lib/*": [
+        "./src/lib/packages/lib/src/*"
+      ],
+      "@typebot.io/prisma/*": [
+        "./src/lib/packages/prisma/src/*"
+      ],
+      "@typebot.io/react/*": [
+        "./src/lib/packages/react/src/*"
+      ],
+      "@typebot.io/schemas/*": [
+        "./src/lib/packages/schemas/src/*"
+      ],
+      "@typebot.io/settings/*": [
+        "./src/lib/packages/settings/src/*"
+      ],
+      "@typebot.io/telemetry/*": [
+        "./src/lib/packages/telemetry/src/*"
+      ],
+      "@typebot.io/templates/*": [
+        "./src/lib/packages/templates/src/*"
+      ],
+      "@typebot.io/ui/*": [
+        "./src/lib/packages/ui/src/*"
+      ],
+      "@typebot.io/user/*": [
+        "./src/lib/packages/user/src/*"
+      ],
+      "@typebot.io/workspaces/*": [
+        "./src/lib/packages/workspaces/src/*"
+      ],
+      "@typebot.io/ui": [
+        "./src/lib/packages/ui/src/index.ts"
+      ],
+      "@typebot.io/lib": [
+        "./src/lib/packages/lib/src/index.ts"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",

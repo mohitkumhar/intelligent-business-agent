@@ -1,0 +1,62 @@
+import { Plan, WorkspaceRole } from "@typebot.io/prisma/enum";
+import type { Prisma } from "@typebot.io/prisma/types";
+import { z } from "zod";
+
+export const workspaceMemberSchema = z.object({
+  workspaceId: z.string(),
+  userId: z.string(),
+  user: z.object({
+    name: z.string().nullable(),
+    email: z.string().nullable(),
+    image: z.string().nullable(),
+  }),
+  role: z.nativeEnum(WorkspaceRole),
+}) satisfies z.ZodType<
+  Omit<Prisma.MemberInWorkspace, "createdAt" | "updatedAt"> & {
+    user: Pick<Prisma.User, "name" | "email" | "image">;
+  }
+>;
+
+export const workspaceInvitationSchema = z.object({
+  id: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  email: z.string(),
+  type: z.nativeEnum(WorkspaceRole),
+}) satisfies z.ZodType<
+  Omit<Prisma.WorkspaceInvitation, "workspaceId" | "userId">
+>;
+
+const workspaceSettingsSchema = z.object({});
+
+export const workspaceSchema = z.object({
+  id: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  name: z.string(),
+  icon: z.string().nullable(),
+  plan: z.nativeEnum(Plan),
+  stripeId: z.string().nullable(),
+  additionalChatsIndex: z.number(),
+  additionalStorageIndex: z.number(),
+  chatsLimitFirstEmailSentAt: z.date().nullable(),
+  chatsLimitSecondEmailSentAt: z.date().nullable(),
+  storageLimitFirstEmailSentAt: z.date().nullable(),
+  storageLimitSecondEmailSentAt: z.date().nullable(),
+  settings: workspaceSettingsSchema.nullable(),
+  customChatsLimit: z.number().nullable(),
+  customStorageLimit: z.number().nullable(),
+  customSeatsLimit: z.number().nullable(),
+  isQuarantined: z.boolean(),
+  isSuspended: z.boolean(),
+  isPastDue: z.boolean(),
+  isVerified: z.boolean().nullable(),
+  chatsHardLimit: z.number().nullable(),
+  lastActivityAt: z.date().nullable(),
+  inactiveFirstEmailSentAt: z.date().nullable(),
+  inactiveSecondEmailSentAt: z.date().nullable(),
+}) satisfies z.ZodType<Prisma.Workspace>;
+
+export type Workspace = z.infer<typeof workspaceSchema>;
+export type WorkspaceMember = z.infer<typeof workspaceMemberSchema>;
+export type WorkspaceInvitation = z.infer<typeof workspaceInvitationSchema>;
