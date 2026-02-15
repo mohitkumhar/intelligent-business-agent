@@ -13,7 +13,7 @@ const instructions = [
     },
     title: "Step 1",
     description:
-      "Create your account and choose your plan—you can sign up for a risk-free trial",
+      "Create your secure account and link your financial sources—like QuickBooks, Stripe, or Google Sheets—in just a few clicks.",
   },
   {
     image: {
@@ -21,7 +21,7 @@ const instructions = [
       alt: "A mockup of a chatbot editor interface",
     },
     title: "Step 2",
-    description: "Pick a template from our library or start from scratch.",
+    description: "Your AI advisor immediately analyzes your cash flow and expenses, spotting trends and hidden risks you might have missed.",
   },
   {
     image: {
@@ -30,7 +30,7 @@ const instructions = [
     },
     title: "Step 3",
     description:
-      "Build and test your chat in real-time. Ready to launch? Just click publish!",
+      "Chat with your data. Ask 'Can I afford to hire?' or 'Where can I cut costs?' and get data-backed answers instantly.",
   },
 ];
 
