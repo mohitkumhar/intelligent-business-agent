@@ -1,0 +1,99 @@
+import {
+  ComparisonOperators,
+  LogicalOperator,
+} from "@typebot.io/conditions/constants";
+import { z } from "zod";
+import { maxTypingEmulationMaxDelay, rememberUserStorages } from "./constants";
+
+export const systemMessagesSchema = z.object({
+  invalidMessage: z.string().optional(),
+  botClosed: z.string().optional(),
+  networkErrorTitle: z.string().optional(),
+  networkErrorMessage: z.string().optional(),
+  popupBlockedTitle: z.string().optional(),
+  popupBlockedDescription: z.string().optional(),
+  popupBlockedButtonLabel: z.string().optional(),
+  fileUploadError: z.string().optional(),
+  fileUploadSizeError: z.string().optional(),
+  whatsAppPictureChoiceSelectLabel: z.string().optional(),
+});
+export type SystemMessages = z.infer<typeof systemMessagesSchema>;
+
+const generalSettings = z.object({
+  isBrandingEnabled: z.boolean().optional(),
+  isTypingEmulationEnabled: z.boolean().optional(),
+  isInputPrefillEnabled: z.boolean().optional(),
+  isHideQueryParamsEnabled: z.boolean().optional(),
+  isNewResultOnRefreshEnabled: z.boolean().optional(),
+  rememberUser: z
+    .object({
+      isEnabled: z.boolean().optional(),
+      storage: z.enum(rememberUserStorages).optional(),
+    })
+    .optional(),
+  systemMessages: systemMessagesSchema.optional(),
+});
+
+const typingEmulation = z.object({
+  enabled: z.boolean().optional(),
+  speed: z.number().optional(),
+  maxDelay: z.number().optional(),
+  delayBetweenBubbles: z
+    .number()
+    .min(0)
+    .max(maxTypingEmulationMaxDelay)
+    .optional(),
+  isDisabledOnFirstMessage: z.boolean().optional(),
+});
+
+const metadataSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
+  favIconUrl: z.string().optional(),
+  customHeadCode: z.string().optional(),
+  googleTagManagerId: z.string().optional(),
+  allowIndexing: z.boolean().optional(),
+});
+
+const startConditionSchema = z.object({
+  logicalOperator: z.enum(LogicalOperator).optional(),
+  comparisons: z.array(
+    z.object({
+      id: z.string(),
+      comparisonOperator: z.enum(ComparisonOperators).optional(),
+      value: z.string().optional(),
+    }),
+  ),
+});
+
+export const whatsAppSettingsSchema = z.object({
+  isEnabled: z.boolean().optional(),
+  startCondition: startConditionSchema.optional(),
+  sessionExpiryTimeout: z
+    .number()
+    .max(48)
+    .min(0.01)
+    .optional()
+    .describe("Expiration delay in hours after latest interaction"),
+  errorAndMarketingStatusWebhookForwardUrl: z.string().url().optional(),
+});
+
+export const settingsSchema = z.object({
+  general: generalSettings.optional(),
+  typingEmulation: typingEmulation.optional(),
+  metadata: metadataSchema.optional(),
+  whatsApp: whatsAppSettingsSchema.optional(),
+  publicShare: z
+    .object({
+      isEnabled: z.boolean().optional(),
+    })
+    .optional(),
+  security: z
+    .object({
+      allowedOrigins: z.array(z.string()).optional(),
+    })
+    .optional(),
+});
+
+export type Settings = z.infer<typeof settingsSchema>;
