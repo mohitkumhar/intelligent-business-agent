@@ -109,8 +109,7 @@ export const WhatsAppPricingCalculator = () => {
       </NumberField.Root>
       {priceResult && (
         <p className="font-medium">
-          Estimated Price:{" "}
-          <span className="text-orange-900">{priceResult}</span>
+          Estimated Price: <span className="text-blue-900">{priceResult}</span>
         </p>
       )}
     </Card>

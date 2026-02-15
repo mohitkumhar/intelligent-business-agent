@@ -98,11 +98,11 @@ const components = {
   Warning: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
     <div
       className={cn(
-        "flex gap-4 rounded-xl border px-6 bg-orange-50 text-orange-800",
+        "flex gap-4 rounded-xl border px-6 bg-blue-50 text-blue-800",
       )}
       {...props}
     >
-      <TriangleAlertIcon className="size-5 shrink-0 mt-7 stroke-orange-600" />
+      <TriangleAlertIcon className="size-5 shrink-0 mt-7 stroke-blue-600" />
       <div>{children}</div>
     </div>
   ),

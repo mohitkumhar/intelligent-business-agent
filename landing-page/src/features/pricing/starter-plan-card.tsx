@@ -22,7 +22,7 @@ export const StarterPlanCard = ({
   children?: React.ReactNode;
 }) => (
   <PricingCardRoot>
-    <PlanNamePill className="bg-orange-400 text-white absolute top-0 flex flex-col">
+    <PlanNamePill className="bg-blue-600 text-white absolute top-0 flex flex-col">
       Starter
     </PlanNamePill>
     <div className="flex flex-col gap-10 items-center">
