@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:16 
+    image: postgres:16
     container_name: postgres_db
     restart: always
     environment:
@@ -15,7 +15,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   pgadmin:
-    image: dpage/pgadmin4:9 # the latest version on 15/01/2026
+    image: dpage/pgadmin4:9
     container_name: pgadmin
     restart: always
     environment:
@@ -23,8 +23,21 @@ services:
       PGADMIN_DEFAULT_PASSWORD: root
     ports:
       - "5050:80"
-    depends_on:
-      - db
+
+  landing-page:
+    build:
+      context: ./landing-page
+      dockerfile: Dockerfile
+    container_name: landing-page
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - DATABASE_URL=postgresql://admin:root@db:5432/test_db
+      - ENCRYPTION_SECRET=12345678901234567890123456789012
+      - NEXTAUTH_URL=http://localhost:5173
+      - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
 
 volumes:
   pgdata:
