@@ -62,7 +62,7 @@ const cards = [
     Icon: DatabaseIcon,
     title: "Universal Sync",
     description:
-      "ProfitPilot plays nice with your existing tools. Connect seamlessly to Stripe, QuickBooks, Google Sheets, and CRMs. If it has numbers, we can analyze it.",
+      "ProfitPilot plays nice with your existing tools. Connect seamlessly to Stripe, QuickBooks, Xero, and Google Sheets. If it has numbers, we can analyze it.",
     rotateCoeff: -4,
   },
 ] as const;

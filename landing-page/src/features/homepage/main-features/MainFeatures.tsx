@@ -70,9 +70,9 @@ const features = [
       sub: "Centralize Your Business Data",
     },
     description:
-      "ProfitPilot connects with the tools you already use—Excel, Google Sheets, Banks, and CRMs. No manual data entry. Just secure, real-time synchronization so your AI advisor always knows your true financial status.",
+      "ProfitPilot connects with the tools you already use—QuickBooks, Xero, Stripe, and Google Sheets. No manual data entry. Just secure, real-time synchronization so your AI advisor always knows your true financial status.",
     link: {
-      src: "https://docs.profitpilot.io/editor/blocks/integrations/google-sheets",
+      src: "https://docs.profitpilot.io/integrations/overview",
       text: "View all integrations",
     },
     video: {
