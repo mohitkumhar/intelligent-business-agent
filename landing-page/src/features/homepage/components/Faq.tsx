@@ -9,97 +9,55 @@ import { discordUrl, docsUrl } from "../../../constants";
 
 const data = [
   {
-    title:
-      "What are the pricing plans, and what features are included in the free plan?",
+    title: "Is there a free version to test the waters?",
     content: (
       <>
-        ProfitPilot offers flexible pricing plans to suit solo business owners,
-        startups, and large companies. The{" "}
-        <span className="font-bold">Free</span> plan includes unlimited
-        bots, 200 chats per month, native integrations, webhooks, custom
-        Javascript & CSS, and community support. <br />
-        <br /> For more details on our Starter and Pro plans, check out the{" "}
-        <TextLink to="/pricing">Pricing Page</TextLink>.
+        Yes! You can connect your data sources and get your first 'Financial
+        Health Check' completely for free. We only charge when you need advanced
+        forecasting models or multiple business dashboards.
       </>
     ),
   },
   {
-    title:
-      "How easy is it to integrate ProfitPilot with my existing systems and platforms?",
+    title: "Does this work with my messy Excel sheets?",
     content: (
       <>
-        Integrating ProfitPilot with your existing systems and platforms is
-        straightforward. We provide clear, step-by-step instructions to guide
-        you through the process. ProfitPilot supports a wide range of platforms,
-        including WhatsApp, WordPress, Shopify, FlutterFlow, React, Next.js,
-        Notion, Webflow, Framer, and many more.
+        Absolutely. Whether you use QuickBooks, Stripe, Xero, or just a chaotic
+        Google Sheet, ProfitPilot can read it. Our 'Universal Sync' feature
+        cleans and organizes your data automatically in minutes.
       </>
     ),
   },
   {
-    title:
-      "What kind of AI and machine learning capabilities does ProfitPilot offer?",
+    title: "Can it really predict my future cash flow?",
     content: (
       <>
-        ProfitPilot is AI provider agnostic, giving you the flexibility to connect
-        with any AI provider of your choice. Unlike competitors that lock you
-        into proprietary systems, ProfitPilot provides the building blocks to
-        integrate seamlessly with your preferred AI services. You maintain full
-        control over the data you inject into the AI and the associated costs.
+        Yes. By analyzing your past income and expense patterns, ProfitPilot
+        projects your bank balance 30, 60, and 90 days out. It flags potential
+        cash crunches{" "}
+        <span className="italic font-bold">before</span> they happen, so you can
+        sleep better.
       </>
     ),
   },
   {
-    title:
-      "What kind of support and resources are available if I encounter issues or need help?",
+    title: "Do I need to be an accountant to understand this?",
     content: (
       <>
-        If you encounter any issues or need assistance, ProfitPilot offers several
-        support and resource options:
-        <ol className="list-decimal list-inside flex flex-col gap-6 py-6">
-          <li>
-            <TextLink href={docsUrl} target="_blank">
-              Documentation
-            </TextLink>
-            : Our comprehensive documentation is regularly updated to cover all
-            possible issues and questions. Use the search bar to quickly find
-            the information you need.
-          </li>
-          <li>
-            <TextLink href={discordUrl} target="_blank">
-              Discord Community
-            </TextLink>
-            : Join our Discord community and ask for help or report bugs in the
-            #help-and-questions channel. We strive to answer all questions
-            daily, and you might find that someone else has already asked the
-            same question. Use the search bar to find existing answers.
-          </li>
-          <li>
-            <span className="font-bold">Direct Support for Subscribers</span>:
-            Users on the Starter or Pro plans can reach out directly through the
-            chat widget located in the bottom right corner of the app for
-            priority support.
-          </li>
-        </ol>
+        Not at all. We built this specifically for business owners, not CPAs.
+        ProfitPilot speaks plain English. Instead of 'EBITDA adjustments', it
+        says 'You spent more on ads than you made in sales this week.'
       </>
     ),
   },
   {
-    title: "How secure is ProfitPilot, and how do you handle data privacy?",
+    title: "Is my financial data actually safe?",
     content: (
-      <p>
-        ProfitPilot is ISO 27001 certified, demonstrating our commitment to
-        maintaining the highest standards of information security management.
-        Our guiding principle is to collect only what we need to provide the
-        best service to you. We use a select number of trusted external service
-        providers for certain service offerings.
-        <br />
-        <br />
-        For detailed information, please refer to our{" "}
-        <TextLink to="/$slug" params={{ slug: "privacy-policy" }}>
-          privacy policy
-        </TextLink>
-      </p>
+      <>
+        Security is our #1 priority. We use bank-grade 256-bit encryption for
+        all connections. We never sell your data, and our AI analyzes numbers
+        anonymously without storing your personal banking credentials.
+      </>
     ),
   },
 ];

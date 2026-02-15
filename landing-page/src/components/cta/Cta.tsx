@@ -11,7 +11,7 @@ export type CtaProps = {
 };
 export const Cta = ({
   className,
-  children = "Ready to dive into the latest tools and hack your business growth?",
+  children = "Ready to build a business driven by data, not guesswork?",
   buttonLabel = "Get started free",
   isLogoDisplayed = true,
 }: CtaProps) => {
@@ -39,7 +39,7 @@ export const Cta = ({
           {buttonLabel}
         </CtaButtonLink>
         <p className="text-muted-foreground text-center">
-          No trial. Generous free plan.
+          Start your journey to financial clarity today. No credit card required.
         </p>
       </div>
     </div>
