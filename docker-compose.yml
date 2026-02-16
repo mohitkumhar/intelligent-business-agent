@@ -45,6 +45,7 @@ services:
       - NEXTAUTH_URL=http://localhost:5173
       - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
 
+<<<<<<< HEAD
     depends_on:
       - backend
       - db
@@ -133,6 +134,11 @@ services:
       - backend
       - web
 
+=======
+    stdin_open: true
+    tty: true
+
+>>>>>>> 3433653 (FOr check)
 volumes:
   pgdata:
   prometheus_data:
