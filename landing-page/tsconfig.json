@@ -27,55 +27,55 @@
         "./.content-collections/generated"
       ],
       "@typebot.io/billing/*": [
-        "./src/lib/packages/billing/src/*"
+        "./src/lib/packages/billing/*"
       ],
       "@typebot.io/conditions/*": [
-        "./src/lib/packages/conditions/src/*"
+        "./src/lib/packages/conditions/*"
       ],
       "@typebot.io/config/*": [
-        "./src/lib/packages/config/src/*"
+        "./src/lib/packages/config/*"
       ],
       "@typebot.io/emails/*": [
         "./src/lib/packages/emails/*"
       ],
       "@typebot.io/env/*": [
-        "./src/lib/packages/env/src/*"
+        "./src/lib/packages/env/*"
       ],
       "@typebot.io/lib/*": [
-        "./src/lib/packages/lib/src/*"
+        "./src/lib/packages/lib/*"
       ],
       "@typebot.io/prisma/*": [
-        "./src/lib/packages/prisma/src/*"
+        "./src/lib/packages/prisma/*"
       ],
       "@typebot.io/react/*": [
-        "./src/lib/packages/react/src/*"
+        "./src/lib/packages/react/*"
       ],
       "@typebot.io/schemas/*": [
-        "./src/lib/packages/schemas/src/*"
+        "./src/lib/packages/schemas/*"
       ],
       "@typebot.io/settings/*": [
-        "./src/lib/packages/settings/src/*"
+        "./src/lib/packages/settings/*"
       ],
       "@typebot.io/telemetry/*": [
-        "./src/lib/packages/telemetry/src/*"
+        "./src/lib/packages/telemetry/*"
       ],
       "@typebot.io/templates/*": [
-        "./src/lib/packages/templates/src/*"
+        "./src/lib/packages/templates/*"
       ],
       "@typebot.io/ui/*": [
-        "./src/lib/packages/ui/src/*"
+        "./src/lib/packages/ui/*"
       ],
       "@typebot.io/user/*": [
-        "./src/lib/packages/user/src/*"
+        "./src/lib/packages/user/*"
       ],
       "@typebot.io/workspaces/*": [
-        "./src/lib/packages/workspaces/src/*"
+        "./src/lib/packages/workspaces/*"
       ],
       "@typebot.io/ui": [
-        "./src/lib/packages/ui/src/index.ts"
+        "./src/lib/packages/ui/index.ts"
       ],
       "@typebot.io/lib": [
-        "./src/lib/packages/lib/src/index.ts"
+        "./src/lib/packages/lib/index.ts"
       ]
     }
   },
