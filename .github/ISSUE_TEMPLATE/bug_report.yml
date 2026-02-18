@@ -56,11 +56,3 @@ body:
       description: Attach logs or screenshots (optional)
     validations:
       required: false
-
-  - type: input
-    id: username
-    attributes:
-      label: Your Github username
-      placeholder: @yourusername
-    validations:
-      required: true
