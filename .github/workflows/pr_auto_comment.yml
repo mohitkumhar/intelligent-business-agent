@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Comment & Label Using Personal Account
+      - name: Commenting & Labeling PR
         env:
           GH_TOKEN: ${{ secrets.MOHIT_GH_TOKEN }}
         run: |
@@ -30,12 +30,8 @@ jobs:
 
             Thanks again!  
             Mohit Kumhar  
-            Maintainer
+            **Maintainer**
             "
 
           gh pr edit $PR_NUMBER \
             --add-label "needs-review" \
-            --add-label "auto-generated"
-
-
-            
