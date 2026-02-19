@@ -14,7 +14,7 @@ jobs:
 
       - name: Comment & Label Using Personal Account
         env:
-          GH_TOKEN: ${{ secrets.PERSONAL_GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.MOHIT_GH_TOKEN }}
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
 
