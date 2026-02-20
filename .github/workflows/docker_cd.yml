@@ -2,28 +2,25 @@ name: Docker CI
 
 on:
   push:
-    branches:
-      - test
-    tags:
-      - "v*.*.*"
+    branches: [main]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract metadata (tags)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/ai-business-agent
-          tags: |
-            type=sha,format=short,prefix=test-
-            type=ref,event=tag
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Read VERSION file
+        id: version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -37,5 +34,6 @@ jobs:
           context: ./landing-page
           file: ./landing-page/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/ai-business-agent:${{ env.VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/ai-business-agent:latest
