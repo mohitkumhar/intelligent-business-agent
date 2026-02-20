@@ -1,0 +1,35 @@
+name: Auto Bump Version
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Bump Version
+        run: |
+          VERSION=$(cat VERSION)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          PATCH=$((PATCH+1))
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo $NEW_VERSION > VERSION
+          git add VERSION
+          git commit -m "Auto bump version to $NEW_VERSION"
+          git push origin ${{ github.head_ref }}
