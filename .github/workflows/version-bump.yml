@@ -1,0 +1,41 @@
+name: Auto Bump Version on PR
+
+on:
+  pull_request:
+    types: [opened]
+    branches:
+      - main
+
+  workflow_run:
+    workflows:
+      - PR Automation
+      - Add PR Reaction
+    types:
+      - completed
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Bump Patch Version
+        run: |
+          VERSION=$(cat VERSION)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          PATCH=$((PATCH+1))
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo $NEW_VERSION > VERSION
+          git add VERSION
+          git commit -m "Auto bump version to $NEW_VERSION"
+          git push
