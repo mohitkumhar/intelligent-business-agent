@@ -5,7 +5,7 @@ on:
     types: [opened, reopened]
 
 jobs:
-  pr-bot:
+  pr-comment:
     runs-on: ubuntu-latest
 
     steps:
