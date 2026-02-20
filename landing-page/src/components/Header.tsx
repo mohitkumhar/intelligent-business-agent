@@ -285,7 +285,7 @@ const Desktop = React.forwardRef<
         ))}
         {isAuthenticated ? (
           <CtaButtonLink size="sm" href={dashboardUrl}>
-            Go to dashboard
+            Go to dashboardd
           </CtaButtonLink>
         ) : (
           <CtaButtonLink size="sm" href={registerUrl}>
