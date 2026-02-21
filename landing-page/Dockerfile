@@ -5,7 +5,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-COPY . .
 
 # Expose the port defined in package.json (dev script uses port 3003)
 EXPOSE 5173

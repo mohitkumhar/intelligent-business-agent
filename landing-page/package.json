@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "lint": "eslint . --ext js,jsx,ts,tsx",
     "content-collections:build": "npx @content-collections/cli build --config content-collections.ts",
     "check-types": "tsc --noEmit",
     "dev": "dotenv -e ./.env -- vite dev --port 3003",
