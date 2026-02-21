@@ -17,9 +17,9 @@ jobs:
       - name: Install dependencies
         working-directory: ./landing-page
         run: npm install
-      - name: Run Linting
+      - name: Run Type Checking
         working-directory: ./landing-page
-        run: npm run lint
+        run: npm run check-types
 
   build-and-push:
     needs: lint
