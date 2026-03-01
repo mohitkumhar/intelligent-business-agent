@@ -1,10 +1,13 @@
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Annotated
 from pydantic  import BaseModel, Field
 from langgraph.graph import StateGraph, START, END
 from langchain_ollama import ChatOllama
 from langchain_community.tools import DuckDuckGoSearchRun
-from langgraph.checkpoint.sqlite import SqliteSaver
-import sqlite3
+from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg_pool import ConnectionPool
+from langgraph.graph.message import add_messages
+import psycopg
+import operator
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -14,17 +17,22 @@ llm_base_url = os.getenv("LLM_BASE_URL", "http://127.0.0.1:11434/")
 
 
 
-def create_sqlite_memory():
-    conn = sqlite3.connect(
-            database="chatbot.db", 
-            check_same_thread=False
-        )
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:root@localhost:5432/test_db")
 
-    return SqliteSaver(conn=conn)
+def create_postgres_memory():
+    # Run setup() on a standalone autocommit connection
+    # because CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
+        PostgresSaver(conn).setup()
+
+    pool = ConnectionPool(conninfo=DATABASE_URL)
+    checkpointer = PostgresSaver(pool)
+    return checkpointer
 
 
 class GeneralInformationGraphState(TypedDict):
     user_query: str
+    messages: Annotated[list, add_messages]
     web_search_result: str
     user_query_output: str
     route: str
@@ -75,19 +83,30 @@ def is_web_search_required(state: GeneralInformationGraphState):
 def answer_user_query(state: GeneralInformationGraphState):
     user_query = state["user_query"]
     web_search_result = state.get('web_search_result', "")
+    messages = state.get("messages", [])
+
+    # Build conversation history from previous messages (exclude current user message)
+    history_text = ""
+    for msg in messages[:-1]:
+        role = msg.type.capitalize()  # LangChain message objects use .type ("human"/"ai")
+        history_text += f"{role}: {msg.content}\n"
 
     prompt = f"""
     You are a helpful AI assistant.
 
     Your job is to answer the user's question clearly and concisely.
 
-    User Question:
+    Conversation History:
+    {history_text if history_text else "(No previous conversation)"}
+
+    Current User Question:
     {user_query}
 
     Web Search Data (if available):
     {web_search_result}
 
     Instructions:
+    - Use the conversation history to understand context from previous messages.
     - If web search data is provided, use it to generate the answer.
     - If no web data is provided, answer from your own knowledge.
     - Keep the answer clear, structured, and easy to understand.
@@ -101,7 +120,10 @@ def answer_user_query(state: GeneralInformationGraphState):
 
     response = general_information_web_search_llm.invoke(prompt)
 
-    return {"user_query_output": response.content}
+    return {
+        "user_query_output": response.content,
+        "messages": [{"role": "assistant", "content": response.content}]
+    }
 
 web_search_tool = DuckDuckGoSearchRun()
 
@@ -115,20 +137,25 @@ def generate_graph():
     gen_info_graph = StateGraph(GeneralInformationGraphState)
 
 
-    gen_info_graph.add_edge(START, "is_web_search_required")
 
     gen_info_graph.add_node("is_web_search_required", is_web_search_required)
     gen_info_graph.add_node("answer_user_query", answer_user_query)
     gen_info_graph.add_node("duck_duck_go_search", duck_duck_go_search)
 
+
+
+    gen_info_graph.add_edge(START, "is_web_search_required")
+    
     gen_info_graph.add_conditional_edges("is_web_search_required", lambda state: state["route"], {
         "required": "duck_duck_go_search",
         "not_required": "answer_user_query",
     })
-
+    
     gen_info_graph.add_edge("duck_duck_go_search", "answer_user_query")
     gen_info_graph.add_edge("answer_user_query", END)
-    memory = create_sqlite_memory()
+    memory = create_postgres_memory()
+    
+    
     general_information_graph_workflow = gen_info_graph.compile(checkpointer=memory)
     
     return general_information_graph_workflow
