@@ -1,0 +1,9 @@
+node_modules
+.env
+.content-collections
+.tanstack
+*.db-shm
+*.db-wal
+*.venv
+.ipynb_checkpoints/
+.vscode/
