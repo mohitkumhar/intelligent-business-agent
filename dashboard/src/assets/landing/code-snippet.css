@@ -1,0 +1,81 @@
+@reference "./globals.css";
+
+:root {
+  --sh-class: #5395e5;
+  --sh-identifier: white;
+  --sh-sign: #8996a3;
+  --sh-property: #5395e5;
+  --sh-entity: #249a97;
+  --sh-jsxliterals: #6266d1;
+  --sh-string: #00a99a;
+  --sh-keyword: #f47067;
+  --sh-comment: #a19595;
+}
+
+[data-rehype-pretty-code-figure] {
+  @apply mt-6 mb-4;
+}
+[data-rehype-pretty-code-figure] code {
+  @apply grid min-w-full wrap-break-word rounded-none border-0 bg-transparent p-0 text-sm text-gray-2 relative;
+  counter-reset: line;
+  box-decoration-break: clone;
+}
+[data-rehype-pretty-code-figure] [data-line] {
+  @apply px-4 py-1;
+}
+[data-rehype-pretty-code-figure] [data-line-numbers] > [data-line]::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 1rem;
+  margin-right: 1rem;
+  text-align: right;
+  color: gray;
+}
+[data-rehype-pretty-code-figure] .highlighted {
+  @apply border-l-4;
+  border-color: rgb(56 189 248);
+  background-color: rgb(56 189 248 / 0.1);
+}
+[data-rehype-pretty-code-figure] .highlighted span {
+  @apply relative isolate;
+}
+[data-rehype-pretty-code-figure] [data-highlighted-chars] {
+  @apply rounded-md p-1;
+  background-color: rgb(56 189 248 / 0.1);
+}
+[data-rehype-pretty-code-title] {
+  @apply py-2 px-4 text-sm rounded-t-lg;
+  background-color: rgb(41 45 62 / 0.9);
+  color: rgb(186, 190, 216);
+}
+[data-rehype-pretty-code-title] + pre {
+  @apply mt-0 border-0 rounded-t-none;
+}
+
+pre {
+  @apply px-0;
+  padding-inline-start: 0;
+  padding-inline-end: 0;
+}
+
+[data-rehype-pretty-code-figure] .diff.remove {
+  background-color: rgb(244 63 94 / 0.1);
+  /* background-color: rgba(244, 63, 94, 0.16); */
+}
+.diff.remove:before {
+  content: "-";
+  color: rgb(244 63 94);
+}
+.diff.add:before,
+.diff.remove:before {
+  position: absolute;
+  left: 4px;
+}
+[data-rehype-pretty-code-figure] .diff.add {
+  background-color: rgb(16 185 129 / 0.2);
+}
+.diff.add:before {
+  content: "+";
+  color: rgb(16 185 129);
+}
