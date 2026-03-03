@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   useNavigate,
+  useRouterState,
 } from "@tanstack/react-router";
 import { z } from "zod";
 import css from "@/assets/globals.css?url";
@@ -66,6 +67,9 @@ function RootComponent() {
     });
   };
 
+  const currentPath = useRouterState({ select: (s) => s.location.pathname });
+  const isDashboard = currentPath.startsWith("/dashboard");
+
   useTrackPageViewQuery({
     enabled:
       cookieConsentStatus === "not-needed" ||
@@ -79,23 +83,29 @@ function RootComponent() {
       </head>
       <body>
         <div className="isolate flex flex-col items-stretch">
-          <div className="fixed z-10 top-4 md:bottom-12 md:top-auto w-full">
-            <Header
-              onOpen={openHeader}
-              onClose={closeHeader}
-              isOpened={isHeaderOpened}
-            />
-          </div>
+          {!isDashboard && (
+            <div className="fixed z-10 top-4 md:bottom-12 md:top-auto w-full">
+              <Header
+                onOpen={openHeader}
+                onClose={closeHeader}
+                isOpened={isHeaderOpened}
+              />
+            </div>
+          )}
           <Outlet />
-          <CookieConsentBot
-            isOpen={cookieConsentStatus === "need-consent"}
-            openDelay={HERO_ANIMATION_DELAY}
-            onSubmit={(response) => {
-              setCookie(response);
-              setCookieConsentStatus(response);
-            }}
-          />
-          <Footer />
+          {!isDashboard && (
+            <>
+              <CookieConsentBot
+                isOpen={cookieConsentStatus === "need-consent"}
+                openDelay={HERO_ANIMATION_DELAY}
+                onSubmit={(response) => {
+                  setCookie(response);
+                  setCookieConsentStatus(response);
+                }}
+              />
+              <Footer />
+            </>
+          )}
         </div>
         <Scripts />
       </body>

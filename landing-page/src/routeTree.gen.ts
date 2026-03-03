@@ -11,8 +11,12 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardDecisionsRouteImport } from './routes/dashboard/decisions'
+import { Route as DashboardDataRouteImport } from './routes/dashboard/data'
+import { Route as DashboardBusinessHealthRouteImport } from './routes/dashboard/business-health'
 import { Route as LayoutAboutRouteImport } from './routes/_layout/about'
 import { Route as LayoutSlugRouteImport } from './routes/_layout/$slug'
 import { ServerRoute as SitemapDotxmlServerRouteImport } from './routes/sitemap[.]xml'
@@ -20,6 +24,11 @@ import { ServerRoute as HealthzServerRouteImport } from './routes/healthz'
 
 const rootServerRouteImport = createServerRootRoute()
 
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
@@ -28,6 +37,21 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardDecisionsRoute = DashboardDecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardDataRoute = DashboardDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardBusinessHealthRoute = DashboardBusinessHealthRouteImport.update({
+  id: '/business-health',
+  path: '/business-health',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const LayoutAboutRoute = LayoutAboutRouteImport.update({
   id: '/about',
@@ -52,32 +76,68 @@ const HealthzServerRoute = HealthzServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/$slug': typeof LayoutSlugRoute
   '/about': typeof LayoutAboutRoute
+  '/dashboard/business-health': typeof DashboardBusinessHealthRoute
+  '/dashboard/data': typeof DashboardDataRoute
+  '/dashboard/decisions': typeof DashboardDecisionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/$slug': typeof LayoutSlugRoute
   '/about': typeof LayoutAboutRoute
+  '/dashboard/business-health': typeof DashboardBusinessHealthRoute
+  '/dashboard/data': typeof DashboardDataRoute
+  '/dashboard/decisions': typeof DashboardDecisionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_layout': typeof LayoutRouteWithChildren
+  '/dashboard': typeof DashboardRouteWithChildren
   '/_layout/$slug': typeof LayoutSlugRoute
   '/_layout/about': typeof LayoutAboutRoute
+  '/dashboard/business-health': typeof DashboardBusinessHealthRoute
+  '/dashboard/data': typeof DashboardDataRoute
+  '/dashboard/decisions': typeof DashboardDecisionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$slug' | '/about'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/$slug'
+    | '/about'
+    | '/dashboard/business-health'
+    | '/dashboard/data'
+    | '/dashboard/decisions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$slug' | '/about'
-  id: '__root__' | '/' | '/_layout' | '/_layout/$slug' | '/_layout/about'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/$slug'
+    | '/about'
+    | '/dashboard/business-health'
+    | '/dashboard/data'
+    | '/dashboard/decisions'
+  id:
+    | '__root__'
+    | '/'
+    | '/_layout'
+    | '/dashboard'
+    | '/_layout/$slug'
+    | '/_layout/about'
+    | '/dashboard/business-health'
+    | '/dashboard/data'
+    | '/dashboard/decisions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LayoutRoute: typeof LayoutRouteWithChildren
+  DashboardRoute: typeof DashboardRouteWithChildren
 }
 export interface FileServerRoutesByFullPath {
   '/healthz': typeof HealthzServerRoute
@@ -107,6 +167,13 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout': {
       id: '/_layout'
       path: ''
@@ -120,6 +187,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/decisions': {
+      id: '/dashboard/decisions'
+      path: '/decisions'
+      fullPath: '/dashboard/decisions'
+      preLoaderRoute: typeof DashboardDecisionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/data': {
+      id: '/dashboard/data'
+      path: '/data'
+      fullPath: '/dashboard/data'
+      preLoaderRoute: typeof DashboardDataRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/business-health': {
+      id: '/dashboard/business-health'
+      path: '/business-health'
+      fullPath: '/dashboard/business-health'
+      preLoaderRoute: typeof DashboardBusinessHealthRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/_layout/about': {
       id: '/_layout/about'
@@ -169,9 +257,26 @@ const LayoutRouteChildren: LayoutRouteChildren = {
 const LayoutRouteWithChildren =
   LayoutRoute._addFileChildren(LayoutRouteChildren)
 
+interface DashboardRouteChildren {
+  DashboardBusinessHealthRoute: typeof DashboardBusinessHealthRoute
+  DashboardDataRoute: typeof DashboardDataRoute
+  DashboardDecisionsRoute: typeof DashboardDecisionsRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardBusinessHealthRoute: DashboardBusinessHealthRoute,
+  DashboardDataRoute: DashboardDataRoute,
+  DashboardDecisionsRoute: DashboardDecisionsRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LayoutRoute: LayoutRouteWithChildren,
+  DashboardRoute: DashboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
