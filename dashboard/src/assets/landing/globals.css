@@ -1,0 +1,208 @@
+@import "tailwindcss";
+@import "@typebot.io/ui/theme.css";
+@source "../";
+@source "../../../../packages/ui/src/";
+
+@plugin "@tailwindcss/typography";
+
+@layer base {
+  body {
+    @apply text-foreground bg-[#F1F1F1];
+  }
+
+  section,
+  .dark {
+    @apply text-foreground bg-background;
+  }
+
+  section:not(.dark) {
+    @apply bg-[#F1F1F1];
+  }
+
+  h1 {
+    @apply text-4xl md:text-6xl font-bold;
+  }
+
+  h2 {
+    @apply text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-medium;
+  }
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@utility h-all-features-sticky-container {
+  height: calc(
+    (100vh - var(--padding-top)) +
+    (var(--total-cards) - 1) *
+    (
+      100vh -
+      var(--padding-top) -
+      var(--header-height) -
+      var(--gap-header-and-card)
+    ) -
+    var(--gap-header-and-card)
+  );
+}
+
+@utility md-scroll-magic-container-fade-in {
+  @media (min-width: 768px) {
+    animation: linear fade-in forwards;
+    animation-timeline: view();
+    animation-range: contain 0% contain 0%;
+  }
+}
+
+@utility md-scroll-use-cases-fade-in {
+  @media (min-width: 768px) {
+    animation: linear fade-in forwards;
+    animation-timeline: view();
+    animation-range: cover 20% contain 0%;
+  }
+}
+
+@utility why-cta {
+  &::before {
+    content: "";
+    position: absolute;
+    top: 90%;
+    left: 0;
+    width: 100%;
+    height: 200%;
+    background: conic-gradient(
+      from 179.91deg at 50% 50%,
+      #ff5924 -72.48deg,
+      #ffd79a 44.64deg,
+      #8f00ff 145.15deg,
+      #ff5924 287.52deg,
+      #ffd79a 404.64deg
+    );
+    opacity: 0.4;
+    mix-blend-mode: plus-lighter;
+    filter: blur(295px);
+  }
+}
+
+details > summary {
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+typebot-bubble::part(button) {
+  background-image: linear-gradient(to bottom, #393939, #121212);
+  border: 1px solid rgb(58 58 58);
+}
+
+typebot-bubble::part(bot) {
+  border: 1px solid rgb(58 58 58);
+  border-radius: 1rem;
+  background-color: #0d0d0d;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% - var(--marquee-gap)));
+  }
+}
+
+@keyframes slight-random-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(var(--rotate-angle));
+  }
+}
+
+@keyframes magic-zoom-blur {
+  0% {
+    filter: blur(64px);
+  }
+  95% {
+    filter: blur(64px);
+  }
+  100% {
+    filter: blur(0px);
+  }
+}
+
+@keyframes fill-carousel-dot {
+  to {
+    background-color: var(--color-stone-400);
+  }
+}
+
+@keyframes magic-zoom {
+  0% {
+    transform: scaleX(0) scaleY(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  70% {
+    transform: scaleX(0.7) scaleY(0.5);
+  }
+  95% {
+    border-radius: 1.5rem;
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+    border-radius: 0;
+  }
+}
+
+/* Used for scroll animations */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
