@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-from llm.format_response_llm import llm
+from llm.base_llm import base_llm
 
 
 def _serialize(data) -> str:
@@ -46,7 +46,7 @@ def format_response(intent, result, auth_meta=None, intent_meta=None):
             "Respond ONLY with the formatted answer — no preamble."
         )
         try:
-            llm_response = llm.invoke(prompt)
+            llm_response = base_llm.invoke(prompt)
             formatted = llm_response.content
         except Exception:
             # Graceful degradation — return the raw data if the LLM is down

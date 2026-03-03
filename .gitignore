@@ -7,3 +7,4 @@ node_modules
 *.venv
 .ipynb_checkpoints/
 .vscode/
+__pycache__/
