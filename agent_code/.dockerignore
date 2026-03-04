@@ -1,0 +1,6 @@
+__pycache__/
+agent_code/chatbot.db-shm
+agent_code/chatbot.db
+agent_code/chatbot.db-wal
+
+
