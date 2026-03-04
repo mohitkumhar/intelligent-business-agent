@@ -3,6 +3,41 @@
 - Problem Statement [[Click Here](/PS.md)]
 
 ---
+Note: Make sure to have a `.env` in `./agent_code` folder which container the db url
+```bash
+DATABASE_URL=postgresql://admin:root@postgres_db:5432/test_db
+```
+
+---
+DOCKER COMPOSE ENDPOINTS
+- postgres  
+   - POSTGRES USER: `admin`  
+   - POSTGRES PASSWORD: `root`  
+   - POSTGRES DEFAULT DB: `test_db`  
+   - POSTGRES PORT: `5432`  
+
+- pg-admin(for db-UI)  
+   - PGADMIN DEFAULT EMAIL: `mohitmolela@gmail.com`  
+   - PGADMIN DEFAULT PASSWORD: `root`  
+   - PORTS: `5050`  
+
+- landing-page(frontend)  
+   - PORT: `5173`  
+   - VITE_API_URL=`http://localhost:8000`  
+   - DATABASE_URL=`postgresql://admin:root@db:5432/test_db`  
+   - ENCRYPTION_SECRET=`12345678901234567890123456789012`  
+   - NEXTAUTH_URL=`http://localhost:5173`  
+   - NEXT_PUBLIC_VIEWER_URL=`http://localhost:5173`  
+
+- Flask Agent  
+   - PORT: `8000`  
+
+- loki  
+   - PORT: `3100`  
+
+- grafana  
+   - PORT: `3000`  
+---
 
 # AI Business Helper Chatbot – Database Setup Instructions
 
