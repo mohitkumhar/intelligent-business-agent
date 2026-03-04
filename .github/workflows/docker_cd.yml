@@ -37,3 +37,14 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/ai-business-agent:${{ env.VERSION }}
             ${{ secrets.DOCKER_USERNAME }}/ai-business-agent:latest
+          
+      # Build Backend image
+      - name: Build & Push AI-Agent API
+        uses: docker/build-push-action@v5
+        with:
+          context: ./agent_code
+          file: ./agent_code/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/intelligent-business-ai-agent:${{ env.VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/intelligent-business-ai-agent:latest
