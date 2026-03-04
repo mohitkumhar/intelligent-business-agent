@@ -25,6 +25,7 @@ services:
       - "5050:80"
 
   landing-page:
+    # image: mohitkumhar/intelligent-business-agent-web:latest
     build:
       context: ./landing-page
       dockerfile: Dockerfile
@@ -44,8 +45,55 @@ services:
       - NEXTAUTH_URL=http://localhost:5173
       - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
 
+    depends_on:
+      - backend
+      - db
+
     stdin_open: true
     tty: true
+
+  backend:
+    # image: mohitkumhar/intelligent-business-agent:latest
+    build:
+      context: ./agent_code
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    ports:
+      - "8000:5000"
+    volumes:
+      - ./agent_code:/app
+      - ./logs:/app/logs
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+
+    # promptail and loki configuration
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    # command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+      - ./logs:/var/log/app
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
 
 volumes:
   pgdata:
