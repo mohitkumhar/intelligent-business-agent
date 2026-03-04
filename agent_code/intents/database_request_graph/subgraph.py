@@ -27,8 +27,9 @@ from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg_pool import ConnectionPool
 from dotenv import load_dotenv
 import psycopg
-import logging
+from logger.logger import logger
 import os
+from intents.database_request_graph.graph_state import DatabaseRequestGraphState
 from intents.database_request_graph.utils import (
     resolve_data_range,
     validate_entities,
@@ -57,52 +58,6 @@ DATABASE_URL = os.getenv(
 #  Graph State
 # =================================
 
-class DatabaseRequestGraphState(TypedDict):
-    # input
-    user_query: str
-    messages: Annotated[list, add_messages]
-
-    # resolve_data_range
-    date_range_start: str
-    date_range_end: str
-    date_range_description: str
-
-    # validate_entities
-    target_tables: list[str]
-    target_columns: list[str]
-    entities_valid: bool
-
-    # fetch_table_schema
-    table_schema: str
-
-    # SQL_generation
-    generated_sql: str
-    sql_explanation: str
-
-    # SQL_validation
-    is_sql_valid: bool
-    sql_validation_error: str
-    sql_retry_count: int
-
-    # execute_query
-    query_results: str          # JSON string
-    execution_error: str
-    has_results: bool
-
-    # logging
-    log_entry: str
-
-    # post_query_operations
-    processed_data: str         # JSON string
-
-    # business_insight_generator
-    business_insight: str       # JSON string
-
-    # format_response_of_business_insight_generator
-    formatted_response: str
-
-    # internal routing
-    route: str
 
 
 # ── Known tables (mirrors the DDL) ─────────────────────────────────
@@ -137,14 +92,26 @@ TABLE_DESCRIPTIONS: dict[str, str] = {
 
 # graph conditional routing function
 def _route_after_sql_validation(state: DatabaseRequestGraphState) -> str:
-    return state.get("route", "sql_valid")
+    try:
+        logger.info(f"Routing after SQL validation. State: {state}")
+        return state.get("route", "sql_valid")
+
+    except Exception as e:
+        logger.error(f"Error in routing function after SQL validation: {e}", exc_info=True)
+        return "sql_valid"  # default to treating as valid to let error propagate to execution step
 
 # checkpointer
 def _create_postgres_memory():
-    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
-        PostgresSaver(conn).setup()
-    pool = ConnectionPool(conninfo=DATABASE_URL)
-    return PostgresSaver(pool)
+    try:
+        logger.info("Setting up Postgres checkpointer for graph state persistence.")
+        with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
+            PostgresSaver(conn).setup()
+        pool = ConnectionPool(conninfo=DATABASE_URL)
+        return PostgresSaver(pool)
+
+    except Exception as e:
+        logger.error(f"Failed to set up Postgres checkpointer: {e}", exc_info=True)
+        raise RuntimeError("Could not set up Postgres checkpointer") from e
 
 # graph generation function
 def generate_graph():
@@ -189,11 +156,11 @@ def generate_graph():
                    "format_response_of_business_insight_generator")
     graph.add_edge("format_response_of_business_insight_generator", END)
 
-    # ── compile with Postgres checkpointer (needed for interrupt) ──
+    # compile with Postgres checkpointer (needed for interrupt)
     memory   = _create_postgres_memory()
     workflow = graph.compile(checkpointer=memory)
     return workflow
 
-
-# ── module-level singleton ──────────────────────────────────────────
+# generate the graph workflow instance
+logger.info("Generating database request graph workflow...")
 database_request_graph_workflow = generate_graph()

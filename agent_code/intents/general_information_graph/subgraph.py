@@ -9,16 +9,25 @@ import psycopg
 from intents.general_information_graph.structures import WebSearchStructure
 from dotenv import load_dotenv
 import os
+from llm.base_llm import base_llm
+from logger.logger import logger
 
 load_dotenv()
 
-llm_base_url = os.getenv("LLM_BASE_URL", "http://127.0.0.1:11434/")
-
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:root@localhost:5432/test_db")
+
+class GeneralInformationGraphState(TypedDict):
+    user_query: str
+    messages: Annotated[list, add_messages]
+    web_search_result: str
+    user_query_output: str
+    route: str
+    
 
 def create_postgres_memory():
     # Run setup() on a standalone autocommit connection
     # because CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+    logger.info("Setting up PostgresSaver memory...")
     with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         PostgresSaver(conn).setup()
 
@@ -27,22 +36,14 @@ def create_postgres_memory():
     return checkpointer
 
 
-class GeneralInformationGraphState(TypedDict):
-    user_query: str
-    messages: Annotated[list, add_messages]
-    web_search_result: str
-    user_query_output: str
-    route: str
-
-
-
-general_information_web_search_llm = ChatOllama(model="llama3.1:8b", base_url=llm_base_url)
+general_information_web_search_llm = base_llm
 general_information_web_search_require_llm = general_information_web_search_llm.with_structured_output(WebSearchStructure)
 
 
 def is_web_search_required(state: GeneralInformationGraphState):
     """checks if the user query required to use websearch tool"""
 
+    logger.info("Determining if web search is required for the user query...")
     user_query = state["user_query"]
     prompt = f"""
     You are a decision system.
@@ -67,7 +68,9 @@ def is_web_search_required(state: GeneralInformationGraphState):
     {user_query}
     """
     
+    logger.info(f"Prompt for web search requirement:\n{prompt}")
     response = general_information_web_search_require_llm.invoke(prompt).model_dump()
+    logger.info(f"Web search requirement response: {response}")
 
     if response["is_web_search_required"] == "yes":
         return {"route": "required"}
@@ -76,9 +79,14 @@ def is_web_search_required(state: GeneralInformationGraphState):
 
 
 def answer_user_query(state: GeneralInformationGraphState):
+    logger.info("Answering user query with or without web search data...")
     user_query = state["user_query"]
     web_search_result = state.get('web_search_result', "")
     messages = state.get("messages", [])
+
+    logger.info(f"User query: {user_query}")
+    logger.info(f"Web search result: {web_search_result}")
+    logger.info(f"Messages: {messages}")
 
     # Build conversation history from previous messages (exclude current user message)
     history_text = ""
@@ -86,6 +94,7 @@ def answer_user_query(state: GeneralInformationGraphState):
         role = msg.type.capitalize()  # LangChain message objects use .type ("human"/"ai")
         history_text += f"{role}: {msg.content}\n"
 
+    logger.info(f"Constructed conversation history:\n{history_text}")
     prompt = f"""
     You are a helpful AI assistant.
 
@@ -112,9 +121,9 @@ def answer_user_query(state: GeneralInformationGraphState):
 
     Provide only the final answer.
     """
-
+    logger.info(f"Prompt for answering user query:\n{prompt}")
     response = general_information_web_search_llm.invoke(prompt)
-
+    logger.info(f"Generated response: {response.content}")
     return {
         "user_query_output": response.content,
         "messages": [{"role": "assistant", "content": response.content}]
@@ -124,7 +133,9 @@ web_search_tool = DuckDuckGoSearchRun()
 
 def duck_duck_go_search(state: GeneralInformationGraphState):
     user_query = state["user_query"]
+    logger.info(f"Performing DuckDuckGo search for query: {user_query}")
     response = web_search_tool.invoke(user_query)
+    logger.info(f"DuckDuckGo search result: {response}")
     return {"web_search_result": response}
 
 
@@ -157,5 +168,6 @@ def generate_graph():
 
 
 
-
+logger.info("Generating general information graph workflow...")
 general_information_graph_workflow = generate_graph()
+logger.info("General information graph workflow generated successfully.")
