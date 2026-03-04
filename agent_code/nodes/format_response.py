@@ -53,6 +53,7 @@ def format_response(intent, result, auth_meta=None, intent_meta=None):
             formatted = raw_text
 
     return {
+        "is_error": False,
         'timestamp': datetime.utcnow().isoformat() + 'Z',
         'status': 'ok',
         'intent': intent,
