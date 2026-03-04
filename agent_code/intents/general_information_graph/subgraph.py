@@ -1,5 +1,4 @@
-from typing import TypedDict, Literal, Annotated
-from pydantic  import BaseModel, Field
+from typing import TypedDict, Annotated
 from langgraph.graph import StateGraph, START, END
 from langchain_ollama import ChatOllama
 from langchain_community.tools import DuckDuckGoSearchRun
@@ -7,15 +6,13 @@ from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg_pool import ConnectionPool
 from langgraph.graph.message import add_messages
 import psycopg
-import operator
+from intents.general_information_graph.structures import WebSearchStructure
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 
-
 llm_base_url = os.getenv("LLM_BASE_URL", "http://127.0.0.1:11434/")
-
-
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:root@localhost:5432/test_db")
 
@@ -37,8 +34,6 @@ class GeneralInformationGraphState(TypedDict):
     user_query_output: str
     route: str
 
-class WebSearchStructure(BaseModel):
-    is_web_search_required: Literal["yes", "no"] = Field(description="Is Web search is required to answer the asked question by user")
 
 
 general_information_web_search_llm = ChatOllama(model="llama3.1:8b", base_url=llm_base_url)
