@@ -1,3 +1,6 @@
+add the benchmarking feature and slack integration and github issue integration and dashboard 
+
+
 ### AI Business Helper Chatbot for Business Owners
 
 - Problem Statement [[Click Here](/PS.md)]
