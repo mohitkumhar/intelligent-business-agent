@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
+import time
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -6,6 +7,8 @@ load_dotenv()
 
 # keep only required imports
 from nodes import intent_detection, format_response
+from nodes.logs_request import handle_logs_request
+from nodes.metrics_request import handle_metrics_request
 
 # import subgraphs
 from intents.general_information_graph.subgraph import general_information_graph_workflow
@@ -16,7 +19,62 @@ from langgraph.types import Command
 
 from logger.logger import logger
 
+# Prometheus
+from prometheus_client import (
+    Counter, Histogram, Gauge, generate_latest,
+    CONTENT_TYPE_LATEST, REGISTRY,
+)
+
 app = Flask(__name__)
+
+# ── Prometheus metrics ──────────────────────────────────────────────
+AGENT_REQUEST_COUNT = Counter(
+    "agent_requests_total",
+    "Total requests to the agent API",
+    ["method", "endpoint", "status"],
+)
+AGENT_REQUEST_LATENCY = Histogram(
+    "agent_request_duration_seconds",
+    "Agent API request latency",
+    ["method", "endpoint"],
+    buckets=[0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120],
+)
+AGENT_INTENT_COUNT = Counter(
+    "agent_intent_detections_total",
+    "Total intent detections by type",
+    ["intent"],
+)
+AGENT_INTENT_LATENCY = Histogram(
+    "agent_intent_processing_seconds",
+    "Time to process each intent",
+    ["intent"],
+    buckets=[0.5, 1, 2, 5, 10, 30, 60, 120],
+)
+AGENT_ERRORS = Counter(
+    "agent_errors_total",
+    "Total agent errors",
+    ["intent", "error_type"],
+)
+
+from flask import g as flask_g
+
+@app.before_request
+def _start_timer():
+    flask_g.start_time = time.time()
+
+@app.after_request
+def _record_metrics(response):
+    if request.path == "/metrics":
+        return response
+    latency = time.time() - getattr(flask_g, "start_time", time.time())
+    endpoint = request.endpoint or "unknown"
+    AGENT_REQUEST_COUNT.labels(request.method, endpoint, response.status_code).inc()
+    AGENT_REQUEST_LATENCY.labels(request.method, endpoint).observe(latency)
+    return response
+
+@app.route("/metrics")
+def metrics_endpoint():
+    return Response(generate_latest(REGISTRY), mimetype=CONTENT_TYPE_LATEST)
 
 
 # ─── helper: handle database_request with interrupt support ─────────
@@ -169,7 +227,10 @@ def query_agent():
     logger.info(f"Detected intent for query '{input_query}': {intent}")
     
     for i in intent['intent']:
+        # i = "logs_request"
         logger.info(f"Processing intent '{i}' for thread_id: '{thread_id}'")
+        AGENT_INTENT_COUNT.labels(i).inc()
+        intent_start = time.time()
 
         # general information / greeting 
         # ===============================
@@ -205,6 +266,7 @@ def query_agent():
             )
             
             logger.info(f"Formatted response for thread_id: '{thread_id}': {response}")
+            AGENT_INTENT_LATENCY.labels(i).observe(time.time() - intent_start)
             return jsonify(response), 200
 
         # database request
@@ -214,6 +276,68 @@ def query_agent():
         if i == "database_request":
             logger.info(f"Handling database_request intent for thread_id: '{thread_id}'")
             return _handle_database_request(input_query, thread_id, intent)
+
+        # logs request
+        # ===============================
+
+        if i == "logs_request":
+            logger.info(f"Handling logs_request intent for thread_id: '{thread_id}'")
+            try:
+                final_state = handle_logs_request(input_query, thread_id)
+                result_text = final_state.get(
+                    "formatted_response", "No log analysis available."
+                )
+                AGENT_INTENT_LATENCY.labels("logs_request").observe(time.time() - intent_start)
+                return jsonify({
+                    "is_error": False,
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "status": "ok",
+                    "intent": intent,
+                    "result": result_text,
+                    "thread_id": thread_id,
+                }), 200
+            except Exception as exc:
+                logger.error(
+                    f"Logs request failed for thread_id '{thread_id}': {exc}",
+                    exc_info=True,
+                )
+                AGENT_ERRORS.labels("logs_request", type(exc).__name__).inc()
+                return jsonify({
+                    "is_error": True,
+                    "error": f"Logs request error: {exc}",
+                    "intent": intent,
+                }), 500
+
+        # metrics request
+        # ===============================
+
+        if i == "metrics_request":
+            logger.info(f"Handling metrics_request intent for thread_id: '{thread_id}'")
+            try:
+                final_state = handle_metrics_request(input_query, thread_id)
+                result_text = final_state.get(
+                    "formatted_response", "No metrics analysis available."
+                )
+                AGENT_INTENT_LATENCY.labels("metrics_request").observe(time.time() - intent_start)
+                return jsonify({
+                    "is_error": False,
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "status": "ok",
+                    "intent": intent,
+                    "result": result_text,
+                    "thread_id": thread_id,
+                }), 200
+            except Exception as exc:
+                logger.error(
+                    f"Metrics request failed for thread_id '{thread_id}': {exc}",
+                    exc_info=True,
+                )
+                AGENT_ERRORS.labels("metrics_request", type(exc).__name__).inc()
+                return jsonify({
+                    "is_error": True,
+                    "error": f"Metrics request error: {exc}",
+                    "intent": intent,
+                }), 500
 
 
         # ── unsupported intents ─────────────────────────────────────────
