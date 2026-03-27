@@ -15,8 +15,16 @@ from logger.logger import logger
 def handle_metrics_request(
     input_query: str,
     thread_id: str,
-):
-    """Run the metrics-request LangGraph and return the final state."""
+) -> dict:
+    """Run the metrics-request LangGraph and return the final state.
+
+    Args:
+        input_query: The raw user question, e.g. "show me agent error rates".
+        thread_id:   The conversation thread ID used for LangGraph checkpointing.
+
+    Returns:
+        The final graph state dict. The caller should read ``state["formatted_response"]``.
+    """
 
     logger.info(
         f"[metrics_request] Handling metrics request - query='{input_query}', thread_id='{thread_id}'"
