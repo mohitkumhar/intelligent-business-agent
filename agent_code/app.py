@@ -27,7 +27,8 @@ from prometheus_client import (
 
 app = Flask(__name__)
 
-# ── Prometheus metrics ──────────────────────────────────────────────
+# Prometheus metrics 
+# ===============================
 AGENT_REQUEST_COUNT = Counter(
     "agent_requests_total",
     "Total requests to the agent API",
@@ -77,7 +78,8 @@ def metrics_endpoint():
     return Response(generate_latest(REGISTRY), mimetype=CONTENT_TYPE_LATEST)
 
 
-# ─── helper: handle database_request with interrupt support ─────────
+# helper: handle database_request with interrupt support 
+# ============================================
 def _handle_database_request(input_query: str, thread_id: str, intent: dict):
     """
     Invoke the database-request subgraph.
@@ -90,7 +92,8 @@ def _handle_database_request(input_query: str, thread_id: str, intent: dict):
     logger.info(f"Handling database request for thread_id: '{thread_id}'")
     config = {"configurable": {"thread_id": thread_id}}
 
-    # ── check for a pending interrupt we should resume ──────────────
+    # check for a pending interrupt we should resume 
+    # ===========================================
     is_resuming = False
     try:
         logger.info(f"Checking for pending interrupt for thread_id: '{thread_id}' in database_request_graph.")
@@ -182,7 +185,8 @@ def home():
     logger.info("Home endpoint '/' was accessed.")
     return "Intelligent AI Agent is running. Use the /api/v1/query endpoint to interact with the agent."
 
-# ─── main endpoint ──────────────────────────────────────────────────
+# main endpoint 
+# =====================
 @app.route('/api/v1/query', methods=['POST', 'GET'])
 def query_agent():
 
@@ -221,7 +225,8 @@ def query_agent():
     except Exception as e:
         logger.warning(f"Error checking for pending interrupt for thread_id '{thread_id}': {e}", exc_info=True)
 
-    # ── intent detection ────────────────────────────────────────────
+    # intent detection 
+    # ===============================
     logger.info(f"No pending interrupt for thread_id: '{thread_id}'. Starting intent detection.")
     intent = intent_detection.detect_intent(input_query)
     logger.info(f"Detected intent for query '{input_query}': {intent}")
@@ -340,7 +345,8 @@ def query_agent():
                 }), 500
 
 
-        # ── unsupported intents ─────────────────────────────────────────
+        # unsupported intents 
+        # ==========================
         logger.warning(f"Unsupported intent '{i}' for query: '{input_query}'")
         return jsonify({
             "error": f"Intent '{i}' is not yet supported.",
