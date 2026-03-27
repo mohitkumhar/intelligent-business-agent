@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Chatbot – Intelligent Business Agent{% endblock %}
+{% block page_title %}AI Business Chatbot{% endblock %}
+
+{% block content %}
+<div class="chatbot-layout">
+    <!-- Conversation History Sidebar -->
+    <div class="chat-sidebar" id="chatSidebar">
+        <div class="chat-sidebar-header">
+            <h3>Chat History</h3>
+            <button class="btn-new-chat" id="btnNewChat" title="New Chat">
+                <i class="fas fa-plus"></i> New Chat
+            </button>
+        </div>
+        <div class="conversation-list" id="conversationList">
+            <!-- Conversations loaded dynamically -->
+            <div class="empty-state" id="noConversations">
+                <i class="fas fa-comments"></i>
+                <p>No conversations yet</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Main Area -->
+    <div class="chat-main">
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h2>Intelligent Business Agent</h2>
+                <p>Ask me anything about your business data, logs, or general information.</p>
+                <div class="suggestion-chips">
+                    <button class="chip" onclick="sendSuggestion(this)">What were today's total sales?</button>
+                    <button class="chip" onclick="sendSuggestion(this)">Show me active alerts</button>
+                    <button class="chip" onclick="sendSuggestion(this)">How many employees do we have?</button>
+                    <button class="chip" onclick="sendSuggestion(this)">What is our net profit this month?</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <textarea id="chatInput"
+                          placeholder="Type your message..."
+                          rows="1"
+                          autocomplete="off"></textarea>
+                <button class="btn-send" id="btnSend" title="Send message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <p class="input-hint">Press Enter to send, Shift+Enter for new line</p>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile chat sidebar toggle -->
+<button class="chat-sidebar-toggle" id="chatSidebarToggle">
+    <i class="fas fa-history"></i>
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endblock %}
