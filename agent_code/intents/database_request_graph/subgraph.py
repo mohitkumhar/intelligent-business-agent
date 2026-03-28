@@ -64,7 +64,7 @@ DATABASE_URL = os.getenv(
 AVAILABLE_TABLES: list[str] = [
     "alerts",
     "business_health_scores",
-    "business",
+    "businesses",
     "daily_transactions",
     "decision_outcomes",
     "decisions",
@@ -78,7 +78,7 @@ AVAILABLE_TABLES: list[str] = [
 TABLE_DESCRIPTIONS: dict[str, str] = {
     "alerts": "Business alerts with severity (Low/Medium/High) and status (Active/Resolved)",
     "business_health_scores": "Overall business health metrics - cash, profitability, growth, cost-control, risk scores",
-    "business": "Business registration info - name, industry, owner, monthly revenue target, risk appetite",
+    "businesses": "Business registration info - name, industry, owner, monthly revenue target, risk appetite",
     "daily_transactions": "Daily revenue & expense transactions with categories and amounts",
     "decision_outcomes": "Outcomes of past decisions with actual profit impact",
     "decisions": "Business decisions (Marketing/Hiring/Pricing/Expansion) with risk levels and success probability",

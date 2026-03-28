@@ -138,6 +138,78 @@ function escapeCsvCell(s: string): string {
   return s;
 }
 
+/** SSE payloads from POST /api/chat/send (Flask mirrors /api/v1/query events). */
+export type ChatSseEvent = {
+  type: string;
+  content?: string;
+  status?: string;
+  error?: string;
+  intent_str?: string;
+  clarification?: unknown;
+};
+
+/**
+ * Streams the LangGraph SSE response from the agent (via Next rewrite to backend).
+ * Do not use fetch().json() — the body is text/event-stream.
+ */
+export async function* streamChatSend(
+  conversationId: string,
+  message: string
+): AsyncGenerator<ChatSseEvent> {
+  const res = await fetch(`${API_BASE}/api/chat/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ conversation_id: conversationId, message }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || `Chat API error: ${res.status}`);
+  }
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("No response body");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  function* parseBufferedBlocks(): Generator<ChatSseEvent> {
+    while (buffer.includes("\n\n")) {
+      const i = buffer.indexOf("\n\n");
+      const raw = buffer.slice(0, i).trim();
+      buffer = buffer.slice(i + 2);
+      if (!raw.startsWith("data: ")) continue;
+      const payload = raw.slice(6).trim();
+      if (!payload) continue;
+      try {
+        yield JSON.parse(payload) as ChatSseEvent;
+      } catch {
+        /* skip malformed JSON */
+      }
+    }
+  }
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (value) buffer += decoder.decode(value, { stream: true });
+    if (done) buffer += decoder.decode();
+    yield* parseBufferedBlocks();
+    if (done) {
+      const tail = buffer.trim();
+      if (tail.startsWith("data: ")) {
+        const payload = tail.slice(6).trim();
+        if (payload) {
+          try {
+            yield JSON.parse(payload) as ChatSseEvent;
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+
 export const api = {
   getSummary: (period?: DashboardPeriod) =>
     fetchWithFallback<DashboardSummary>(
@@ -280,12 +352,4 @@ export const api = {
     window.URL.revokeObjectURL(url);
   },
 
-  sendMessage: (conversationId: string, message: string) =>
-    fetchJson<{ content: string; intent: string | null }>("/api/chat/send").then(() =>
-      fetch(`${API_BASE}/api/chat/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversation_id: conversationId, message }),
-      }).then((r) => r.json())
-    ),
 };
