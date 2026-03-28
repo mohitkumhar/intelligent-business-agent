@@ -4,7 +4,6 @@ node_modules
 .gitignore
 README.md
 Dockerfile
-
 public/assets
 out
 build

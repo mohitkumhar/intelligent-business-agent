@@ -88,6 +88,19 @@ export interface EmployeeStats {
   avg_salary: number[];
 }
 
+export interface BusinessInfo {
+  business_id: string;
+  business_name: string;
+  industry_type: string;
+  owner_name: string;
+  city: string;
+  business_age: string;
+  employees_range: string;
+  biggest_challenge: string;
+  finance_tracking_method: string;
+  onboarding_notes?: string;
+}
+
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -163,6 +176,9 @@ export const api = {
 
   getEmployeeStats: () =>
     fetchWithFallback<EmployeeStats>("/api/dashboard/employee-stats", mockEmployeeStats),
+
+  getBusinessInfo: () =>
+    fetchJson<BusinessInfo>("/api/dashboard/business-info").catch(() => null),
 
   // Chatbot — no mock fallback (requires live backend)
   sendMessage: (conversationId: string, message: string) =>
