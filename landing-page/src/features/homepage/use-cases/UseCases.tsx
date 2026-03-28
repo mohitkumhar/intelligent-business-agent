@@ -7,7 +7,7 @@ import { Progress } from "@/components/Progress";
 import { TypebotLogoFull } from "@/components/TypebotLogo";
 import { registerUrl } from "@/constants";
 import marketingBotSrc from "./assets/marketing-bot.png";
-import marketingBuilderSrc from "./assets/marketing-builder.png";
+import marketingBuilderSrc from "./assets/uix.png";
 import salesBotSrc from "./assets/sales-bot.png";
 import salesBuilderSrc from "./assets/sales-builder.png";
 import supportAndProductBotSrc from "./assets/support-bot.png";
