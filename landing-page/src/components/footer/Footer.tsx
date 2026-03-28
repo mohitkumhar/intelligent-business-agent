@@ -31,7 +31,7 @@ const data = [
       },
       {
         label: "LinkedIn",
-        href: discordUrl,
+        href: linkedInUrl,
       },
     ],
   },

@@ -11,7 +11,7 @@ import marketingBuilderSrc from "./assets/uix.png";
 import salesBotSrc from "./assets/sales-bot.png";
 import salesBuilderSrc from "./assets/sales-builder.png";
 import supportAndProductBotSrc from "./assets/support-bot.png";
-import supportAndProductBuilderSrc from "./assets/support-builder.png";
+// import supportAndProductBuilderSrc from "./assets/support-builder.png";
 
 const useCases = [
   {
