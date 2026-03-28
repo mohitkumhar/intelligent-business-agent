@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { api, Transaction } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import { SearchIcon, FilterIcon } from "./Icons";
 
 interface RecentTransactionsProps {
@@ -8,6 +9,7 @@ interface RecentTransactionsProps {
 }
 
 export default function RecentTransactions({ search: globalSearch }: RecentTransactionsProps) {
+  const { period } = useDashboardPeriod();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,7 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
         search: activeSearch || undefined,
         category: selectedCategory || undefined,
         limit: 10,
+        period,
       });
       setTransactions(res.transactions);
     } catch (err) {
@@ -29,7 +32,7 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
     } finally {
       setLoading(false);
     }
-  }, [activeSearch, selectedCategory]);
+  }, [activeSearch, selectedCategory, period]);
 
   useEffect(() => {
     api.getCategories()

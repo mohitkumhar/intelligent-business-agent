@@ -2,22 +2,25 @@
 import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, RevenueVsExpense } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import { PieChartIcon } from "./Icons";
 
 Chart.register(...registerables);
 
 export default function TransactionsByCategory() {
+  const { period } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<RevenueVsExpense | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getRevenueVsExpense()
+    setLoading(true);
+    api.getRevenueVsExpense(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;

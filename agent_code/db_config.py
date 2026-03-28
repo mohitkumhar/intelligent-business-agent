@@ -50,25 +50,46 @@ def get_db_schema() -> str:
         return f"Error reading schema: {str(e)}"
 
 
+def _assert_select_only_sql(sql: str) -> None:
+    cleaned = sql.strip().lower()
+    if not cleaned.startswith("select"):
+        raise ValueError("Only SELECT queries are allowed for safety.")
+    forbidden = ["insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create "]
+    for keyword in forbidden:
+        if keyword in cleaned:
+            raise ValueError(f"Forbidden SQL keyword detected: {keyword.strip()}")
+
+
 def execute_read_query(sql: str) -> list[dict]:
     """
     Safely executes a SELECT-only SQL query.
     Returns results as a list of dicts.
     Raises ValueError if the query is not a SELECT.
     """
-    cleaned = sql.strip().lower()
-    if not cleaned.startswith("select"):
-        raise ValueError("Only SELECT queries are allowed for safety.")
-
-    forbidden = ["insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create "]
-    for keyword in forbidden:
-        if keyword in cleaned:
-            raise ValueError(f"Forbidden SQL keyword detected: {keyword.strip()}")
-
+    _assert_select_only_sql(sql)
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(sql)
+        results = cur.fetchall()
+        cur.close()
+        return [dict(row) for row in results]
+    except Exception as e:
+        raise RuntimeError(f"SQL execution error: {str(e)}")
+    finally:
+        conn.close()
+
+
+def execute_read_query_params(sql: str, params: tuple | list | None = None) -> list[dict]:
+    """
+    Same safety rules as execute_read_query, but supports parameterized queries
+    (psycopg2 %s placeholders). Use for all user-influenced predicates.
+    """
+    _assert_select_only_sql(sql)
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(sql, params or ())
         results = cur.fetchall()
         cur.close()
         return [dict(row) for row in results]
