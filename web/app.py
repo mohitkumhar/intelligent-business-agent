@@ -41,7 +41,7 @@ from prometheus_client import (
 load_dotenv()
 
 # ── configuration ────────────────────────────────────────────────────
-AGENT_API_URL = os.getenv("AGENT_API_URL", "http://localhost:8000")
+AGENT_API_URL = os.getenv("AGENT_API_URL", "http://127.0.0.1:5000")
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://admin:root@localhost:5432/test_db"
 )
@@ -646,60 +646,86 @@ def api_chat_send():
 
     CHAT_MESSAGES_TOTAL.labels("user").inc()
 
-    # forward to backend agent
-    agent_start = time.time()
-    try:
-        resp = requests.get(
-            f"{AGENT_API_URL}/api/v1/query",
-            params={"input-query": user_msg, "thread-id": conv_id},
-            timeout=120,
+    # We return a streaming response
+    from flask import stream_with_context
+    import json
+
+    def generate_stream():
+        agent_start = time.time()
+        full_assistant_msg = ""
+        intent_value = None
+        clarification_data = None
+        is_error = False
+
+        try:
+            resp = requests.get(
+                f"{AGENT_API_URL}/api/v1/query",
+                params={"input-query": user_msg, "thread-id": conv_id},
+                timeout=120,
+                stream=True,
+            )
+            
+            for line in resp.iter_lines():
+                if line:
+                    decoded = line.decode('utf-8')
+                    if decoded.startswith("data: "):
+                        # Pass through immediately
+                        yield decoded + "\n\n"
+                        payload = decoded[6:]
+                        try:
+                            chunk_data = json.loads(payload)
+                            t = chunk_data.get("type")
+                            if t == "token":
+                                full_assistant_msg += chunk_data.get("content", "")
+                            elif t == "final":
+                                intent_value = chunk_data.get("intent_str")
+                            elif t == "clarification":
+                                clarification_data = chunk_data.get("clarification")
+                                intent_value = chunk_data.get("intent_str")
+                            elif t == "error":
+                                full_assistant_msg = "⚠️ Error: " + chunk_data.get("error", "Unknown")
+                                intent_value = chunk_data.get("intent_str")
+                                is_error = True
+                        except Exception:
+                            pass
+
+            CHAT_AGENT_LATENCY.observe(time.time() - agent_start)
+        except Exception as exc:
+            err_msg = f"Could not reach agent: {exc}"
+            yield f"data: {json.dumps({'type': 'error', 'error': err_msg})}\n\n"
+            full_assistant_msg = f"⚠️ Error: {err_msg}"
+            is_error = True
+
+        CHAT_MESSAGES_TOTAL.labels("assistant").inc()
+
+        # Build final text for DB
+        if clarification_data:
+            if isinstance(clarification_data, str):
+                final_text = clarification_data
+            else:
+                final_text = clarification_data.get("message", "Could you please clarify your question?")
+        else:
+            final_text = full_assistant_msg
+
+        # Save assistant message with intent to DB. We use a fresh connection 
+        # because the request-context may drop or remain open for a long time.
+        db2 = sqlite3.connect(CHAT_DB_PATH)
+        db2.execute(
+            "INSERT INTO messages (conversation_id, role, content, intent) VALUES (?, 'assistant', ?, ?)",
+            (conv_id, final_text, intent_value),
         )
-        agent_data = resp.json()
-    except Exception as exc:
-        agent_data = {
-            "is_error": True,
-            "error": f"Could not reach agent: {exc}",
-        }
-    CHAT_AGENT_LATENCY.observe(time.time() - agent_start)
-
-    # extract intent from response
-    raw_intent = agent_data.get("intent", {})
-    intent_list = raw_intent.get("intent", []) if isinstance(raw_intent, dict) else []
-    intent_str = ",".join(intent_list) if intent_list else None
-
-    # extract assistant reply
-    if agent_data.get("is_error"):
-        assistant_msg = f"⚠️ Error: {agent_data.get('error', 'Unknown error')}"
-    elif agent_data.get("needs_clarification"):
-        clar = agent_data.get("clarification", {})
-        assistant_msg = clar if isinstance(clar, str) else clar.get(
-            "message", "Could you please clarify your question?"
+        db2.execute(
+            "UPDATE conversations SET updated_at = datetime('now') WHERE conversation_id = ?",
+            (conv_id,),
         )
-    else:
-        assistant_msg = agent_data.get("result", "No response from agent.")
+        db2.commit()
+        db2.close()
 
-    CHAT_MESSAGES_TOTAL.labels("assistant").inc()
-
-    # save assistant message with intent
-    db.execute(
-        "INSERT INTO messages (conversation_id, role, content, intent) VALUES (?, 'assistant', ?, ?)",
-        (conv_id, assistant_msg, intent_str),
-    )
-    db.execute(
-        "UPDATE conversations SET updated_at = datetime('now') WHERE conversation_id = ?",
-        (conv_id,),
-    )
-    db.commit()
-
-    return jsonify(
-        {
-            "conversation_id": conv_id,
-            "role": "assistant",
-            "content": assistant_msg,
-            "intent": intent_str,
-            "raw": agent_data,
-        }
-    )
+    response = Response(stream_with_context(generate_stream()), mimetype='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache, no-transform'
+    response.headers['X-Accel-Buffering'] = 'no'
+    response.headers['Connection'] = 'keep-alive'
+    return response
 
 
 # ═══════════════════════════════════════════════════════════════════
