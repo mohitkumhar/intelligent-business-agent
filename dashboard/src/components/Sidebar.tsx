@@ -11,6 +11,7 @@ export default function Sidebar() {
     { label: "Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> },
     { label: "Import Data", href: "/import", icon: <FileUpIcon size={18} /> },
   ];
+  console.log("Current mainMenu:", mainMenu.map(m => m.label));
 
   return (
     <aside className="sidebar">

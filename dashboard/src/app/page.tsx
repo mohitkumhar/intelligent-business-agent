@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 
+import { DashboardPeriodProvider } from "@/context/DashboardPeriodContext";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import WelcomeBanner from "@/components/WelcomeBanner";
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
+    <DashboardPeriodProvider>
     <div className="app-layout">
       <Sidebar />
       <div className="main-area">
@@ -62,5 +64,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+    </DashboardPeriodProvider>
   );
 }
