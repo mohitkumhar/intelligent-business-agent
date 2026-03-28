@@ -1,5 +1,6 @@
-from typing import TypedDict, Annotated
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, START, END
+from typing import TypedDict, Annotated
 from langchain_ollama import ChatOllama
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.checkpoint.postgres import PostgresSaver
@@ -78,7 +79,7 @@ def is_web_search_required(state: GeneralInformationGraphState):
 
 
 
-def answer_user_query(state: GeneralInformationGraphState):
+def answer_user_query(state: GeneralInformationGraphState, config: RunnableConfig):
     logger.info("Answering user query with or without web search data...")
     user_query = state["user_query"]
     web_search_result = state.get('web_search_result', "")
@@ -122,7 +123,7 @@ def answer_user_query(state: GeneralInformationGraphState):
     Provide only the final answer.
     """
     logger.info(f"Prompt for answering user query:\n{prompt}")
-    response = general_information_web_search_llm.invoke(prompt)
+    response = general_information_web_search_llm.invoke(prompt, config=config)
     logger.info(f"Generated response: {response.content}")
     return {
         "user_query_output": response.content,
