@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
@@ -16,11 +17,13 @@ import EmployeeStatistics from "@/components/EmployeeStatistics";
 import RecentTransactions from "@/components/RecentTransactions";
 
 export default function DashboardPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <div className="app-layout">
       <Sidebar />
       <div className="main-area">
-        <Topbar />
+        <Topbar onSearch={setSearchQuery} />
         <div className="content-wrapper">
           <WelcomeBanner />
           <KPICards />
@@ -55,7 +58,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Row 6: Recent Transactions */}
-          <RecentTransactions />
+          <RecentTransactions search={searchQuery} />
         </div>
       </div>
     </div>

@@ -22,29 +22,33 @@ services:
     ports:
       - "5050:80"
 
-  # landing-page:
-  #   # image: mohitkumhar/intelligent-business-agent-web:latest
-  #   build:
-  #     context: ./landing-page
-  #     dockerfile: Dockerfile
-  #   container_name: landing-page
-  #   restart: always
-  #   ports:
-  #     - "5173:5173"
-  #   volumes:
-  #     - ./landing-page:/app
-  #     - /app/node_modules
-  #   environment:
-  #     - VITE_API_URL=http://localhost:8000
-  #     - DATABASE_URL=postgresql://admin:root@db:5432/test_db
-  #     - ENCRYPTION_SECRET=12345678901234567890123456789012
-  #     - NEXTAUTH_URL=http://localhost:5173
-  #     - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
-  #   depends_on:
-  #     - backend
-  #     - db
-  #   stdin_open: true
-  #   tty: true
+  landing-page:
+    # image: mohitkumhar/intelligent-business-agent-web:latest
+    build:
+      context: ./landing-page
+      dockerfile: Dockerfile
+    container_name: landing-page
+    restart: always
+    ports:
+      - "5173:5173"
+
+    volumes:
+      - ./landing-page:/app
+      - /app/node_modules
+
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - DATABASE_URL=postgresql://admin:root@db:5432/test_db
+      - ENCRYPTION_SECRET=12345678901234567890123456789012
+      - NEXTAUTH_URL=http://localhost:5173
+      - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
+
+    depends_on:
+      - backend
+      - db
+
+    stdin_open: true
+    tty: true
 
   backend:
     # image: mohitkumhar/intelligent-business-agent:latest

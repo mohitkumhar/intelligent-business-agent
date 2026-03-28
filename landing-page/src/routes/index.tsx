@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Cta } from "@/components/cta/Cta";
 import { Section } from "@/components/Section";
 import { AllFeatures } from "@/features/homepage/all-features/AllFeatures";
-import { Companies } from "@/features/homepage/companies/components/Companies";
 import { Faq } from "@/features/homepage/components/Faq";
 import { JoinTheCommunity } from "@/features/homepage/components/JoinTheCommunity";
 import { MadeForDevelopers } from "@/features/homepage/components/MadeForDevelopers";
@@ -40,7 +39,6 @@ function Home() {
           <div className="md:h-[200vh] motion-safe:md-scroll-use-cases-fade-in md:motion-safe:opacity-0">
             <UseCases className="md:sticky top-0" />
           </div>
-          <Companies />
           <div id="magic-animation-separator" className="invisible -mt-32" />
           <MainFeatures />
         </Section>
