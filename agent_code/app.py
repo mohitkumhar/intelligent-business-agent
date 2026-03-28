@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, stream_with_context
 import time
+import json
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -13,6 +14,8 @@ from nodes.metrics_request import handle_metrics_request
 # import subgraphs
 from intents.general_information_graph.subgraph import general_information_graph_workflow
 from intents.database_request_graph.subgraph import database_request_graph_workflow
+from intents.logs_request_graph.subgraph import logs_request_graph_workflow
+from intents.metrics_request_graph.subgraph import metrics_request_graph_workflow
 
 # langgraph helpers for human-in-the-loop
 from langgraph.types import Command
@@ -78,106 +81,50 @@ def metrics_endpoint():
     return Response(generate_latest(REGISTRY), mimetype=CONTENT_TYPE_LATEST)
 
 
-# helper: handle database_request with interrupt support 
+# helper: Handle Streaming from LangGraph
 # ============================================
-def _handle_database_request(input_query: str, thread_id: str, intent: dict):
-    """
-    Invoke the database-request subgraph.
-    Handles the human-in-the-loop interrupt flow:
-      1. New query  → invoke with initial state
-      2. Resuming   → invoke with Command(resume=<user answer>)
-    After invoke, checks whether the graph paused (interrupt) or finished.
-    """
-
-    logger.info(f"Handling database request for thread_id: '{thread_id}'")
-    config = {"configurable": {"thread_id": thread_id}}
-
-    # check for a pending interrupt we should resume 
-    # ===========================================
-    is_resuming = False
+def _stream_graph(workflow, initial_state, config, intent_dict, final_node_names, resume_input=None):
+    intent_str = ",".join(intent_dict["intent"])
+    clarification = None
+    
     try:
-        logger.info(f"Checking for pending interrupt for thread_id: '{thread_id}' in database_request_graph.")
-        snapshot = database_request_graph_workflow.get_state(config)
-        if snapshot and snapshot.next:          # graph is paused
-            is_resuming = True
-            logger.info(f"Found pending interrupt for thread_id: '{thread_id}'. Resuming graph.")
-    except Exception as e:
-        logger.warning(f"Could not check for pending interrupt for thread_id '{thread_id}': {e}", exc_info=True)
-
-    # invoke
-    try:
-        if is_resuming:
-            logger.info(f"Resuming database_request_graph_workflow for thread_id: '{thread_id}'")
-            final_state = database_request_graph_workflow.invoke(
-                Command(resume=input_query), config=config
-            )
-            logger.info(f"Resumed database_request_graph_workflow completed for thread_id: '{thread_id}'. Final state: {final_state}")
-        else:
-            logger.info(f"Invoking database_request_graph_workflow for new query on thread_id: '{thread_id}'")
-            initial_state = {
-                "user_query": input_query,
-                "messages": [{"role": "user", "content": input_query}],
-                "sql_retry_count": 0,
-            }
-            logger.info(f"Initial state for database_request_graph for thread_id '{thread_id}': {initial_state}")
-            final_state = database_request_graph_workflow.invoke(
-                initial_state, config=config
-            )
-            logger.info(f"database_request_graph_workflow completed for thread_id: '{thread_id}'. Final state: {final_state}")
-    except Exception as exc:
-        # If the exception is a GraphInterrupt, the state is saved;
-        # fall through to the snapshot check below.
-        if "interrupt" in type(exc).__name__.lower():
-            logger.info(f"GraphInterrupt occurred for thread_id: '{thread_id}'. State is saved.")
-            final_state = None
-        else:
-            logger.error(f"Agent error during database_request_graph_workflow invocation for thread_id '{thread_id}': {exc}", exc_info=True)
-            return jsonify({
-                "is_error": True,
-                "error": f"Agent error: {exc}",
-                "intent": intent,
-            }), 500
-
-    # did the graph pause for clarification?
-    try:
-        logger.info(f"Checking for post-invocation snapshot for thread_id: '{thread_id}'")
-        post_snapshot = database_request_graph_workflow.get_state(config)
-        if post_snapshot and post_snapshot.next:
-            # Extract the interrupt payload
-            interrupt_data = None
-            for task in (post_snapshot.tasks or []):
+        # If resuming, we pass a Command object. Otherwise, we pass the initial state dict.
+        inputs = Command(resume=resume_input) if resume_input else initial_state
+        
+        yield f"data: {json.dumps({'type': 'status', 'status': 'Starting workflow...'})}\n\n"
+        
+        for event in workflow.stream(inputs, config, stream_mode=["messages", "updates"]):
+            mode = event[0]
+            if mode == "messages":
+                chunk, metadata = event[1]
+                node_name = metadata.get("langgraph_node")
+                if node_name in final_node_names:
+                    content = getattr(chunk, "content", "")
+                    if content:
+                        yield f"data: {json.dumps({'type': 'token', 'content': content})}\n\n"
+            elif mode == "updates":
+                update_dict = event[1]
+                for node_name in update_dict.keys():
+                    if node_name not in final_node_names:
+                        friendly_name = node_name.replace("_", " ").title()
+                        yield f"data: {json.dumps({'type': 'status', 'status': f'Completed: {friendly_name}'})}\n\n"
+        # Check if paused for clarification
+        state = workflow.get_state(config)
+        if state and state.next:
+            for task in (state.tasks or []):
                 if hasattr(task, "interrupts") and task.interrupts:
-                    interrupt_data = task.interrupts[0].value
+                    clarification = task.interrupts[0].value
                     break
+            if clarification:
+                yield f"data: {json.dumps({'type': 'clarification', 'clarification': clarification, 'intent_str': intent_str})}\n\n"
+                return
 
-            logger.info(f"Graph paused for clarification for thread_id: '{thread_id}'.")
-            return jsonify({
-                "is_error": False,
-                "needs_clarification": True,
-                "clarification": interrupt_data or {
-                    "message": "Could you please clarify your question?"
-                },
-                "thread_id": thread_id,
-                "intent": intent,
-            }), 200
-    except Exception as e:
-        logger.warning(f"Could not get post-invocation snapshot for thread_id '{thread_id}': {e}", exc_info=True)
+        yield f"data: {json.dumps({'type': 'final', 'intent_str': intent_str})}\n\n"
+        
+    except Exception as exc:
+        logger.error(f"Error during stream: {exc}", exc_info=True)
+        yield f"data: {json.dumps({'type': 'error', 'error': str(exc), 'intent_str': intent_str})}\n\n"
 
-    # graph completed - return the formatted response
-    result_text = (
-        final_state.get("formatted_response", "No response generated.")
-        if final_state else "No response generated."
-    )
-
-    logger.info(f"Database request graph completed for thread_id: '{thread_id}'.")
-    return jsonify({
-        "is_error": False,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "status": "ok",
-        "intent": intent,
-        "result": result_text,
-        "thread_id": thread_id,
-    }), 200
 
 logger.info("Starting Intelligent AI Agent...")
 @app.route("/")
@@ -209,149 +156,144 @@ def query_agent():
             "error": "thread-id is required in form data"
         }), 400
 
-    # check if this thread already has a pending interrupt
-    # (user might be replying to a clarification question; skip re-detection)
+    config = {"configurable": {"thread_id": thread_id}}
+
+    # 1. Check if database_request has a pending interrupt we should resume
     try:
         logger.info(f"Checking for pending interrupts for thread_id: '{thread_id}'")
-        snapshot = database_request_graph_workflow.get_state(
-            {"configurable": {"thread_id": thread_id}}
-        )
+        snapshot = database_request_graph_workflow.get_state(config)
         if snapshot and snapshot.next:
             logger.info(f"Pending interrupt found for thread_id: '{thread_id}'. Resuming database_request graph.")
-            # Resume the interrupted database_request graph
-            return _handle_database_request(
-                input_query, thread_id, {"intent": "database_request"}
+            intent_dict = {"intent": ["database_request"]}
+            generator = _stream_graph(
+                database_request_graph_workflow, 
+                None, 
+                config, 
+                intent_dict, 
+                ["format_response_of_business_insight_generator"], 
+                resume_input=input_query
             )
+            resp = Response(stream_with_context(generator), mimetype='text/event-stream')
+            resp.headers['Cache-Control'] = 'no-cache, no-transform'
+            resp.headers['X-Accel-Buffering'] = 'no'
+            resp.headers['Connection'] = 'keep-alive'
+            return resp
     except Exception as e:
         logger.warning(f"Error checking for pending interrupt for thread_id '{thread_id}': {e}", exc_info=True)
 
-    # intent detection 
+    # 2. Intent detection 
     # ===============================
     logger.info(f"No pending interrupt for thread_id: '{thread_id}'. Starting intent detection.")
     intent = intent_detection.detect_intent(input_query)
     logger.info(f"Detected intent for query '{input_query}': {intent}")
     
+    # We will process the first valid intent for streaming
     for i in intent['intent']:
-        # i = "logs_request"
         logger.info(f"Processing intent '{i}' for thread_id: '{thread_id}'")
         AGENT_INTENT_COUNT.labels(i).inc()
         intent_start = time.time()
-
-        # general information / greeting 
+        
+        # General Info / Greeting
         # ===============================
-
         if i in ["general_information_request", "greeting_request"]:
-            logger.info(f"Invoking general_information_graph for intent '{i}' on thread_id: '{thread_id}'")
-            config = {
-                "configurable": {
-                    "thread_id": thread_id
+            def generate_general():
+                initial_state = {
+                    "user_query": input_query,
+                    "messages": [{"role": "user", "content": input_query}]
                 }
-            }
+                intent_str = ",".join(intent["intent"])
+                try:
+                    yield f"data: {json.dumps({'type': 'status', 'status': 'Analyzing query context...'})}\n\n"
+                    final_state = general_information_graph_workflow.invoke(initial_state, config=config)
+                    yield f"data: {json.dumps({'type': 'status', 'status': 'Generating response...'})}\n\n"
+                    # We stream the final formatting helper instead of graph itself to preserve current architecture
+                    for token in format_response.format_response_stream(intent, final_state):
+                        yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+                    yield f"data: {json.dumps({'type': 'final', 'intent_str': intent_str})}\n\n"
+                    AGENT_INTENT_LATENCY.labels(i).observe(time.time() - intent_start)
+                except Exception as exc:
+                    logger.error(f"Error in general_information_graph: {exc}", exc_info=True)
+                    yield f"data: {json.dumps({'type': 'error', 'error': str(exc), 'intent_str': intent_str})}\n\n"
+            resp = Response(stream_with_context(generate_general()), mimetype='text/event-stream')
+            resp.headers['Cache-Control'] = 'no-cache, no-transform'
+            resp.headers['X-Accel-Buffering'] = 'no'
+            resp.headers['Connection'] = 'keep-alive'
+            return resp
 
+        # Database Request
+        # ===============================
+        if i == "database_request":
             initial_state = {
                 "user_query": input_query,
-                "messages": [{"role": "user", "content": input_query}]
+                "messages": [{"role": "user", "content": input_query}],
+                "sql_retry_count": 0,
             }
-            
-            logger.info(f"Initial state for thread_id: {thread_id} for general_information_graph: {initial_state}")
-
-            final_state = general_information_graph_workflow.invoke(
-                initial_state, config=config
+            generator = _stream_graph(
+                database_request_graph_workflow, 
+                initial_state, 
+                config, 
+                intent, 
+                ["format_response_of_business_insight_generator"]
             )
-            
-            logger.info(f"general_information_graph_workflow completed for thread_id: '{thread_id}'. Final state: {final_state}")
-
-            logger.info(f"General information graph finished for thread_id: '{thread_id}'. Formatting response.")
-            # format response
-            response = format_response.format_response(
-                intent,
-                final_state,
-                auth_meta=None,
-                intent_meta=None
-            )
-            
-            logger.info(f"Formatted response for thread_id: '{thread_id}': {response}")
             AGENT_INTENT_LATENCY.labels(i).observe(time.time() - intent_start)
-            return jsonify(response), 200
+            resp = Response(stream_with_context(generator), mimetype='text/event-stream')
+            resp.headers['Cache-Control'] = 'no-cache, no-transform'
+            resp.headers['X-Accel-Buffering'] = 'no'
+            resp.headers['Connection'] = 'keep-alive'
+            return resp
 
-        # database request
+        # Logs Request
         # ===============================
-        
-        # if intent["intent"] == "database_request":
-        if i == "database_request":
-            logger.info(f"Handling database_request intent for thread_id: '{thread_id}'")
-            return _handle_database_request(input_query, thread_id, intent)
-
-        # logs request
-        # ===============================
-
         if i == "logs_request":
-            logger.info(f"Handling logs_request intent for thread_id: '{thread_id}'")
-            try:
-                final_state = handle_logs_request(input_query, thread_id)
-                result_text = final_state.get(
-                    "formatted_response", "No log analysis available."
-                )
-                AGENT_INTENT_LATENCY.labels("logs_request").observe(time.time() - intent_start)
-                return jsonify({
-                    "is_error": False,
-                    "timestamp": datetime.utcnow().isoformat() + "Z",
-                    "status": "ok",
-                    "intent": intent,
-                    "result": result_text,
-                    "thread_id": thread_id,
-                }), 200
-            except Exception as exc:
-                logger.error(
-                    f"Logs request failed for thread_id '{thread_id}': {exc}",
-                    exc_info=True,
-                )
-                AGENT_ERRORS.labels("logs_request", type(exc).__name__).inc()
-                return jsonify({
-                    "is_error": True,
-                    "error": f"Logs request error: {exc}",
-                    "intent": intent,
-                }), 500
+            initial_state = {
+                "user_query": input_query,
+                "messages": [{"role": "user", "content": input_query}],
+            }
+            generator = _stream_graph(
+                logs_request_graph_workflow, 
+                initial_state, 
+                config, 
+                intent, 
+                ["format_logs_response"]
+            )
+            AGENT_INTENT_LATENCY.labels(i).observe(time.time() - intent_start)
+            resp = Response(stream_with_context(generator), mimetype='text/event-stream')
+            resp.headers['Cache-Control'] = 'no-cache, no-transform'
+            resp.headers['X-Accel-Buffering'] = 'no'
+            resp.headers['Connection'] = 'keep-alive'
+            return resp
 
-        # metrics request
+        # Metrics Request
         # ===============================
-
         if i == "metrics_request":
-            logger.info(f"Handling metrics_request intent for thread_id: '{thread_id}'")
-            try:
-                final_state = handle_metrics_request(input_query, thread_id)
-                result_text = final_state.get(
-                    "formatted_response", "No metrics analysis available."
-                )
-                AGENT_INTENT_LATENCY.labels("metrics_request").observe(time.time() - intent_start)
-                return jsonify({
-                    "is_error": False,
-                    "timestamp": datetime.utcnow().isoformat() + "Z",
-                    "status": "ok",
-                    "intent": intent,
-                    "result": result_text,
-                    "thread_id": thread_id,
-                }), 200
-            except Exception as exc:
-                logger.error(
-                    f"Metrics request failed for thread_id '{thread_id}': {exc}",
-                    exc_info=True,
-                )
-                AGENT_ERRORS.labels("metrics_request", type(exc).__name__).inc()
-                return jsonify({
-                    "is_error": True,
-                    "error": f"Metrics request error: {exc}",
-                    "intent": intent,
-                }), 500
-
+            initial_state = {
+                "user_query": input_query,
+                "messages": [{"role": "user", "content": input_query}],
+            }
+            generator = _stream_graph(
+                metrics_request_graph_workflow, 
+                initial_state, 
+                config, 
+                intent, 
+                ["format_metrics_response"]
+            )
+            AGENT_INTENT_LATENCY.labels(i).observe(time.time() - intent_start)
+            resp = Response(stream_with_context(generator), mimetype='text/event-stream')
+            resp.headers['Cache-Control'] = 'no-cache, no-transform'
+            resp.headers['X-Accel-Buffering'] = 'no'
+            resp.headers['Connection'] = 'keep-alive'
+            return resp
 
         # unsupported intents 
         # ==========================
         logger.warning(f"Unsupported intent '{i}' for query: '{input_query}'")
-        return jsonify({
-            "error": f"Intent '{i}' is not yet supported.",
-            "is_error": True,
-        }), 400
+        def generate_unsupported():
+            yield f"data: {json.dumps({'type': 'error', 'error': f'Intent {i} is not yet supported.', 'intent_str': ','.join(intent['intent'])})}\n\n"
+        resp = Response(stream_with_context(generate_unsupported()), mimetype='text/event-stream')
+        resp.headers['Cache-Control'] = 'no-cache, no-transform'
+        resp.headers['X-Accel-Buffering'] = 'no'
+        resp.headers['Connection'] = 'keep-alive'
+        return resp
 
 
 if __name__ == '__main__':

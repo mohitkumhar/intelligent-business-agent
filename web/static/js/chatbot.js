@@ -202,38 +202,94 @@
         isSending = true;
         btnSend.disabled = true;
 
-        // Send to API
-        const result = await api("/api/chat/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                conversation_id: activeConversationId,
-                message: text.trim(),
-            }),
-        });
+        // Send to API via Fetch to stream
+        try {
+            const resp = await fetch("/api/chat/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    conversation_id: activeConversationId,
+                    message: text.trim(),
+                }),
+            });
 
-        // Remove typing indicator
-        typingEl.remove();
+            typingEl.remove();
+
+            if (!resp.ok) {
+                appendMessage("assistant", "Sorry, an error occurred communicating with the server.");
+                isSending = false;
+                btnSend.disabled = false;
+                return;
+            }
+
+            const streamBubble = appendStreamMessage("assistant");
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedContent = "";
+            let buffer = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n\n");
+                buffer = lines.pop() || ""; // keep partial chunk
+                
+                for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                        const payload = line.substring(6);
+                        try {
+                            const chunkData = JSON.parse(payload);
+                            if (chunkData.type === "token") {
+                                accumulatedContent += chunkData.content || "";
+                                streamBubble.updateContent(accumulatedContent);
+                            } else if (chunkData.type === "status") {
+                                streamBubble.updateStatus(chunkData.status);
+                            } else if (chunkData.type === "final") {
+                                if (chunkData.content) {
+                                    accumulatedContent = chunkData.content;
+                                    streamBubble.updateContent(accumulatedContent);
+                                }
+                                streamBubble.updateIntents(chunkData.intent_str);
+                                streamBubble.updateStatus("");
+                            } else if (chunkData.type === "clarification") {
+                                const clarif = chunkData.clarification;
+                                accumulatedContent = typeof clarif === "string" ? clarif : (clarif.message || "Please clarify");
+                                streamBubble.updateContent(accumulatedContent);
+                                streamBubble.updateIntents(chunkData.intent_str);
+                                streamBubble.updateStatus("");
+                            } else if (chunkData.type === "error") {
+                                accumulatedContent = "⚠️ Error: " + (chunkData.error || "Unknown");
+                                streamBubble.updateContent(accumulatedContent);
+                                streamBubble.updateStatus("");
+                            }
+                        } catch(e) { /* ignore parse error for chunk */ }
+                    }
+                }
+            }
+
+            // flush any remaining buffer
+            if (buffer.startsWith("data: ")) {
+                 try {
+                     const payload = buffer.substring(6);
+                     const chunkData = JSON.parse(payload);
+                     if (chunkData.type === "token") {
+                         accumulatedContent += chunkData.content || "";
+                         streamBubble.updateContent(accumulatedContent);
+                     } else if (chunkData.type === "final") {
+                         streamBubble.updateIntents(chunkData.intent_str);
+                         streamBubble.updateStatus("");
+                     }
+                 } catch(e) { }
+            }
+
+        } catch (err) {
+            typingEl.remove();
+            appendMessage("assistant", "Sorry, I could not connect. Please try again.");
+        }
+
         isSending = false;
         btnSend.disabled = false;
-
-        // Extract intent from response
-        let intentStr = null;
-        if (result && result.intent) {
-            intentStr = result.intent;
-        } else if (result && result.raw && result.raw.intent) {
-            const ri = result.raw.intent;
-            if (ri.intent && Array.isArray(ri.intent)) {
-                intentStr = ri.intent.join(",");
-            }
-        }
-
-        if (result && result.content) {
-            appendMessage("assistant", result.content, null, intentStr);
-        } else {
-            appendMessage("assistant", "Sorry, I could not get a response. Please try again.");
-        }
-
         scrollToBottom();
         loadConversations(); // refresh sidebar
     }
@@ -254,6 +310,53 @@
     }
 
     // ── DOM Helpers ────────────────────────────────────────────────
+    function appendStreamMessage(role, timestamp) {
+        const bubble = document.createElement("div");
+        bubble.className = `message-bubble ${role}`;
+
+        const avatar = role === "user" ? "U" : '<i class="fas fa-robot"></i>';
+        const timeStr = timestamp
+            ? new Date(timestamp + "Z").toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+            : new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+        bubble.innerHTML = `
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-body">
+                <div class="dynamic-intents"></div>
+                <div class="agent-status" style="font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 5px;"></div>
+                <div class="message-content"></div>
+                <div class="message-time">${timeStr}</div>
+            </div>
+        `;
+        chatMessages.appendChild(bubble);
+        scrollToBottom();
+        return {
+            updateContent: (text) => {
+                const contentDiv = bubble.querySelector(".message-content");
+                try {
+                    contentDiv.innerHTML = marked.parse(text);
+                } catch {
+                    contentDiv.innerHTML = escapeHtml(text);
+                }
+                scrollToBottom();
+            },
+            updateIntents: (intentStr) => {
+                const intentsDiv = bubble.querySelector(".dynamic-intents");
+                intentsDiv.innerHTML = buildIntentBadges(intentStr);
+            },
+            updateStatus: (statusText) => {
+                const statusDiv = bubble.querySelector(".agent-status");
+                if (statusText) {
+                    statusDiv.style.display = "block";
+                    statusDiv.innerHTML = '<i class="fas fa-circle-notch fa-spin" style="margin-right: 5px;"></i>' + escapeHtml(statusText);
+                } else {
+                    statusDiv.style.display = "none";
+                }
+                scrollToBottom();
+            }
+        };
+    }
+
     function appendMessage(role, content, timestamp, intentStr) {
         const bubble = document.createElement("div");
         bubble.className = `message-bubble ${role}`;

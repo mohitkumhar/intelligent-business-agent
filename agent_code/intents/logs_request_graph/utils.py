@@ -11,9 +11,9 @@ Loki label used by Promtail:  job="python_app"
 import json
 import os
 import time
-import requests
 from datetime import date
 from dotenv import load_dotenv
+from langchain_core.runnables import RunnableConfig
 
 from llm.base_llm import base_llm
 from logger.logger import logger
@@ -297,7 +297,7 @@ Log lines:
 
 
 # ── NODE 4 – format_logs_response ─────────────────────────────────────
-def format_logs_response(state: LogsRequestGraphState):
+def format_logs_response(state: LogsRequestGraphState, config: RunnableConfig):
     """Turn the structured log analysis into a polished markdown response."""
 
     analysis_raw = state.get("logs_analysis", "{}")
@@ -334,7 +334,7 @@ Respond ONLY with the formatted answer — no preamble."""
 
     try:
         logger.info("[logs] Formatting log analysis response...")
-        llm_response = base_llm.invoke(prompt)
+        llm_response = base_llm.invoke(prompt, config=config)
         formatted = llm_response.content
         logger.info("[logs] Formatted response generated.")
     except Exception:
