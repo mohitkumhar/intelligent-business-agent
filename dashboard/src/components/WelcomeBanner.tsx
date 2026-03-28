@@ -1,5 +1,5 @@
 "use client";
-import { ChevronDownIcon, ExportIcon } from "./Icons";
+import { ExportIcon } from "./Icons";
 
 export default function WelcomeBanner() {
   const now = new Date();
@@ -10,6 +10,18 @@ export default function WelcomeBanner() {
   ];
   const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
+  const handleExport = () => {
+    const headers = "Txn ID,Date,Description,Category,Type,Amount\n";
+    const data = "1001,2026-03-24,Sample Revenue,Sales,CREDIT,500.00\n1002,2026-03-25,Sample Expense,Ops,DEBIT,150.00";
+    const blob = new Blob([headers + data], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="welcome-banner">
       <div className="welcome-text">
@@ -17,10 +29,14 @@ export default function WelcomeBanner() {
         <p>{dateStr}</p>
       </div>
       <div className="welcome-actions">
-        <button className="filter-dropdown">
-          This Month <ChevronDownIcon size={14} />
-        </button>
-        <button className="export-btn">
+        <div style={{ position: 'relative' }}>
+          <select className="filter-dropdown" style={{ appearance: 'none', paddingRight: '12px' }}>
+            <option>This Month</option>
+            <option>Last Month</option>
+            <option>Year to Date</option>
+          </select>
+        </div>
+        <button className="export-btn" onClick={handleExport}>
           <ExportIcon size={14} /> Export
         </button>
       </div>
