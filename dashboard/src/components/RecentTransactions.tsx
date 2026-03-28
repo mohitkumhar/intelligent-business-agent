@@ -3,17 +3,23 @@ import { useEffect, useState, useCallback } from "react";
 import { api, Transaction } from "@/lib/api";
 import { SearchIcon, FilterIcon } from "./Icons";
 
-export default function RecentTransactions() {
+interface RecentTransactionsProps {
+  search?: string;
+}
+
+export default function RecentTransactions({ search: globalSearch }: RecentTransactionsProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+
+  const activeSearch = globalSearch || localSearch;
 
   const fetchTransactions = useCallback(async () => {
     try {
       const res = await api.getRecentTransactions({
-        search: search || undefined,
+        search: activeSearch || undefined,
         category: selectedCategory || undefined,
         limit: 10,
       });
@@ -23,7 +29,7 @@ export default function RecentTransactions() {
     } finally {
       setLoading(false);
     }
-  }, [search, selectedCategory]);
+  }, [activeSearch, selectedCategory]);
 
   useEffect(() => {
     api.getCategories()
@@ -55,8 +61,8 @@ export default function RecentTransactions() {
             <input
               type="text"
               placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
             />
           </div>
           <select

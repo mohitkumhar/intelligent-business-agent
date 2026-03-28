@@ -15,15 +15,15 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="logo-icon">IBA</div>
-        <span className="logo-text">IBA</span>
+        <div className="logo-icon"></div>
+        <span className="logo-text">ProfitPilot</span>
       </div>
 
       {/* Main Menu */}
-      <div className="sidebar-section">
-        <div className="sidebar-section-title">Main Menu</div>
-      </div>
       <nav className="sidebar-nav">
+        <div className="sidebar-section">
+          <div className="sidebar-section-title">Main Menu</div>
+        </div>
         {mainMenu.map((item) => (
           <Link
             key={item.href}
@@ -39,14 +39,12 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="sidebar-footer">
         <div className="ai-boost-card">
-          <div className="ai-icon"><SparklesIcon size={22} color="#3B82F6" /></div>
+          <div className="ai-icon"><SparklesIcon size={20} color="#3B82F6" /></div>
           <div className="ai-title">Boost with AI</div>
           <div className="ai-desc">
-            AI-powered insights, analytics, and tools that save hours.
+            AI-powered insights tools that save hours.
           </div>
-          <Link href="/chatbot">
-            <button className="ai-boost-btn">Ask AI Agent</button>
-          </Link>
+          <button className="ai-boost-btn">Upgrade to Pro</button>
         </div>
       </div>
     </aside>

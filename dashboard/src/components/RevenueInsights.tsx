@@ -85,7 +85,7 @@ export default function RevenueInsights() {
             boxPadding: 6,
             callbacks: {
               label(ctx) {
-                return `${ctx.dataset.label}: $${(ctx.parsed.y ?? 0).toLocaleString()}`;
+                return `${ctx.dataset.label}: $${(ctx.parsed?.y ?? 0).toLocaleString()}`;
               },
             },
           },
