@@ -80,7 +80,7 @@ export default function SalesTrend() {
             bodyFont: { family: "Inter", size: 11 },
             padding: 12,
             cornerRadius: 8,
-            callbacks: { label: (ctx) => `${ctx.dataset.label}: $${(ctx.parsed.y ?? 0).toLocaleString()}` },
+            callbacks: { label: (ctx) => `${ctx.dataset.label}: $${(ctx.parsed?.y ?? 0).toLocaleString()}` },
           },
         },
         scales: {

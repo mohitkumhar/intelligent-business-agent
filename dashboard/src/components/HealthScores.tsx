@@ -4,14 +4,14 @@ import { api, HealthScores as HealthScoresData } from "@/lib/api";
 import { HeartPulseIcon } from "./Icons";
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return "#10B981";
-  if (score >= 40) return "#F59E0B";
-  return "#EF4444";
+  if (score >= 75) return "#10B981"; // Excellent
+  if (score >= 60) return "#F59E0B"; // Good
+  return "#EF4444"; // At Risk
 }
 
 function getScoreBg(score: number): string {
-  if (score >= 70) return "#ECFDF5";
-  if (score >= 40) return "#FFFBEB";
+  if (score >= 75) return "#ECFDF5";
+  if (score >= 60) return "#FFFBEB";
   return "#FEF2F2";
 }
 
@@ -27,39 +27,36 @@ export default function HealthScores() {
   }, []);
 
   return (
-    <div className="chart-card">
-      <div className="chart-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div className="chart-card h-full flex flex-col">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
           <HeartPulseIcon size={18} color="#EF4444" />
-          <span className="chart-title">Business Health Scores</span>
         </div>
+        <h3 className="text-[15px] font-semibold text-slate-900">Business Health Scores</h3>
       </div>
-      <div style={{ padding: "0 4px" }}>
+
+      <div className="flex-1">
         {loading ? (
-          <div className="loading-spinner">Loading...</div>
+          <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+            Calculating scores...
+          </div>
         ) : data && data.scores.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="space-y-6">
             {data.scores.map((biz) => (
-              <div key={biz.name} style={{
-                background: "#F8FAFC",
-                borderRadius: 12,
-                padding: "16px 18px",
-                border: "1px solid #E2E8F0",
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontWeight: 600, fontSize: 14, color: "#1E293B" }}>{biz.name}</span>
-                  <span style={{
-                    fontWeight: 700,
-                    fontSize: 18,
-                    color: getScoreColor(biz.overall),
-                    background: getScoreBg(biz.overall),
-                    padding: "4px 12px",
-                    borderRadius: 20,
-                  }}>
+              <div key={biz.name} className="p-5 border border-slate-100 rounded-2xl bg-slate-50/50">
+                <div className="flex justify-between items-center mb-5">
+                  <span className="text-sm font-semibold text-slate-900">{biz.name}</span>
+                  <div className="px-3 py-1.5 rounded-full text-sm font-bold transition-all shadow-sm"
+                    style={{
+                      color: getScoreColor(biz.overall),
+                      background: "white",
+                      border: `1px solid ${getScoreBg(biz.overall)}`
+                    }}>
                     {biz.overall}
-                  </span>
+                  </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
+
+                <div className="grid grid-cols-5 gap-4">
                   {[
                     { label: "Cash", value: biz.cash },
                     { label: "Profit", value: biz.profitability },
@@ -67,27 +64,20 @@ export default function HealthScores() {
                     { label: "Cost", value: biz.cost_control },
                     { label: "Risk", value: biz.risk },
                   ].map((metric) => (
-                    <div key={metric.label} style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "#94A3B8", fontWeight: 500, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    <div key={metric.label} className="text-center group">
+                      <div className="text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-wider">
                         {metric.label}
                       </div>
-                      <div style={{
-                        width: "100%",
-                        height: 5,
-                        background: "#E2E8F0",
-                        borderRadius: 3,
-                        overflow: "hidden",
-                        marginBottom: 4,
-                      }}>
-                        <div style={{
-                          width: `${metric.value}%`,
-                          height: "100%",
-                          background: getScoreColor(metric.value),
-                          borderRadius: 3,
-                          transition: "width 1s ease",
-                        }} />
+                      <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-2 relative">
+                        <div
+                          className="h-full rounded-full transition-all duration-1000 ease-out"
+                          style={{
+                            width: `${metric.value}%`,
+                            background: getScoreColor(metric.value),
+                          }}
+                        />
                       </div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: getScoreColor(metric.value) }}>
+                      <div className="text-xs font-bold text-slate-700">
                         {metric.value}
                       </div>
                     </div>
@@ -97,7 +87,9 @@ export default function HealthScores() {
             ))}
           </div>
         ) : (
-          <div className="loading-spinner">No health data available</div>
+          <div className="flex items-center justify-center h-full text-slate-400 text-sm italic">
+            No health data available
+          </div>
         )}
       </div>
     </div>
