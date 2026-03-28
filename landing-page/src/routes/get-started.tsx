@@ -97,9 +97,16 @@ function GetStartedPage() {
       const result = await response.json();
       if (response.ok) {
         localStorage.setItem('profit_pilot_onboarded', 'true');
+        const userStr = localStorage.getItem('profit_pilot_user') || '{}';
+        const user = JSON.parse(userStr);
+        localStorage.setItem('profit_pilot_user', JSON.stringify({
+          ...user,
+          full_name: formData.full_name,
+          email: formData.email
+        }));
         setIsSubmitted(true);
         setTimeout(() => {
-          window.location.href = dashboardUrl;
+          window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(formData.email)}`;
         }, 2000);
       } else {
         setError(result.error || "Failed to submit form");
@@ -123,7 +130,7 @@ function GetStartedPage() {
               Welcome to ProfitPilot! We've received your business details and are setting up your workspace.
             </p>
             <Button
-              onClick={() => window.location.href = dashboardUrl}
+              onClick={() => window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(formData.email)}`}
               variant="outline"
               style={{ color: "black", backgroundColor: "white", borderColor: "white" }}
               className="mt-6 rounded-full font-medium"

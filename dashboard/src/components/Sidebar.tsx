@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DashboardIcon, ChatbotIcon, SparklesIcon } from "./Icons";
+import { DashboardIcon, ChatbotIcon, SparklesIcon, FileUpIcon } from "./Icons";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -9,6 +9,7 @@ export default function Sidebar() {
   const mainMenu = [
     { label: "Dashboard", href: "/", icon: <DashboardIcon size={18} /> },
     { label: "Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> },
+    { label: "Import Data", href: "/import", icon: <FileUpIcon size={18} /> },
   ];
 
   return (
@@ -34,6 +35,24 @@ export default function Sidebar() {
             <span>{item.label}</span>
           </Link>
         ))}
+      </nav>
+
+      {/* Account Section */}
+      <nav className="sidebar-nav" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-section">
+          <div className="sidebar-section-title">Account</div>
+        </div>
+        <button 
+          onClick={() => {
+            localStorage.clear();
+            window.location.href = "http://localhost:3000";
+          }}
+          className="nav-link"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: 'auto', padding: '12px 16px', color: '#64748B', fontWeight: 500 }}
+        >
+          <span className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', width: '18px' }}>🚪</span>
+          <span>Logout</span>
+        </button>
       </nav>
 
       {/* Footer */}

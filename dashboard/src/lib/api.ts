@@ -12,7 +12,7 @@ import {
   mockEmployeeStats,
 } from "./mockData";
 
-const API_BASE = "";
+const API_BASE = "http://localhost:5000";
 
 export interface DashboardSummary {
   total_revenue: number;
@@ -99,10 +99,43 @@ export interface BusinessInfo {
   biggest_challenge: string;
   finance_tracking_method: string;
   onboarding_notes?: string;
+  user_name?: string;
+}
+
+function getStoredUserEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  // First check URL for direct navigation/redirection from landing page
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailParam = urlParams.get("user_email");
+  if (emailParam) {
+    // If found in URL, persist it for future use in this session/origin
+    const existing = localStorage.getItem("profit_pilot_user");
+    if (!existing) {
+      localStorage.setItem("profit_pilot_user", JSON.stringify({ email: emailParam }));
+    }
+    return emailParam;
+  }
+
+  // Then check localStorage
+  const userStr = localStorage.getItem("profit_pilot_user");
+  if (!userStr) return null;
+  try {
+    const user = JSON.parse(userStr);
+    return user.email || null;
+  } catch {
+    return null;
+  }
+}
+
+function appendUserEmail(url: string): string {
+  const email = getStoredUserEmail();
+  if (!email) return url;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}email=${encodeURIComponent(email)}`;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, { cache: "no-store" });
+  const res = await fetch(`${API_BASE}${appendUserEmail(url)}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
@@ -110,7 +143,10 @@ async function fetchJson<T>(url: string): Promise<T> {
 /** Try the real API first; if it fails, return mock data. */
 async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
   try {
-    return await fetchJson<T>(url);
+    const finalUrl = appendUserEmail(url);
+    const res = await fetch(`${API_BASE}${finalUrl}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return await res.json();
   } catch {
     console.warn(`[API] ${url} unavailable — using mock data`);
     return fallback;

@@ -49,10 +49,17 @@ export default function Topbar({ onSearch }: TopbarProps) {
         <button className="topbar-icon-btn" title="Help">
           <HelpCircleIcon size={16} />
         </button>
-        <button className="topbar-icon-btn" title="Notifications">
+        <button className="topbar-icon-btn" title="Bell">
           <BellIcon size={16} />
         </button>
-        <div className="avatar">U</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '12px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>
+            {typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('profit_pilot_user') || '{}').full_name || 'User' : 'User'}
+          </span>
+          <div className="avatar">
+            {typeof window !== 'undefined' ? (JSON.parse(localStorage.getItem('profit_pilot_user') || '{}').full_name || 'U').charAt(0).toUpperCase() : 'U'}
+          </div>
+        </div>
       </div>
     </header>
   );

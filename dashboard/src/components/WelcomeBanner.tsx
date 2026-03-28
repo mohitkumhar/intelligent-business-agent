@@ -32,7 +32,7 @@ export default function WelcomeBanner() {
   return (
     <div className="welcome-banner">
       <div className="welcome-text">
-        <h2>Welcome back, {business?.business_name || "Urban Retail Store"}!</h2>
+        <h2>Welcome back, {business?.user_name || business?.business_name || "Guest"}!</h2>
         <p>{dateStr}</p>
       </div>
       <div className="welcome-actions">

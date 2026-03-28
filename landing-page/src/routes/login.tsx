@@ -56,7 +56,7 @@ function LoginPage() {
 
           if (userExists && isOnboarded) {
              // Returning user -> Dashboard
-             window.location.href = dashboardUrl;
+             window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(user.email)}`;
           } else if (userExists && !isOnboarded) {
              // Partial user -> Onboarding
              navigate({ to: onboardingUrl });
@@ -100,7 +100,8 @@ function LoginPage() {
             email: email,
             phone: ""
           }));
-          window.location.href = isOnboarded ? dashboardUrl : onboardingUrl;
+          const redirectTo = isOnboarded ? `${dashboardUrl}?user_email=${encodeURIComponent(email)}` : onboardingUrl;
+          window.location.href = redirectTo;
         } else {
           setMode("signup");
           alert("Account not found! Please create your account first.");

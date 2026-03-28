@@ -343,14 +343,14 @@ def onboarding():
         cur.execute("""
             INSERT INTO public.businesses (
                 business_id, business_name, industry_type, owner_name, 
-                city, business_age, employees_range, biggest_challenge, 
-                finance_tracking_method, onboarding_notes
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                city, business_age, employees_range, monthly_revenue,
+                biggest_challenge, finance_tracking_method, onboarding_notes
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING business_id
         """, (
             business_id, business_name, industry_type, full_name,
-            city, business_age, employees_range, biggest_challenge,
-            finance_tracking_method, onboarding_notes
+            city, business_age, employees_range, monthly_revenue,
+            biggest_challenge, finance_tracking_method, onboarding_notes
         ))
         
         # 2. Insert role
@@ -398,14 +398,30 @@ def _parse_revenue(rev_str):
     if 'Under ₹50K' in rev_str: return 35000
     return 100000
 
+def get_business_by_user(cur, email=None):
+    if email:
+        cur.execute("""
+            SELECT b.*, u.name as user_name FROM public.businesses b
+            JOIN public.users u ON b.business_id = u.business_id
+            WHERE u.email = %s
+            ORDER BY b.created_at DESC LIMIT 1
+        """, (email,))
+    else:
+        cur.execute("""
+            SELECT b.*, u.name as user_name FROM public.businesses b
+            LEFT JOIN public.users u ON b.business_id = u.business_id
+            ORDER BY b.created_at DESC LIMIT 1
+        """)
+    return cur.fetchone()
+
 @app.route('/api/dashboard/summary', methods=['GET', 'OPTIONS'])
 def get_dashboard_summary():
+    email = request.args.get('email')
     conn = get_db_connection()
     try:
         import psycopg2.extras
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM public.businesses ORDER BY created_at DESC LIMIT 1")
-        business = cur.fetchone()
+        business = get_business_by_user(cur, email)
         if not business:
             return jsonify({"error": "No business found"}), 404
             
@@ -435,12 +451,12 @@ def get_dashboard_summary():
 
 @app.route('/api/dashboard/financial-overview', methods=['GET', 'OPTIONS'])
 def get_financial_overview():
+    email = request.args.get('email')
     conn = get_db_connection()
     try:
         import psycopg2.extras
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM public.businesses ORDER BY created_at DESC LIMIT 1")
-        business = cur.fetchone()
+        business = get_business_by_user(cur, email)
         if not business: return jsonify({}), 404
         
         base_rev = _parse_revenue(business.get('monthly_revenue'))
@@ -465,12 +481,12 @@ def get_financial_overview():
 
 @app.route('/api/dashboard/revenue-vs-expense', methods=['GET', 'OPTIONS'])
 def get_revenue_vs_expense():
+    email = request.args.get('email')
     conn = get_db_connection()
     try:
         import psycopg2.extras
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM public.businesses ORDER BY created_at DESC LIMIT 1")
-        business = cur.fetchone()
+        business = get_business_by_user(cur, email)
         if not business: return jsonify({}), 404
         
         cat = business.get('industry_type', 'Other')
@@ -504,12 +520,12 @@ def get_sales_trend():
 
 @app.route('/api/dashboard/business-info', methods=['GET', 'OPTIONS'])
 def get_business_info():
+    email = request.args.get('email')
     conn = get_db_connection()
     try:
         import psycopg2.extras
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM public.businesses ORDER BY created_at DESC LIMIT 1")
-        business = cur.fetchone()
+        business = get_business_by_user(cur, email)
         if not business:
             return jsonify({"error": "No business found"}), 404
         return jsonify(business)
