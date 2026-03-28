@@ -7,6 +7,7 @@ from intents.database_request_graph.structures import (
 )
 from langgraph.types import interrupt
 from datetime import date
+from langchain_core.runnables import RunnableConfig
 from llm.base_llm import base_llm
 from logger.logger import logger
 from intents.database_request_graph.subgraph import (
@@ -779,7 +780,7 @@ Rules:
 #  NODE 10 - format_response_of_business_insight_generator
 # =================================
 
-def format_response_of_business_insight_generator(state: DatabaseRequestGraphState):
+def format_response_of_business_insight_generator(state: DatabaseRequestGraphState, config: RunnableConfig):
     """Produce a polished, user-friendly markdown response."""
 
     business_insight = state.get("business_insight", "{}")
@@ -845,7 +846,7 @@ Respond ONLY with the formatted answer - no preamble, no meta-commentary."""
 
     try:
         logger.info("Invoking base_llm to format the final response.")
-        response = base_llm.invoke(prompt)
+        response = base_llm.invoke(prompt, config=config)
         formatted = response.content
         logger.info("Final response formatted successfully by LLM.")
     except Exception as exc:

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -24,33 +22,29 @@ services:
     ports:
       - "5050:80"
 
-  landing-page:
-    # image: mohitkumhar/intelligent-business-agent-web:latest
-    build:
-      context: ./landing-page
-      dockerfile: Dockerfile
-    container_name: landing-page
-    restart: always
-    ports:
-      - "5173:5173"
-
-    volumes:
-      - ./landing-page:/app
-      - /app/node_modules
-
-    environment:
-      - VITE_API_URL=http://localhost:8000
-      - DATABASE_URL=postgresql://admin:root@db:5432/test_db
-      - ENCRYPTION_SECRET=12345678901234567890123456789012
-      - NEXTAUTH_URL=http://localhost:5173
-      - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
-
-    depends_on:
-      - backend
-      - db
-
-    stdin_open: true
-    tty: true
+  # landing-page:
+  #   # image: mohitkumhar/intelligent-business-agent-web:latest
+  #   build:
+  #     context: ./landing-page
+  #     dockerfile: Dockerfile
+  #   container_name: landing-page
+  #   restart: always
+  #   ports:
+  #     - "5173:5173"
+  #   volumes:
+  #     - ./landing-page:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - VITE_API_URL=http://localhost:8000
+  #     - DATABASE_URL=postgresql://admin:root@db:5432/test_db
+  #     - ENCRYPTION_SECRET=12345678901234567890123456789012
+  #     - NEXTAUTH_URL=http://localhost:5173
+  #     - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
+  #   depends_on:
+  #     - backend
+  #     - db
+  #   stdin_open: true
+  #   tty: true
 
   backend:
     # image: mohitkumhar/intelligent-business-agent:latest
@@ -60,7 +54,7 @@ services:
     container_name: backend
     restart: always
     ports:
-      - "8000:5000"
+      - "5000:5000"
     volumes:
       - ./agent_code:/app
       - ./logs:/app/logs
@@ -71,24 +65,20 @@ services:
     depends_on:
       - db
 
-  web:
+  dashboard:
     build:
-      context: ./web
+      context: ./dashboard
       dockerfile: Dockerfile
-    container_name: web-dashboard
+    container_name: nextjs-dashboard
     restart: always
     ports:
-      - "5001:5001"
-    volumes:
-      - ./web:/app
+      - "3001:3000"
     environment:
       - AGENT_API_URL=http://backend:5000
-      - DATABASE_URL=postgresql://admin:root@db:5432/test_db
-      - SECRET_KEY=change-me-in-production
-      - CHAT_DB_PATH=/app/chat_history.db
     depends_on:
       - backend
       - db
+
 
     # promptail and loki configuration
   loki:
@@ -131,7 +121,7 @@ services:
       - "--storage.tsdb.retention.time=15d"
     depends_on:
       - backend
-      - web
+      - dashboard
 
 volumes:
   pgdata:
