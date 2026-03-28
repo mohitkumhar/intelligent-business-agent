@@ -11,6 +11,7 @@ import css from "@/assets/globals.css?url";
 import { Footer } from "@/components/footer/Footer";
 import { Header } from "@/components/Header";
 import { NotFound } from "@/components/NotFound";
+import { FloatingChatbot } from "@/components/FloatingChatbot";
 
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -88,6 +89,7 @@ function RootComponent() {
 
             <Footer />
           </div>
+          <FloatingChatbot />
           <Scripts />
         </GoogleOAuthProvider>
       </body>

@@ -151,10 +151,8 @@ const Mobile = React.forwardRef<HTMLElement, Props>(function Mobile(
         </Link>
         <Button
           aria-label={isOpened ? "Close menu" : "Open menu"}
-          variant="ghost"
-          size="icon"
           onClick={toggleHeaderExpansion}
-          className="transition-none"
+          className="transition-none bg-transparent hover:bg-white/5"
         >
           {isOpened ? <Cancel01Icon /> : <Menu01Icon />}
         </Button>
