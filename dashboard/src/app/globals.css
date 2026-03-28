@@ -437,7 +437,7 @@ body {
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 18px;
+  gap: 16px;
   margin-bottom: 28px;
 }
 
@@ -965,11 +965,17 @@ body {
 }
 
 /* ─── Responsive ────────────────────────────────────────── */
-@media (max-width: 1400px) {
+@media (max-width: 1500px) {
+  .kpi-grid { gap: 12px; }
+  .kpi-card { padding: 18px 14px; gap: 10px; }
+  .kpi-value { font-size: 24px; }
+}
+
+@media (max-width: 1100px) {
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .charts-row { grid-template-columns: 1fr; }
 }

@@ -4,7 +4,6 @@ node_modules
 .gitignore
 README.md
 Dockerfile
-package-lock.json
 public/assets
 out
 build
