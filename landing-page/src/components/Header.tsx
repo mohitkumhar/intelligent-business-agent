@@ -1,5 +1,4 @@
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { Bubble } from "@typebot.io/react";
 import { Button, buttonVariants } from "@typebot.io/ui/components/Button";
 import { Cancel01Icon } from "@typebot.io/ui/icons/Cancel01Icon";
 import { Menu01Icon } from "@typebot.io/ui/icons/Menu01Icon";
@@ -218,7 +217,7 @@ const Desktop = React.forwardRef<
 >(function Desktop({ appearance, className }, ref) {
   const { pathname } = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isChatBubbleMounted, setIsChatBubbleMounted] = useState(true);
+
   const [isIntersecting, setIsIntersecting] = useState(false);
   const isAuthenticated = useIsAuthenticated();
 
@@ -226,7 +225,7 @@ const Desktop = React.forwardRef<
     const handleScroll = () => {
       if (window.scrollY < 50) setIsIntersecting(false);
       setIsScrolled(window.scrollY > 50);
-      setIsChatBubbleMounted(window.scrollY < 300);
+
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -293,25 +292,7 @@ const Desktop = React.forwardRef<
           </CtaButtonLink>
         )}
       </nav>
-      {isChatBubbleMounted && pathname === "/" && (
-        <div
-          className={cx(
-            "flex transition-opacity",
-            isScrolled ? "opacity-0 pointer-events-none" : "opacity-100",
-          )}
-        >
-          <Bubble
-            typebot="typebot-demo"
-            theme={{
-              position: "static",
-              chatWindow: {
-                maxHeight: "400px",
-                backgroundColor: "#1D1D1D",
-              },
-            }}
-          />
-        </div>
-      )}
+
     </div>
   );
 });

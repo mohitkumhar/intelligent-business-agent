@@ -21,8 +21,8 @@ export const CookieConsentBot = ({ isOpen, onSubmit, openDelay }: Props) => {
           isHidden: true,
         },
         chatWindow: {
-          maxHeight: "250px",
-          maxWidth: "450px",
+          maxHeight: "150px",
+          maxWidth: "300px",
         },
       }}
       onEnd={() => {
