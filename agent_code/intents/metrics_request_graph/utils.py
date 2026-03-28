@@ -7,10 +7,10 @@ Graph flow:
 
 import json
 import os
-import time
 import requests
 from datetime import date
 from dotenv import load_dotenv
+from langchain_core.runnables import RunnableConfig
 
 from llm.base_llm import base_llm
 from logger.logger import logger
@@ -294,7 +294,7 @@ Raw metrics data:
 # NODE 4 – format_metrics_response
 # =================================
 
-def format_metrics_response(state: MetricsRequestGraphState):
+def format_metrics_response(state: MetricsRequestGraphState, config: RunnableConfig):
     """Turn the structured analysis into a polished markdown response."""
 
     analysis_raw = state.get("metrics_analysis", "{}")
@@ -327,7 +327,7 @@ Respond ONLY with the formatted answer — no preamble."""
 
     try:
         logger.info("[metrics] Formatting metrics analysis response...")
-        llm_response = base_llm.invoke(prompt)
+        llm_response = base_llm.invoke(prompt, config=config)
         formatted = llm_response.content
         logger.info("[metrics] Formatted response generated.")
     except Exception:
