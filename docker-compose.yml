@@ -74,6 +74,8 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        AGENT_API_URL: http://backend:5000
     container_name: nextjs-dashboard
     restart: always
     ports:

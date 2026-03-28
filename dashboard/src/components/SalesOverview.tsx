@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, SalesTarget } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 
 function SemiCircleGauge({ percentage }: { percentage: number }) {
   const size = 200;
@@ -82,15 +83,17 @@ function SemiCircleGauge({ percentage }: { percentage: number }) {
 }
 
 export default function SalesOverview() {
+  const { period } = useDashboardPeriod();
   const [data, setData] = useState<SalesTarget | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getSalesTarget()
+    setLoading(true);
+    api.getSalesTarget(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [period]);
 
   const sales = data?.current_revenue ?? 3884.00;
   const target = data?.target_revenue ?? 20000.00;

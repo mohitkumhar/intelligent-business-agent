@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, DashboardSummary } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import {
   DollarIcon,
   ReceiptIcon,
@@ -23,16 +24,18 @@ function formatNumber(value: number): string {
 }
 
 export default function KPICards() {
+  const { period } = useDashboardPeriod();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     api
-      .getSummary()
+      .getSummary(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [period]);
 
   const cards = data
     ? [
