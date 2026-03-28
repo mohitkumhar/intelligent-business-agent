@@ -180,15 +180,34 @@ const Mobile = React.forwardRef<HTMLElement, Props>(function Mobile(
                 </TextLink>
               ))}
             </div>
-            <CtaButtonLink
-              href={signinUrl}
-              className={buttonVariants({
-                size: "lg",
-                variant: "outline",
-              })}
-            >
-              Sign in
-            </CtaButtonLink>
+            <div className="flex flex-col gap-3">
+              {localStorage.getItem('profit_pilot_user') ? (
+                <>
+                  <CtaButtonLink
+                    href={dashboardUrl}
+                    className="w-full py-5 rounded-2xl bg-[#FF5A25] text-white font-bold text-center"
+                  >
+                    Go to Dashboard
+                  </CtaButtonLink>
+                  <button 
+                    onClick={() => {
+                      localStorage.removeItem('profit_pilot_user');
+                      window.location.href = "/";
+                    }}
+                    className="w-full py-4 text-white/50 font-bold hover:text-white transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <CtaButtonLink
+                  href={signinUrl}
+                  className="w-full py-5 rounded-2xl border border-white/20 text-white font-bold text-center"
+                >
+                  Sign in
+                </CtaButtonLink>
+              )}
+            </div>
           </motion.nav>
         )}
       </AnimatePresence>
@@ -282,15 +301,24 @@ const Desktop = React.forwardRef<
             {link.label}
           </ButtonLink>
         ))}
-<<<<<<< HEAD
         {pathname !== "/get-started" && pathname !== "/login" && (
-=======
-        {pathname !== "/get-started" && (
->>>>>>> e50d4b9 (Added something)
           isAuthenticated ? (
-            <CtaButtonLink size="sm" href={dashboardUrl}>
-              Go to dashboard
-            </CtaButtonLink>
+            <div className="flex items-center gap-2">
+              <CtaButtonLink size="sm" href={dashboardUrl}>
+                Go to dashboard
+              </CtaButtonLink>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  localStorage.removeItem('profit_pilot_user');
+                  window.location.href = "/";
+                }}
+                className="text-white/60 hover:text-white"
+              >
+                Logout
+              </Button>
+            </div>
           ) : (
             <CtaButtonLink size="sm" href={registerUrl}>
               Get started free

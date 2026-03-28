@@ -2,12 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ContentPageWrapper } from "@/components/ContentPageWrapper";
 import { Button } from "@typebot.io/ui/components/Button";
 import { createMetaTags } from "@/lib/createMetaTags";
-<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { dashboardUrl } from "@/constants";
-=======
-import { useState } from "react";
->>>>>>> e50d4b9 (Added something)
+import { motion } from "motion/react";
 
 export const Route = createFileRoute("/get-started")({
   head: () => ({
@@ -29,7 +26,6 @@ const selectClasses =
 
 function GetStartedPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
-<<<<<<< HEAD
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,6 +96,7 @@ function GetStartedPage() {
 
       const result = await response.json();
       if (response.ok) {
+        localStorage.setItem('profit_pilot_onboarded', 'true');
         setIsSubmitted(true);
         setTimeout(() => {
           window.location.href = dashboardUrl;
@@ -113,12 +110,6 @@ function GetStartedPage() {
     } finally {
       setIsSubmitting(false);
     }
-=======
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitted(true);
->>>>>>> e50d4b9 (Added something)
   };
 
   if (isSubmitted) {
@@ -129,26 +120,15 @@ function GetStartedPage() {
               Form Submitted Successfully!
             </h1>
             <p className="text-lg text-white/70">
-<<<<<<< HEAD
               Welcome to ProfitPilot! We've received your business details and are setting up your workspace.
             </p>
             <Button
               onClick={() => window.location.href = dashboardUrl}
-=======
-              Thank you for sharing your business details. Our ai partner has started processing your details and will get back to you soon.
-            </p>
-            <Button
-              onClick={() => setIsSubmitted(false)}
->>>>>>> e50d4b9 (Added something)
               variant="outline"
               style={{ color: "black", backgroundColor: "white", borderColor: "white" }}
               className="mt-6 rounded-full font-medium"
             >
-<<<<<<< HEAD
               Go to Dashboard
-=======
-              Submit another query
->>>>>>> e50d4b9 (Added something)
             </Button>
           </div>
       </main>
@@ -160,61 +140,36 @@ function GetStartedPage() {
         <div className="max-w-3xl w-full mx-auto pb-24 mt-8 md:mt-16 animate-in slide-in-from-bottom-8 fade-in duration-700">
           <div className="mb-12 text-center flex flex-col gap-4 mx-auto w-full max-w-2xl">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-<<<<<<< HEAD
               Business Profile
             </h1>
             <p className="text-lg text-white/60 mx-auto">
               Tell us about your company so we can tailor your dynamic AI dashboard.
-=======
-              Let's get started
-            </h1>
-            <p className="text-lg text-white/60 mx-auto">
-              Tell us a little bit about yourself and your business so we can
-              tailor your ProfitPilot experience.
->>>>>>> e50d4b9 (Added something)
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-8 md:gap-12">
-<<<<<<< HEAD
-            {/* Section 2 (Now 1) */}
+            {/* Step 1 */}
             <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-6">
               <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
                 Step 1 — Your Details
-=======
-            {/* Section 1 */}
-            <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-6">
-              <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
-                Section 1 — About You
->>>>>>> e50d4b9 (Added something)
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-3">
                   <label className="text-sm font-medium text-white/80">
-<<<<<<< HEAD
                     Your Full Name <span className="text-red-400">*</span>
-=======
-                    Full Name <span className="text-red-400">*</span>
->>>>>>> e50d4b9 (Added something)
                   </label>
                   <input
                     required
                     type="text"
-<<<<<<< HEAD
                     name="full_name"
                     className={inputClasses}
                     placeholder="Jane Doe"
                     value={formData.full_name}
                     onChange={handleChange}
-=======
-                    className={inputClasses}
-                    placeholder="John Doe"
->>>>>>> e50d4b9 (Added something)
                   />
                 </div>
                 <div className="flex flex-col gap-3">
                   <label className="text-sm font-medium text-white/80">
-<<<<<<< HEAD
                     Work Email <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -228,38 +183,12 @@ function GetStartedPage() {
                   />
                 </div>
               </div>
-
-              <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4 mt-4">
-                Step 2 — Business Details
-=======
-                    WhatsApp / Phone <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    required
-                    type="tel"
-                    className={inputClasses}
-                    placeholder="+91 99999 99999"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-3">
-                <label className="text-sm font-medium text-white/80">
-                  Email Address <span className="text-red-400">*</span>
-                </label>
-                <input
-                  required
-                  type="email"
-                  className={inputClasses}
-                  placeholder="john@example.com"
-                />
-              </div>
             </div>
 
-            {/* Section 2 */}
+            {/* Step 2 */}
             <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-6">
               <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
-                Section 2 — About the Business
->>>>>>> e50d4b9 (Added something)
+                Step 2 — Business Details
               </h2>
               <div className="flex flex-col gap-3">
                 <label className="text-sm font-medium text-white/80">
@@ -268,16 +197,11 @@ function GetStartedPage() {
                 <input
                   required
                   type="text"
-<<<<<<< HEAD
                   name="business_name"
                   className={inputClasses}
                   placeholder="Your Business Name"
                   value={formData.business_name}
                   onChange={handleChange}
-=======
-                  className={inputClasses}
-                  placeholder="Your Business Name"
->>>>>>> e50d4b9 (Added something)
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -285,7 +209,6 @@ function GetStartedPage() {
                   <label className="text-sm font-medium text-white/80">
                     Business Category
                   </label>
-<<<<<<< HEAD
                   <select 
                     name="business_category"
                     className={selectClasses} 
@@ -293,12 +216,6 @@ function GetStartedPage() {
                     onChange={handleChange}
                   >
                     <option value="" disabled>Select a category</option>
-=======
-                  <select className={selectClasses} defaultValue="">
-                    <option value="" disabled>
-                      Select a category
-                    </option>
->>>>>>> e50d4b9 (Added something)
                     <option>Retail/Shop</option>
                     <option>Restaurant/Food</option>
                     <option>Manufacturing</option>
@@ -319,23 +236,17 @@ function GetStartedPage() {
                   <input
                     required
                     type="text"
-<<<<<<< HEAD
                     name="city"
                     className={inputClasses}
                     placeholder="City, Country"
                     value={formData.city}
                     onChange={handleChange}
-=======
-                    className={inputClasses}
-                    placeholder="City, Country"
->>>>>>> e50d4b9 (Added something)
                   />
                 </div>
                 <div className="flex flex-col gap-3">
                   <label className="text-sm font-medium text-white/80">
                     Number of Employees
                   </label>
-<<<<<<< HEAD
                   <select
                     name="employees_range"
                     className={selectClasses}
@@ -350,20 +261,11 @@ function GetStartedPage() {
                     <option>51–100</option>
                     <option>100+</option>
                   </select>
-=======
-                  <input
-                    type="number"
-                    min="1"
-                    className={inputClasses}
-                    placeholder="e.g. 5"
-                  />
->>>>>>> e50d4b9 (Added something)
                 </div>
                 <div className="flex flex-col gap-3">
                   <label className="text-sm font-medium text-white/80">
                     Monthly Revenue
                   </label>
-<<<<<<< HEAD
                   <select 
                     name="monthly_revenue"
                     className={selectClasses}
@@ -371,12 +273,6 @@ function GetStartedPage() {
                     onChange={handleChange}
                   >
                     <option value="" disabled>Select monthly revenue</option>
-=======
-                  <select className={selectClasses} defaultValue="">
-                    <option value="" disabled>
-                      Select monthly revenue
-                    </option>
->>>>>>> e50d4b9 (Added something)
                     <option>Under ₹50K</option>
                     <option>₹50K–₹2L</option>
                     <option>₹2L–₹10L</option>
@@ -389,7 +285,6 @@ function GetStartedPage() {
                 <label className="text-sm font-medium text-white/80">
                   Business Age
                 </label>
-<<<<<<< HEAD
                 <select 
                   name="business_age"
                   className={selectClasses}
@@ -397,12 +292,6 @@ function GetStartedPage() {
                   onChange={handleChange}
                 >
                   <option value="" disabled>Select business age</option>
-=======
-                <select className={selectClasses} defaultValue="">
-                  <option value="" disabled>
-                    Select business age
-                  </option>
->>>>>>> e50d4b9 (Added something)
                   <option>0–6 months</option>
                   <option>Less than 1 year</option>
                   <option>1–3 years</option>
@@ -412,22 +301,15 @@ function GetStartedPage() {
               </div>
             </div>
 
-<<<<<<< HEAD
-            {/* Section 3 (Now 2) */}
+            {/* Step 3 */}
             <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-8">
               <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
-                Step 2 — Your Current Situation
-=======
-            {/* Section 3 */}
-            <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-8">
-              <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
-                Section 3 — Your Situation
->>>>>>> e50d4b9 (Added something)
+                Step 3 — Your Current Situation
               </h2>
 
               <div className="flex flex-col gap-5">
                 <label className="text-sm font-medium text-white/80">
-                  Biggest Challenge <span className="text-red-400">*</span>
+                  Biggest Challenges <span className="text-red-400">*</span>
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {[
@@ -441,7 +323,6 @@ function GetStartedPage() {
                   ].map((challenge) => (
                     <label
                       key={challenge}
-<<<<<<< HEAD
                       className={`cursor-pointer border rounded-full px-5 py-2.5 text-sm transition-all relative ${
                         formData.challenges.includes(challenge)
                           ? "bg-white border-white text-black font-medium"
@@ -452,14 +333,6 @@ function GetStartedPage() {
                         type="checkbox"
                         checked={formData.challenges.includes(challenge)}
                         onChange={() => handleChallengeChange(challenge)}
-=======
-                      className="cursor-pointer border border-white/20 bg-white/5 hover:bg-white/10 rounded-full px-5 py-2.5 text-sm transition-all has-[:checked]:bg-white has-[:checked]:border-white has-[:checked]:text-black has-[:checked]:font-medium relative"
-                    >
-                      <input
-                        type="checkbox"
-                        name="challenge"
-                        value={challenge}
->>>>>>> e50d4b9 (Added something)
                         className="absolute opacity-0 w-0 h-0"
                       />
                       {challenge}
@@ -481,7 +354,6 @@ function GetStartedPage() {
                   ].map((method) => (
                     <label
                       key={method}
-<<<<<<< HEAD
                       className={`cursor-pointer border rounded-full px-5 py-2.5 text-sm transition-all relative ${
                         formData.finance_tracking_method === method
                           ? "bg-white border-white text-black font-medium"
@@ -494,20 +366,62 @@ function GetStartedPage() {
                         value={method}
                         checked={formData.finance_tracking_method === method}
                         onChange={handleChange}
-=======
-                      className="cursor-pointer border border-white/20 bg-white/5 hover:bg-white/10 rounded-full px-5 py-2.5 text-sm transition-all has-[:checked]:bg-white has-[:checked]:border-white has-[:checked]:text-black has-[:checked]:font-medium relative"
-                    >
-                      <input
-                        type="radio"
-                        name="tracking"
-                        value={method}
->>>>>>> e50d4b9 (Added something)
                         className="absolute opacity-0 w-0 h-0"
                       />
                       {method}
                     </label>
                   ))}
                 </div>
+
+                {/* Conditional Sub-options for Digital Methods */}
+                {(formData.finance_tracking_method === "Excel/Sheets" || 
+                  formData.finance_tracking_method === "App like Tally/Zoho") && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-4 animate-in fade-in"
+                  >
+                    <p className="text-sm text-white/70 italic">
+                      Almost ready! Would you like to upload your initial data now for instant analysis?
+                    </p>
+                    <div className="flex gap-4">
+                      <div className="flex-1 border-2 border-dashed border-white/10 rounded-xl p-8 hover:border-[#FF5A25]/50 transition-colors flex flex-col items-center justify-center gap-3 cursor-pointer group">
+                        <svg className="w-8 h-8 text-white/30 group-hover:text-[#FF5A25] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span className="text-sm font-medium">Upload File (.xlsx, .csv)</span>
+                        <input type="file" className="hidden" accept=".xlsx,.csv" />
+                      </div>
+                      <button 
+                        type="button"
+                        className="px-6 py-2 text-sm font-medium text-white/40 hover:text-white transition-colors"
+                      >
+                        Skip for now
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Conditional Upload for Manual Notebook */}
+                {formData.finance_tracking_method === "Notebook/Manual" && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-4 animate-in fade-in"
+                  >
+                    <p className="text-sm text-white/70 italic">
+                      No problem! Take a photo of your latest ledger entries and our AI will extract the data for you.
+                    </p>
+                    <div className="border-2 border-dashed border-white/10 rounded-xl p-8 hover:border-[#FF5A25]/50 transition-colors flex flex-col items-center justify-center gap-3 cursor-pointer group">
+                      <svg className="w-8 h-8 text-white/30 group-hover:text-[#FF5A25] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-sm font-medium">Upload Image of Notebook</span>
+                      <input type="file" className="hidden" accept="image/*" capture="environment" />
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               <div className="flex flex-col gap-3">
@@ -515,21 +429,15 @@ function GetStartedPage() {
                   Anything else AI should know (optional)
                 </label>
                 <textarea
-<<<<<<< HEAD
                   name="onboarding_notes"
                   className={`${inputClasses} min-h-[120px] resize-y leading-relaxed`}
                   placeholder="Tell us more about your specific needs or pain points..."
                   value={formData.onboarding_notes}
                   onChange={handleChange}
-=======
-                  className={`${inputClasses} min-h-[120px] resize-y leading-relaxed`}
-                  placeholder="Tell us more about your specific needs or pain points..."
->>>>>>> e50d4b9 (Added something)
                 />
               </div>
             </div>
 
-<<<<<<< HEAD
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-4 rounded-2xl text-sm">
                 {error}
@@ -541,10 +449,10 @@ function GetStartedPage() {
                 disabled={isSubmitting}
                 type="submit"
                 size="lg"
-                className="group relative overflow-hidden w-full md:w-auto px-12 py-8 text-xl font-bold rounded-full transition-all disabled:opacity-50 disabled:active:scale-100 shadow-[inset_0_3px_2px_0_rgba(255,255,255,0.25),0_10px_40px_rgba(255,90,37,0.2)] bg-linear-to-b border border-[#C4461D] from-[#FF8963] to-[#FF5A25] to-57% text-white active:from-[#E44A19] active:to-[#EF744C] active:from-43% active:to-100% active:shadow-[inset_0_-2px_2px_0_rgba(255,255,255,0.17)] flex items-center justify-center gap-3"
+                className="group relative overflow-hidden w-full md:w-auto px-12 py-8 text-xl font-bold rounded-full transition-all disabled:opacity-50 disabled:active:scale-100 shadow-[inset_0_3px_2px_0_rgba(255,255,255,0.25),0_10px_40px_rgba(255,90,37,0.2)] bg-linear-to-b border border-[#C4461D] from-[#FF8963] to-[#FF5A25] text-white active:shadow-[inset_0_-2px_2px_0_rgba(255,255,255,0.17)] flex items-center justify-center gap-3"
               >
                 {/* Shine effect */}
-                <div className="bg-transparent group-hover:bg-white/40 w-1/4 absolute -left-[40%] group-hover:left-[120%] transition-[left] duration-0 group-hover:duration-700 blur-md -rotate-45 aspect-1/2 pointer-events-none" />
+                <div className="bg-transparent group-hover:bg-white/40 w-1/4 absolute -left-[40%] group-hover:left-[120%] transition-[left] duration-0 group-hover:duration-700 blur-md -rotate-45 aspect-square pointer-events-none" />
                 
                 {isSubmitting ? (
                   <div className="flex items-center gap-3">
@@ -554,16 +462,6 @@ function GetStartedPage() {
                 ) : (
                   "Launch My Dashboard"
                 )}
-=======
-            <div className="flex justify-end pt-4">
-              <Button
-                type="submit"
-                size="lg"
-                style={{ color: "black", backgroundColor: "white", borderColor: "white" }}
-                className="w-full md:w-auto px-12 py-6 text-xl font-semibold rounded-full min-h-[64px] transition-all shadow-xl hover:-translate-y-1 hover:shadow-white/20"
-              >
-                Submit Business Details
->>>>>>> e50d4b9 (Added something)
               </Button>
             </div>
           </form>
