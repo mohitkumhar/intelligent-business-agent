@@ -3,9 +3,10 @@ export const breakpoints = {
 };
 
 export const currentBaseUrl = "/";
-export const signinUrl = "/";
-export const registerUrl = `/get-started`;
-export const dashboardUrl = `/`;
+export const signinUrl = "/login";
+export const registerUrl = `/login`;
+export const onboardingUrl = `/get-started`;
+export const dashboardUrl = `http://localhost:3001`;
 export const githubRepoUrl = "https://github.com/mohitkumhar/intelligent-business-agent";
 export const linkedInUrl = "/";
 export const discordUrl = "/";

@@ -58,7 +58,7 @@ export default function ChatbotPage() {
     <div className="app-layout">
       <Sidebar />
       <div className="main-area">
-        <Topbar />
+        <Topbar onSearch={() => { }} />
         <div className="content-wrapper" style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 69px)", padding: 0 }}>
           {/* Chat Header */}
           <div style={{

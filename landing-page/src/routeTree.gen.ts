@@ -11,6 +11,7 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GetStartedRouteImport } from './routes/get-started'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,11 @@ import { ServerRoute as HealthzServerRouteImport } from './routes/healthz'
 
 const rootServerRouteImport = createServerRootRoute()
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GetStartedRoute = GetStartedRouteImport.update({
   id: '/get-started',
   path: '/get-started',
@@ -59,12 +65,14 @@ const HealthzServerRoute = HealthzServerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/get-started': typeof GetStartedRoute
+  '/login': typeof LoginRoute
   '/$slug': typeof LayoutSlugRoute
   '/about': typeof LayoutAboutRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/get-started': typeof GetStartedRoute
+  '/login': typeof LoginRoute
   '/$slug': typeof LayoutSlugRoute
   '/about': typeof LayoutAboutRoute
 }
@@ -73,19 +81,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_layout': typeof LayoutRouteWithChildren
   '/get-started': typeof GetStartedRoute
+  '/login': typeof LoginRoute
   '/_layout/$slug': typeof LayoutSlugRoute
   '/_layout/about': typeof LayoutAboutRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/get-started' | '/$slug' | '/about'
+  fullPaths: '/' | '/get-started' | '/login' | '/$slug' | '/about'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/get-started' | '/$slug' | '/about'
+  to: '/' | '/get-started' | '/login' | '/$slug' | '/about'
   id:
     | '__root__'
     | '/'
     | '/_layout'
     | '/get-started'
+    | '/login'
     | '/_layout/$slug'
     | '/_layout/about'
   fileRoutesById: FileRoutesById
@@ -94,6 +104,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LayoutRoute: typeof LayoutRouteWithChildren
   GetStartedRoute: typeof GetStartedRoute
+  LoginRoute: typeof LoginRoute
 }
 export interface FileServerRoutesByFullPath {
   '/healthz': typeof HealthzServerRoute
@@ -123,6 +134,13 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/get-started': {
       id: '/get-started'
       path: '/get-started'
@@ -196,6 +214,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LayoutRoute: LayoutRouteWithChildren,
   GetStartedRoute: GetStartedRoute,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

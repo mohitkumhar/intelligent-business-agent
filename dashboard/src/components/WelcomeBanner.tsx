@@ -1,7 +1,10 @@
 "use client";
+import { useEffect, useState } from "react";
+import { api, BusinessInfo } from "@/lib/api";
 import { ExportIcon } from "./Icons";
 
 export default function WelcomeBanner() {
+  const [business, setBusiness] = useState<BusinessInfo | null>(null);
   const now = new Date();
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const months = [
@@ -9,6 +12,10 @@ export default function WelcomeBanner() {
     "July", "August", "September", "October", "November", "December",
   ];
   const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  useEffect(() => {
+    api.getBusinessInfo().then(setBusiness).catch(console.error);
+  }, []);
 
   const handleExport = () => {
     const headers = "Txn ID,Date,Description,Category,Type,Amount\n";
@@ -25,7 +32,7 @@ export default function WelcomeBanner() {
   return (
     <div className="welcome-banner">
       <div className="welcome-text">
-        <h2>Welcome back!</h2>
+        <h2>Welcome back, {business?.business_name || "Urban Retail Store"}!</h2>
         <p>{dateStr}</p>
       </div>
       <div className="welcome-actions">

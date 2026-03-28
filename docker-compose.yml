@@ -42,6 +42,7 @@ services:
       - ENCRYPTION_SECRET=12345678901234567890123456789012
       - NEXTAUTH_URL=http://localhost:5173
       - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
     depends_on:
       - backend

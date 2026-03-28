@@ -282,7 +282,7 @@ const Desktop = React.forwardRef<
             {link.label}
           </ButtonLink>
         ))}
-        {pathname !== "/get-started" && (
+        {pathname !== "/get-started" && pathname !== "/login" && (
           isAuthenticated ? (
             <CtaButtonLink size="sm" href={dashboardUrl}>
               Go to dashboard

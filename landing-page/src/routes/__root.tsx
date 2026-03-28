@@ -13,7 +13,11 @@ import { Header } from "@/components/Header";
 import { NotFound } from "@/components/NotFound";
 
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 const HERO_ANIMATION_DELAY = 1800;
+
+const GOOGLE_CLIENT_ID = typeof window !== 'undefined' ? (import.meta.env.VITE_GOOGLE_CLIENT_ID || "") : "";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -24,6 +28,8 @@ export const Route = createRootRoute({
         type: "images/svg+xml",
         href: "/images/favicon.svg",
       },
+      // Pre-connect for Google Auth performance
+      { rel: "preconnect", href: "https://accounts.google.com" },
     ],
     meta: [
       {
@@ -34,7 +40,7 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "ProfitPilot",
+        title: "ProfitPilot | Your AI Business Partner",
       },
     ],
   }),
@@ -63,27 +69,27 @@ function RootComponent() {
     });
   };
 
-
-
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <div className="isolate flex flex-col items-stretch">
-          <div className="fixed z-10 top-4 md:bottom-12 md:top-auto w-full">
-            <Header
-              onOpen={openHeader}
-              onClose={closeHeader}
-              isOpened={isHeaderOpened}
-            />
-          </div>
-          <Outlet />
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <div className="isolate flex flex-col items-stretch">
+            <div className="fixed z-10 top-4 md:bottom-12 md:top-auto w-full">
+              <Header
+                onOpen={openHeader}
+                onClose={closeHeader}
+                isOpened={isHeaderOpened}
+              />
+            </div>
+            <Outlet />
 
-          <Footer />
-        </div>
-        <Scripts />
+            <Footer />
+          </div>
+          <Scripts />
+        </GoogleOAuthProvider>
       </body>
     </html>
   );
