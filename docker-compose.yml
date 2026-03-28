@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -33,22 +31,18 @@ services:
   #   restart: always
   #   ports:
   #     - "5173:5173"
-
   #   volumes:
   #     - ./landing-page:/app
   #     - /app/node_modules
-
   #   environment:
   #     - VITE_API_URL=http://localhost:8000
   #     - DATABASE_URL=postgresql://admin:root@db:5432/test_db
   #     - ENCRYPTION_SECRET=12345678901234567890123456789012
   #     - NEXTAUTH_URL=http://localhost:5173
   #     - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
-
   #   depends_on:
   #     - backend
   #     - db
-
   #   stdin_open: true
   #   tty: true
 
@@ -71,21 +65,16 @@ services:
     depends_on:
       - db
 
-  web:
+  dashboard:
     build:
-      context: ./web
+      context: ./dashboard
       dockerfile: Dockerfile
-    container_name: web-dashboard
+    container_name: nextjs-dashboard
     restart: always
     ports:
-      - "5001:5001"
-    volumes:
-      - ./web:/app
+      - "3001:3000"
     environment:
       - AGENT_API_URL=http://backend:5000
-      - DATABASE_URL=postgresql://admin:root@db:5432/test_db
-      - SECRET_KEY=change-me-in-production
-      - CHAT_DB_PATH=/app/chat_history.db
     depends_on:
       - backend
       - db
@@ -131,7 +120,7 @@ services:
       - "--storage.tsdb.retention.time=15d"
     depends_on:
       - backend
-      - web
+      - dashboard
 
 volumes:
   pgdata:
