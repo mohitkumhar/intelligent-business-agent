@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.gitignore
+README.md
+Dockerfile
+package-lock.json
+public/assets
+out
+build
+coverage
+.DS_Store
+*.log

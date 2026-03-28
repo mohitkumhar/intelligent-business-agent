@@ -79,6 +79,7 @@ services:
       - backend
       - db
 
+
     # promptail and loki configuration
   loki:
     image: grafana/loki:2.9.0
