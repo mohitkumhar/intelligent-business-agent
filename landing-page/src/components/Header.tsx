@@ -35,7 +35,7 @@ const links = [
   },
   {
     label: "About",
-    to: "/about",
+    to: "/",
   },
 ] as const;
 
@@ -282,14 +282,16 @@ const Desktop = React.forwardRef<
             {link.label}
           </ButtonLink>
         ))}
-        {isAuthenticated ? (
-          <CtaButtonLink size="sm" href={dashboardUrl}>
-            Go to dashboardd
-          </CtaButtonLink>
-        ) : (
-          <CtaButtonLink size="sm" href={registerUrl}>
-            Get started free
-          </CtaButtonLink>
+        {pathname !== "/get-started" && (
+          isAuthenticated ? (
+            <CtaButtonLink size="sm" href={dashboardUrl}>
+              Go to dashboard
+            </CtaButtonLink>
+          ) : (
+            <CtaButtonLink size="sm" href={registerUrl}>
+              Get started free
+            </CtaButtonLink>
+          )
         )}
       </nav>
 
