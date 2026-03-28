@@ -85,7 +85,7 @@ export default function RevenueInsights() {
             boxPadding: 6,
             callbacks: {
               label(ctx) {
-                return `${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`;
+                return `${ctx.dataset.label}: $${(ctx.parsed.y ?? 0).toLocaleString()}`;
               },
             },
           },
@@ -94,7 +94,7 @@ export default function RevenueInsights() {
           x: {
             grid: { display: false },
             ticks: {
-              font: { family: "Inter", size: 11, weight: "500" as const },
+              font: { family: "Inter", size: 11, weight: 500 },
               color: "#94A3B8",
             },
             border: { display: false },
