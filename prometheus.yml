@@ -3,13 +3,13 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  # ── Web Dashboard (Flask on :5001) ─────────────────────────────
-  - job_name: "web-dashboard"
+  # ── Next.js Dashboard (on :3000) ─────────────────────────────
+  - job_name: "nextjs-dashboard"
     metrics_path: "/metrics"
     static_configs:
-      - targets: ["web-dashboard:5001"]
+      - targets: ["nextjs-dashboard:3000"]
         labels:
-          app: "web-dashboard"
+          app: "nextjs-dashboard"
 
   # ── Backend Agent (Flask on :5000) ─────────────────────────────
   - job_name: "backend-agent"

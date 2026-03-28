@@ -1,0 +1,63 @@
+"use client";
+
+import Sidebar from "@/components/Sidebar";
+import Topbar from "@/components/Topbar";
+import WelcomeBanner from "@/components/WelcomeBanner";
+import KPICards from "@/components/KPICards";
+import RevenueVsExpenses from "@/components/RevenueVsExpenses";
+import TransactionsByCategory from "@/components/TransactionsByCategory";
+import SalesTrend from "@/components/SalesTrend";
+import AlertsBySeverity from "@/components/AlertsBySeverity";
+import RevenueInsights from "@/components/RevenueInsights";
+import SalesOverview from "@/components/SalesOverview";
+import TopProducts from "@/components/TopProducts";
+import HealthScores from "@/components/HealthScores";
+import EmployeeStatistics from "@/components/EmployeeStatistics";
+import RecentTransactions from "@/components/RecentTransactions";
+
+export default function DashboardPage() {
+  return (
+    <div className="app-layout">
+      <Sidebar />
+      <div className="main-area">
+        <Topbar />
+        <div className="content-wrapper">
+          <WelcomeBanner />
+          <KPICards />
+
+          {/* Row 1: Revenue vs Expenses + Transactions by Category */}
+          <div className="charts-row">
+            <RevenueVsExpenses />
+            <TransactionsByCategory />
+          </div>
+
+          {/* Row 2: Sales Trend + Alerts by Severity */}
+          <div className="charts-row">
+            <SalesTrend />
+            <AlertsBySeverity />
+          </div>
+
+          {/* Row 3: Financial Overview + Top Products */}
+          <div className="charts-row">
+            <RevenueInsights />
+            <TopProducts />
+          </div>
+
+          {/* Row 4: Health Scores + Employee Statistics */}
+          <div className="charts-row">
+            <HealthScores />
+            <EmployeeStatistics />
+          </div>
+
+          {/* Row 5: Sales Overview (gauge) — full width */}
+          <div className="charts-row" style={{ gridTemplateColumns: "1fr" }}>
+            <SalesOverview />
+          </div>
+
+          {/* Row 6: Recent Transactions */}
+          <RecentTransactions />
+        </div>
+      </div>
+    </div>
+  );
+}

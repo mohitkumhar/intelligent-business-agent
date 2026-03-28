@@ -92,6 +92,14 @@ def _start_timer():
 
 @app.after_request
 def _record_metrics(response):
+    # CORS headers for Next.js dashboard
+    origin = request.headers.get("Origin", "")
+    if origin in ("http://localhost:3000", "http://localhost:3001", "http://localhost:5173"):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+
     if request.path == "/metrics":
         return response
     latency = time.time() - getattr(g, "start_time", time.time())
@@ -465,6 +473,81 @@ def api_employee_stats():
                 "avg_salary": [round(float(r["avg_salary"]), 2) for r in rows],
             }
         )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/dashboard/recent-transactions")
+def api_recent_transactions():
+    """Recent transactions for the table view."""
+    limit = request.args.get("limit", 20, type=int)
+    search = request.args.get("search", "").strip()
+    category = request.args.get("category", "").strip()
+    try:
+        base_sql = """
+            SELECT transaction_id, transaction_date, type, category,
+                   amount, description
+            FROM daily_transactions
+            WHERE 1=1
+        """
+        params = []
+        if search:
+            base_sql += " AND (description ILIKE %s OR category ILIKE %s)"
+            params.extend([f"%{search}%", f"%{search}%"])
+        if category:
+            base_sql += " AND category = %s"
+            params.append(category)
+        base_sql += " ORDER BY transaction_date DESC, transaction_id DESC LIMIT %s"
+        params.append(limit)
+        rows = _pg_query(base_sql, tuple(params))
+        for r in rows:
+            r["amount"] = float(r["amount"] or 0)
+            if r.get("transaction_date"):
+                r["transaction_date"] = r["transaction_date"].isoformat()
+        return jsonify({"transactions": rows})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/dashboard/sales-target")
+def api_sales_target():
+    """Sales vs target for gauge widget."""
+    try:
+        rows = _pg_query(
+            """
+            SELECT b.business_name, b.monthly_target_revenue,
+                   COALESCE(SUM(CASE WHEN dt.type='Revenue' THEN dt.amount END), 0) AS current_revenue
+            FROM businesses b
+            LEFT JOIN daily_transactions dt ON dt.business_id = b.business_id
+                AND EXTRACT(MONTH FROM dt.transaction_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+                AND EXTRACT(YEAR FROM dt.transaction_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+            GROUP BY b.business_id, b.business_name, b.monthly_target_revenue
+            ORDER BY current_revenue DESC
+            LIMIT 1
+            """
+        )
+        if rows:
+            row = rows[0]
+            target = float(row["monthly_target_revenue"] or 100000)
+            current = float(row["current_revenue"] or 0)
+            pct = round((current / target * 100), 1) if target > 0 else 0
+            return jsonify({
+                "business_name": row["business_name"],
+                "current_revenue": current,
+                "target_revenue": target,
+                "percentage": pct,
+            })
+        return jsonify({"current_revenue": 0, "target_revenue": 100000, "percentage": 0})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/dashboard/categories")
+def api_categories():
+    """List distinct categories for filter dropdown."""
+    try:
+        rows = _pg_query("SELECT DISTINCT category FROM daily_transactions ORDER BY category")
+        return jsonify({"categories": [r["category"] for r in rows if r["category"]]})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
