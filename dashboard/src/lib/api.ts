@@ -1,3 +1,4 @@
+import type { DashboardPeriod } from "./dashboardPeriod";
 import {
   mockSummary,
   mockFinancialOverview,
@@ -11,6 +12,16 @@ import {
   mockTopProducts,
   mockEmployeeStats,
 } from "./mockData";
+import {
+  filterTransactionsByPeriod,
+  mockSummaryForPeriod,
+  mockRevenueVsExpenseForPeriod,
+  mockSalesTrendForPeriod,
+  mockFinancialOverviewForPeriod,
+  mockSalesTargetForPeriod,
+  mockAlertsForPeriod,
+} from "./mockPeriod";
+import { getPeriodBounds, periodLabel } from "./dashboardPeriod";
 
 const API_BASE = "";
 
@@ -101,13 +112,18 @@ export interface BusinessInfo {
   onboarding_notes?: string;
 }
 
+function withPeriod(url: string, period?: DashboardPeriod): string {
+  if (!period) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}period=${period}`;
+}
+
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
-/** Try the real API first; if it fails, return mock data. */
 async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
   try {
     return await fetchJson<T>(url);
@@ -117,37 +133,131 @@ async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
   }
 }
 
+function escapeCsvCell(s: string): string {
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+/** SSE payloads from POST /api/chat/send (Flask mirrors /api/v1/query events). */
+export type ChatSseEvent = {
+  type: string;
+  content?: string;
+  status?: string;
+  error?: string;
+  intent_str?: string;
+  clarification?: unknown;
+};
+
+/**
+ * Streams the LangGraph SSE response from the agent (via Next rewrite to backend).
+ * Do not use fetch().json() — the body is text/event-stream.
+ */
+export async function* streamChatSend(
+  conversationId: string,
+  message: string
+): AsyncGenerator<ChatSseEvent> {
+  const res = await fetch(`${API_BASE}/api/chat/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ conversation_id: conversationId, message }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || `Chat API error: ${res.status}`);
+  }
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("No response body");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  function* parseBufferedBlocks(): Generator<ChatSseEvent> {
+    while (buffer.includes("\n\n")) {
+      const i = buffer.indexOf("\n\n");
+      const raw = buffer.slice(0, i).trim();
+      buffer = buffer.slice(i + 2);
+      if (!raw.startsWith("data: ")) continue;
+      const payload = raw.slice(6).trim();
+      if (!payload) continue;
+      try {
+        yield JSON.parse(payload) as ChatSseEvent;
+      } catch {
+        /* skip malformed JSON */
+      }
+    }
+  }
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (value) buffer += decoder.decode(value, { stream: true });
+    if (done) buffer += decoder.decode();
+    yield* parseBufferedBlocks();
+    if (done) {
+      const tail = buffer.trim();
+      if (tail.startsWith("data: ")) {
+        const payload = tail.slice(6).trim();
+        if (payload) {
+          try {
+            yield JSON.parse(payload) as ChatSseEvent;
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+
 export const api = {
-  getSummary: () =>
-    fetchWithFallback<DashboardSummary>("/api/dashboard/summary", mockSummary),
+  getSummary: (period?: DashboardPeriod) =>
+    fetchWithFallback<DashboardSummary>(
+      withPeriod("/api/dashboard/summary", period),
+      period ? mockSummaryForPeriod(period) : mockSummary
+    ),
 
-  getFinancialOverview: () =>
-    fetchWithFallback<FinancialOverview>("/api/dashboard/financial-overview", mockFinancialOverview),
+  getFinancialOverview: (period?: DashboardPeriod) =>
+    fetchWithFallback<FinancialOverview>(
+      withPeriod("/api/dashboard/financial-overview", period),
+      period ? mockFinancialOverviewForPeriod(period) : mockFinancialOverview
+    ),
 
-  getSalesTarget: () =>
-    fetchWithFallback<SalesTarget>("/api/dashboard/sales-target", mockSalesTarget),
+  getSalesTarget: (period?: DashboardPeriod) =>
+    fetchWithFallback<SalesTarget>(
+      withPeriod("/api/dashboard/sales-target", period),
+      period ? mockSalesTargetForPeriod(period) : mockSalesTarget
+    ),
 
-  getRecentTransactions: (params?: { search?: string; category?: string; limit?: number }) => {
+  getRecentTransactions: (params?: {
+    search?: string;
+    category?: string;
+    limit?: number;
+    period?: DashboardPeriod;
+  }) => {
     const searchParams = new URLSearchParams();
     if (params?.search) searchParams.set("search", params.search);
     if (params?.category) searchParams.set("category", params.category);
     if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.period) searchParams.set("period", params.period);
     const qs = searchParams.toString();
     const url = `/api/dashboard/recent-transactions${qs ? `?${qs}` : ""}`;
 
-    // For mock fallback, apply client-side filtering
     return fetchWithFallback<{ transactions: Transaction[] }>(url, (() => {
-      let txns = [...mockTransactions.transactions];
+      let txns = params?.period
+        ? filterTransactionsByPeriod(params.period)
+        : [...mockTransactions.transactions];
       if (params?.search) {
         const q = params.search.toLowerCase();
-        txns = txns.filter(t =>
-          t.description.toLowerCase().includes(q) ||
-          t.category.toLowerCase().includes(q) ||
-          String(t.transaction_id).includes(q)
+        txns = txns.filter(
+          (t) =>
+            t.description.toLowerCase().includes(q) ||
+            t.category.toLowerCase().includes(q) ||
+            String(t.transaction_id).includes(q)
         );
       }
       if (params?.category) {
-        txns = txns.filter(t => t.category === params.category);
+        txns = txns.filter((t) => t.category === params.category);
       }
       if (params?.limit) {
         txns = txns.slice(0, params.limit);
@@ -159,14 +269,23 @@ export const api = {
   getCategories: () =>
     fetchWithFallback<{ categories: string[] }>("/api/dashboard/categories", mockCategories),
 
-  getRevenueVsExpense: () =>
-    fetchWithFallback<RevenueVsExpense>("/api/dashboard/revenue-vs-expense", mockRevenueVsExpense),
+  getRevenueVsExpense: (period?: DashboardPeriod) =>
+    fetchWithFallback<RevenueVsExpense>(
+      withPeriod("/api/dashboard/revenue-vs-expense", period),
+      period ? mockRevenueVsExpenseForPeriod(period) : mockRevenueVsExpense
+    ),
 
-  getSalesTrend: () =>
-    fetchWithFallback<SalesTrend>("/api/dashboard/sales-trend", mockSalesTrend),
+  getSalesTrend: (period?: DashboardPeriod) =>
+    fetchWithFallback<SalesTrend>(
+      withPeriod("/api/dashboard/sales-trend", period),
+      period ? mockSalesTrendForPeriod(period) : mockSalesTrend
+    ),
 
-  getAlertsBySeverity: () =>
-    fetchWithFallback<AlertsBySeverity>("/api/dashboard/alerts-by-severity", mockAlertsBySeverity),
+  getAlertsBySeverity: (period?: DashboardPeriod) =>
+    fetchWithFallback<AlertsBySeverity>(
+      withPeriod("/api/dashboard/alerts-by-severity", period),
+      period ? mockAlertsForPeriod(period) : mockAlertsBySeverity
+    ),
 
   getHealthScores: () =>
     fetchWithFallback<HealthScores>("/api/dashboard/health-scores", mockHealthScores),
@@ -180,13 +299,57 @@ export const api = {
   getBusinessInfo: () =>
     fetchJson<BusinessInfo>("/api/dashboard/business-info").catch(() => null),
 
-  // Chatbot — no mock fallback (requires live backend)
-  sendMessage: (conversationId: string, message: string) =>
-    fetchJson<{ content: string; intent: string | null }>("/api/chat/send").then(() =>
-      fetch(`${API_BASE}/api/chat/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversation_id: conversationId, message }),
-      }).then((r) => r.json())
-    ),
+  /** Build a CSV snapshot for the selected period (summary + transactions). */
+  exportDashboardCsv: async (period: DashboardPeriod) => {
+    const [summary, txRes] = await Promise.all([
+      fetchWithFallback<DashboardSummary>(
+        withPeriod("/api/dashboard/summary", period),
+        mockSummaryForPeriod(period)
+      ),
+      fetchWithFallback<{ transactions: Transaction[] }>((() => {
+        const searchParams = new URLSearchParams();
+        searchParams.set("period", period);
+        searchParams.set("limit", "500");
+        return `/api/dashboard/recent-transactions?${searchParams.toString()}`;
+      })(), (() => {
+        let txns = filterTransactionsByPeriod(period);
+        return { transactions: txns.slice(0, 500) };
+      })()),
+    ]);
+    const { start, end } = getPeriodBounds(period);
+    const headerLines = [
+      `Dashboard export,${periodLabel(period)}`,
+      `Date range,${start} to ${end}`,
+      "",
+      "Metric,Value",
+      `Total revenue,${summary.total_revenue}`,
+      `Total expenses,${summary.total_expenses}`,
+      `Net profit,${summary.net_profit}`,
+      `Transactions,${summary.total_transactions}`,
+      `Active alerts,${summary.active_alerts}`,
+      "",
+      "Txn ID,Date,Type,Category,Amount,Description",
+    ];
+    const rows = txRes.transactions.map((t) =>
+      [
+        String(t.transaction_id),
+        t.transaction_date,
+        t.type,
+        t.category,
+        String(t.amount),
+        t.description,
+      ]
+        .map((c) => escapeCsvCell(String(c)))
+        .join(",")
+    );
+    const csv = [...headerLines, ...rows].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dashboard_${period}_${start}_${end}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  },
+
 };

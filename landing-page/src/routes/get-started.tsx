@@ -4,6 +4,7 @@ import { Button } from "@typebot.io/ui/components/Button";
 import { createMetaTags } from "@/lib/createMetaTags";
 import { useEffect, useState } from "react";
 import { dashboardUrl } from "@/constants";
+import { motion } from "motion/react";
 
 export const Route = createFileRoute("/get-started")({
   head: () => ({
@@ -95,6 +96,7 @@ function GetStartedPage() {
 
       const result = await response.json();
       if (response.ok) {
+        localStorage.setItem('profit_pilot_onboarded', 'true');
         setIsSubmitted(true);
         setTimeout(() => {
           window.location.href = dashboardUrl;
@@ -146,7 +148,7 @@ function GetStartedPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-8 md:gap-12">
-            {/* Section 2 (Now 1) */}
+            {/* Step 1 */}
             <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-6">
               <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
                 Step 1 — Your Details
@@ -181,8 +183,11 @@ function GetStartedPage() {
                   />
                 </div>
               </div>
+            </div>
 
-              <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4 mt-4">
+            {/* Step 2 */}
+            <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-6">
+              <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
                 Step 2 — Business Details
               </h2>
               <div className="flex flex-col gap-3">
@@ -296,15 +301,15 @@ function GetStartedPage() {
               </div>
             </div>
 
-            {/* Section 3 (Now 2) */}
+            {/* Step 3 */}
             <div className="p-6 md:p-10 md:rounded-3xl rounded-2xl border border-white/10 bg-white/[0.02] shadow-xl flex flex-col gap-8">
               <h2 className="text-2xl font-medium text-white/90 border-b border-white/5 pb-4">
-                Step 2 — Your Current Situation
+                Step 3 — Your Current Situation
               </h2>
 
               <div className="flex flex-col gap-5">
                 <label className="text-sm font-medium text-white/80">
-                  Biggest Challenge <span className="text-red-400">*</span>
+                  Biggest Challenges <span className="text-red-400">*</span>
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {[
@@ -367,6 +372,56 @@ function GetStartedPage() {
                     </label>
                   ))}
                 </div>
+
+                {/* Conditional Sub-options for Digital Methods */}
+                {(formData.finance_tracking_method === "Excel/Sheets" || 
+                  formData.finance_tracking_method === "App like Tally/Zoho") && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-4 animate-in fade-in"
+                  >
+                    <p className="text-sm text-white/70 italic">
+                      Almost ready! Would you like to upload your initial data now for instant analysis?
+                    </p>
+                    <div className="flex gap-4">
+                      <div className="flex-1 border-2 border-dashed border-white/10 rounded-xl p-8 hover:border-[#FF5A25]/50 transition-colors flex flex-col items-center justify-center gap-3 cursor-pointer group">
+                        <svg className="w-8 h-8 text-white/30 group-hover:text-[#FF5A25] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span className="text-sm font-medium">Upload File (.xlsx, .csv)</span>
+                        <input type="file" className="hidden" accept=".xlsx,.csv" />
+                      </div>
+                      <button 
+                        type="button"
+                        className="px-6 py-2 text-sm font-medium text-white/40 hover:text-white transition-colors"
+                      >
+                        Skip for now
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Conditional Upload for Manual Notebook */}
+                {formData.finance_tracking_method === "Notebook/Manual" && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-4 animate-in fade-in"
+                  >
+                    <p className="text-sm text-white/70 italic">
+                      No problem! Take a photo of your latest ledger entries and our AI will extract the data for you.
+                    </p>
+                    <div className="border-2 border-dashed border-white/10 rounded-xl p-8 hover:border-[#FF5A25]/50 transition-colors flex flex-col items-center justify-center gap-3 cursor-pointer group">
+                      <svg className="w-8 h-8 text-white/30 group-hover:text-[#FF5A25] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-sm font-medium">Upload Image of Notebook</span>
+                      <input type="file" className="hidden" accept="image/*" capture="environment" />
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               <div className="flex flex-col gap-3">
@@ -394,10 +449,10 @@ function GetStartedPage() {
                 disabled={isSubmitting}
                 type="submit"
                 size="lg"
-                className="group relative overflow-hidden w-full md:w-auto px-12 py-8 text-xl font-bold rounded-full transition-all disabled:opacity-50 disabled:active:scale-100 shadow-[inset_0_3px_2px_0_rgba(255,255,255,0.25),0_10px_40px_rgba(255,90,37,0.2)] bg-linear-to-b border border-[#C4461D] from-[#FF8963] to-[#FF5A25] to-57% text-white active:from-[#E44A19] active:to-[#EF744C] active:from-43% active:to-100% active:shadow-[inset_0_-2px_2px_0_rgba(255,255,255,0.17)] flex items-center justify-center gap-3"
+                className="group relative overflow-hidden w-full md:w-auto px-12 py-8 text-xl font-bold rounded-full transition-all disabled:opacity-50 disabled:active:scale-100 shadow-[inset_0_3px_2px_0_rgba(255,255,255,0.25),0_10px_40px_rgba(255,90,37,0.2)] bg-linear-to-b border border-[#C4461D] from-[#FF8963] to-[#FF5A25] text-white active:shadow-[inset_0_-2px_2px_0_rgba(255,255,255,0.17)] flex items-center justify-center gap-3"
               >
                 {/* Shine effect */}
-                <div className="bg-transparent group-hover:bg-white/40 w-1/4 absolute -left-[40%] group-hover:left-[120%] transition-[left] duration-0 group-hover:duration-700 blur-md -rotate-45 aspect-1/2 pointer-events-none" />
+                <div className="bg-transparent group-hover:bg-white/40 w-1/4 absolute -left-[40%] group-hover:left-[120%] transition-[left] duration-0 group-hover:duration-700 blur-md -rotate-45 aspect-square pointer-events-none" />
                 
                 {isSubmitting ? (
                   <div className="flex items-center gap-3">

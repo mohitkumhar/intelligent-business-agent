@@ -2,22 +2,25 @@
 import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, AlertsBySeverity as AlertsData } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import { AlertTriangleIcon } from "./Icons";
 
 Chart.register(...registerables);
 
 export default function AlertsBySeverity() {
+  const { period } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<AlertsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getAlertsBySeverity()
+    setLoading(true);
+    api.getAlertsBySeverity(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;

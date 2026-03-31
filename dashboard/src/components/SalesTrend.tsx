@@ -2,22 +2,25 @@
 import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, SalesTrend as SalesTrendData } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import { LineChartIcon } from "./Icons";
 
 Chart.register(...registerables);
 
 export default function SalesTrend() {
+  const { period } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<SalesTrendData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getSalesTrend()
+    setLoading(true);
+    api.getSalesTrend(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;

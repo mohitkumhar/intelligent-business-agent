@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ContentPageWrapper } from "@/components/ContentPageWrapper";
 import { createMetaTags } from "@/lib/createMetaTags";
 import { useState } from "react";
-import { onboardingUrl } from "@/constants";
+import { onboardingUrl, dashboardUrl } from "@/constants";
 import { useGoogleLogin } from "@react-oauth/google";
 
 export const Route = createFileRoute("/login")({
@@ -38,16 +38,37 @@ function LoginPage() {
         const user = await res.json();
         
         // Extract basic data
+        // Extract basic data
         if (user.email) {
           console.log("Authenticated User:", user);
-          // Persist user info for onboarding
+          
+          // Check our registry
+          const registry = JSON.parse(localStorage.getItem('profit_pilot_registry') || '[]');
+          const userExists = registry.includes(user.email);
+          const isOnboarded = localStorage.getItem('profit_pilot_onboarded') === 'true';
+
+          // Persist user info
           localStorage.setItem('profit_pilot_user', JSON.stringify({
             full_name: user.name || user.given_name || "",
             email: user.email,
-            phone: "" // Google doesn't always provide phone without extra scopes
+            phone: ""
           }));
-          // Redirect to onboarding
-          navigate({ to: onboardingUrl });
+
+          if (userExists && isOnboarded) {
+             // Returning user -> Dashboard
+             window.location.href = dashboardUrl;
+          } else if (userExists && !isOnboarded) {
+             // Partial user -> Onboarding
+             navigate({ to: onboardingUrl });
+          } else {
+             // New user -> Signup mode
+             setMode("signup");
+             alert("No account found! We've moved you to Signup to get started.");
+             // Add to registry for future
+             const updatedRegistry = [...registry, user.email];
+             localStorage.setItem('profit_pilot_registry', JSON.stringify(updatedRegistry));
+             navigate({ to: onboardingUrl });
+          }
         }
       } catch (err) {
         console.error("Failed to fetch Google user info:", err);
@@ -67,12 +88,35 @@ function LoginPage() {
     // Simulate auth and store data
     setTimeout(() => {
       setIsLoading(false);
-      localStorage.setItem('profit_pilot_user', JSON.stringify({
-        full_name: mode === "signup" ? fullName : "Returning User",
-        email: email,
-        phone: phone
-      }));
-      navigate({ to: onboardingUrl });
+      
+      const registry = JSON.parse(localStorage.getItem('profit_pilot_registry') || '[]');
+      const userExists = registry.includes(email);
+      const isOnboarded = localStorage.getItem('profit_pilot_onboarded') === 'true';
+
+      if (mode === "login") {
+        if (userExists) {
+          localStorage.setItem('profit_pilot_user', JSON.stringify({
+            full_name: "Returning User",
+            email: email,
+            phone: ""
+          }));
+          window.location.href = isOnboarded ? dashboardUrl : onboardingUrl;
+        } else {
+          setMode("signup");
+          alert("Account not found! Please create your account first.");
+        }
+      } else {
+        // Signup
+        localStorage.setItem('profit_pilot_user', JSON.stringify({
+          full_name: fullName,
+          email: email,
+          phone: phone
+        }));
+        // Register the user
+        const updatedRegistry = [...new Set([...registry, email])];
+        localStorage.setItem('profit_pilot_registry', JSON.stringify(updatedRegistry));
+        navigate({ to: onboardingUrl });
+      }
     }, 1500);
   };
 
