@@ -15,6 +15,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Rewrites in next.config.ts read process.env.AGENT_API_URL at *build* time.
+# Default matches docker-compose service name so /api/* proxies to Flask inside the stack.
+# Local dev: omit or use http://localhost:5000 when running `npm run dev` on the host.
+ARG AGENT_API_URL=http://backend:5000
+ENV AGENT_API_URL=$AGENT_API_URL
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.

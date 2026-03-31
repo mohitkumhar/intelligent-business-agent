@@ -35,7 +35,7 @@ const links = [
   },
   {
     label: "About",
-    to: "/about",
+    to: "/",
   },
 ] as const;
 
@@ -151,10 +151,8 @@ const Mobile = React.forwardRef<HTMLElement, Props>(function Mobile(
         </Link>
         <Button
           aria-label={isOpened ? "Close menu" : "Open menu"}
-          variant="ghost"
-          size="icon"
           onClick={toggleHeaderExpansion}
-          className="transition-none"
+          className="transition-none bg-transparent hover:bg-white/5"
         >
           {isOpened ? <Cancel01Icon /> : <Menu01Icon />}
         </Button>
@@ -180,15 +178,34 @@ const Mobile = React.forwardRef<HTMLElement, Props>(function Mobile(
                 </TextLink>
               ))}
             </div>
-            <CtaButtonLink
-              href={signinUrl}
-              className={buttonVariants({
-                size: "lg",
-                variant: "outline",
-              })}
-            >
-              Sign in
-            </CtaButtonLink>
+            <div className="flex flex-col gap-3">
+              {localStorage.getItem('profit_pilot_user') ? (
+                <>
+                  <CtaButtonLink
+                    href={dashboardUrl}
+                    className="w-full py-5 rounded-2xl bg-[#FF5A25] text-white font-bold text-center"
+                  >
+                    Go to Dashboard
+                  </CtaButtonLink>
+                  <button 
+                    onClick={() => {
+                      localStorage.removeItem('profit_pilot_user');
+                      window.location.href = "/";
+                    }}
+                    className="w-full py-4 text-white/50 font-bold hover:text-white transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <CtaButtonLink
+                  href={signinUrl}
+                  className="w-full py-5 rounded-2xl border border-white/20 text-white font-bold text-center"
+                >
+                  Sign in
+                </CtaButtonLink>
+              )}
+            </div>
           </motion.nav>
         )}
       </AnimatePresence>
@@ -282,14 +299,29 @@ const Desktop = React.forwardRef<
             {link.label}
           </ButtonLink>
         ))}
-        {isAuthenticated ? (
-          <CtaButtonLink size="sm" href={dashboardUrl}>
-            Go to dashboardd
-          </CtaButtonLink>
-        ) : (
-          <CtaButtonLink size="sm" href={registerUrl}>
-            Get started free
-          </CtaButtonLink>
+        {pathname !== "/get-started" && pathname !== "/login" && (
+          isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <CtaButtonLink size="sm" href={dashboardUrl}>
+                Go to dashboard
+              </CtaButtonLink>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  localStorage.removeItem('profit_pilot_user');
+                  window.location.href = "/";
+                }}
+                className="text-white/60 hover:text-white"
+              >
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <CtaButtonLink size="sm" href={registerUrl}>
+              Get started free
+            </CtaButtonLink>
+          )
         )}
       </nav>
 

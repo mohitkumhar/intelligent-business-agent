@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, FinancialOverview } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 
 Chart.register(...registerables);
 
 export default function RevenueInsights() {
+  const { period } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<FinancialOverview | null>(null);
@@ -13,11 +15,12 @@ export default function RevenueInsights() {
   const [view, setView] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
-    api.getFinancialOverview()
+    setLoading(true);
+    api.getFinancialOverview(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;

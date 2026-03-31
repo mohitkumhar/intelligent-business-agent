@@ -42,6 +42,7 @@ services:
       - ENCRYPTION_SECRET=12345678901234567890123456789012
       - NEXTAUTH_URL=http://localhost:5173
       - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
     depends_on:
       - backend
@@ -73,6 +74,8 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        AGENT_API_URL: http://backend:5000
     container_name: nextjs-dashboard
     restart: always
     ports:

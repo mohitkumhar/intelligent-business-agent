@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import { ChatbotIcon } from "@/components/Icons";
+import { streamChatSend } from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
@@ -15,6 +16,7 @@ export default function ChatbotPage() {
   const [loading, setLoading] = useState(false);
   const [conversationId] = useState(() => crypto.randomUUID());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const assistantAccRef = useRef("");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,28 +29,65 @@ export default function ChatbotPage() {
 
     const userMsg = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: userMsg },
+      { role: "assistant", content: "" },
+    ]);
     setLoading(true);
+    assistantAccRef.current = "";
+
+    const patchAssistant = (text: string) => {
+      setMessages((prev) => {
+        const next = [...prev];
+        const last = next.length - 1;
+        if (last >= 0 && next[last].role === "assistant") {
+          next[last] = { role: "assistant", content: text };
+        }
+        return next;
+      });
+    };
 
     try {
-      const res = await fetch("/api/chat/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          message: userMsg,
-        }),
-      });
-      const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.content || "No response from agent." },
-      ]);
+      for await (const evt of streamChatSend(conversationId, userMsg)) {
+        if (evt.type === "token" && evt.content) {
+          assistantAccRef.current += evt.content;
+          patchAssistant(assistantAccRef.current);
+        } else if (evt.type === "clarification") {
+          const clar = evt.clarification;
+          const text =
+            typeof clar === "string"
+              ? clar
+              : clar && typeof clar === "object" && clar !== null && "message" in clar
+                ? String((clar as { message?: string }).message ?? "")
+                : "Could you please clarify your question?";
+          assistantAccRef.current = text;
+          patchAssistant(text);
+        } else if (evt.type === "error") {
+          const errText = evt.error ?? "Unknown error";
+          assistantAccRef.current = `⚠️ ${errText}`;
+          patchAssistant(assistantAccRef.current);
+        }
+      }
+
+      if (assistantAccRef.current.trim() === "") {
+        patchAssistant("No response from the agent.");
+      }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Error: Could not reach the AI agent. Please try again." },
-      ]);
+      setMessages((prev) => {
+        const next = [...prev];
+        const last = next.length - 1;
+        if (last >= 0 && next[last].role === "assistant") {
+          next[last] = {
+            role: "assistant",
+            content:
+              next[last].content.trim() !== ""
+                ? next[last].content
+                : "Error: Could not reach the AI agent. Please try again.",
+          };
+        }
+        return next;
+      });
     } finally {
       setLoading(false);
     }
@@ -58,7 +97,7 @@ export default function ChatbotPage() {
     <div className="app-layout">
       <Sidebar />
       <div className="main-area">
-        <Topbar />
+        <Topbar onSearch={() => { }} />
         <div className="content-wrapper" style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 69px)", padding: 0 }}>
           {/* Chat Header */}
           <div style={{
@@ -120,24 +159,14 @@ export default function ChatbotPage() {
                     whiteSpace: "pre-wrap",
                   }}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" && msg.content === "" ? (
+                    <span style={{ color: "var(--text-muted)" }}>Thinking…</span>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))}
-            {loading && (
-              <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                <div style={{
-                  padding: "12px 18px",
-                  borderRadius: "16px 16px 16px 4px",
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border-color)",
-                  fontSize: 14,
-                  color: "var(--text-muted)",
-                }}>
-                  Thinking...
-                </div>
-              </div>
-            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -155,6 +184,7 @@ export default function ChatbotPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              disabled={loading}
               style={{
                 flex: 1,
                 padding: "12px 18px",

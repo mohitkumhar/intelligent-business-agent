@@ -10,6 +10,7 @@ Loki label used by Promtail:  job="python_app"
 
 import json
 import os
+import requests
 import time
 from datetime import date
 from dotenv import load_dotenv
