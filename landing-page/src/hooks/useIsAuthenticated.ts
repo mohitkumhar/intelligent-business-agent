@@ -6,7 +6,9 @@ export const useIsAuthenticated = () => {
 
   useEffect(() => {
     const typebotCookie = getTypebotCookie(document.cookie);
-    if (typebotCookie?.lastProvider || typebotCookie?.landingPage?.isMerged)
+    const hasProfitPilotUser = localStorage.getItem('profit_pilot_user') !== null;
+    
+    if (typebotCookie?.lastProvider || typebotCookie?.landingPage?.isMerged || hasProfitPilotUser)
       setIsAuthenticated(true);
   }, []);
 

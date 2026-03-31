@@ -31,7 +31,7 @@ const data = [
       },
       {
         label: "LinkedIn",
-        href: discordUrl,
+        href: linkedInUrl,
       },
     ],
   },
@@ -40,28 +40,19 @@ const data = [
     links: [
       {
         label: "About",
-        to: "/about",
+        to: "/",
       },
       {
         label: "Terms of Service",
-        to: "/$slug",
-        params: {
-          slug: "terms-of-service",
-        },
+        to: "/",
       },
       {
         label: "Privacy Policy",
-        to: "/$slug",
-        params: {
-          slug: "privacy-policy",
-        },
+        to: "/",
       },
       {
         label: "Business Continuity",
-        to: "/$slug",
-        params: {
-          slug: "business-continuity",
-        },
+        to: "/",
       },
     ],
   },
@@ -84,7 +75,7 @@ export const Footer = () => {
                       <TextLink
                         href={"href" in link ? link.href : undefined}
                         to={"to" in link ? link.to : undefined}
-                        params={"params" in link ? link.params : undefined}
+                        params={"params" in link ? (link as any).params : undefined}
                         target={"href" in link ? "_blank" : undefined}
                         className="text-muted-foreground font-normal"
                         size="sm"

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -25,6 +23,7 @@ services:
       - "5050:80"
 
   landing-page:
+    # image: mohitkumhar/intelligent-business-agent-web:latest
     build:
       context: ./landing-page
       dockerfile: Dockerfile
@@ -32,12 +31,108 @@ services:
     restart: always
     ports:
       - "5173:5173"
+
+    volumes:
+      - ./landing-page:/app
+      - /app/node_modules
+
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://backend:5000
       - DATABASE_URL=postgresql://admin:root@db:5432/test_db
       - ENCRYPTION_SECRET=12345678901234567890123456789012
       - NEXTAUTH_URL=http://localhost:5173
       - NEXT_PUBLIC_VIEWER_URL=http://localhost:5173
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+
+    depends_on:
+      - backend
+      - db
+
+    stdin_open: true
+    tty: true
+
+  backend:
+    # image: mohitkumhar/intelligent-business-agent:latest
+    build:
+      context: ./agent_code
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./agent_code:/app
+      - ./logs:/app/logs
+    env_file:
+      - ./.env
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - db
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+      args:
+        AGENT_API_URL: http://backend:5000
+    container_name: nextjs-dashboard
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - AGENT_API_URL=http://backend:5000
+    depends_on:
+      - backend
+      - db
+
+
+    # promptail and loki configuration
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    # command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+      - ./logs:/var/log/app
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    depends_on:
+      - backend
+      - dashboard
+
+    stdin_open: true
+    tty: true
 
 volumes:
   pgdata:
+  prometheus_data:

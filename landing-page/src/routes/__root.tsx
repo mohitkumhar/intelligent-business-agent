@@ -7,15 +7,18 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 import css from "@/assets/globals.css?url";
-import { CookieConsentBot } from "@/components/CookieConsentBot";
+
 import { Footer } from "@/components/footer/Footer";
 import { Header } from "@/components/Header";
 import { NotFound } from "@/components/NotFound";
-import { setCookie } from "@/helpers/setCookie";
-import { useCookieConsentStatus } from "@/hooks/useIsCookieConsentNeeded";
-import { useTrackPageViewQuery } from "@/hooks/useTrackPageViewQuery";
+import { FloatingChatbot } from "@/components/FloatingChatbot";
+
+
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const HERO_ANIMATION_DELAY = 1800;
+
+const GOOGLE_CLIENT_ID = typeof window !== 'undefined' ? (import.meta.env.VITE_GOOGLE_CLIENT_ID || "") : "";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -26,6 +29,8 @@ export const Route = createRootRoute({
         type: "images/svg+xml",
         href: "/images/favicon.svg",
       },
+      // Pre-connect for Google Auth performance
+      { rel: "preconnect", href: "https://accounts.google.com" },
     ],
     meta: [
       {
@@ -36,7 +41,7 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "ProfitPilot",
+        title: "ProfitPilot | Your AI Business Partner",
       },
     ],
   }),
@@ -50,8 +55,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { isHeaderOpened } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const { cookieConsentStatus, setCookieConsentStatus } =
-    useCookieConsentStatus();
+
 
   const openHeader = () => {
     navigate({
@@ -66,38 +70,28 @@ function RootComponent() {
     });
   };
 
-  useTrackPageViewQuery({
-    enabled:
-      cookieConsentStatus === "not-needed" ||
-      cookieConsentStatus === "accepted",
-  });
-
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <div className="isolate flex flex-col items-stretch">
-          <div className="fixed z-10 top-4 md:bottom-12 md:top-auto w-full">
-            <Header
-              onOpen={openHeader}
-              onClose={closeHeader}
-              isOpened={isHeaderOpened}
-            />
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <div className="isolate flex flex-col items-stretch">
+            <div className="fixed z-10 top-4 md:bottom-12 md:top-auto w-full">
+              <Header
+                onOpen={openHeader}
+                onClose={closeHeader}
+                isOpened={isHeaderOpened}
+              />
+            </div>
+            <Outlet />
+
+            <Footer />
           </div>
-          <Outlet />
-          <CookieConsentBot
-            isOpen={cookieConsentStatus === "need-consent"}
-            openDelay={HERO_ANIMATION_DELAY}
-            onSubmit={(response) => {
-              setCookie(response);
-              setCookieConsentStatus(response);
-            }}
-          />
-          <Footer />
-        </div>
-        <Scripts />
+          <FloatingChatbot />
+          <Scripts />
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

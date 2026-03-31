@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # ── Next.js Dashboard (on :3000) ─────────────────────────────
+  - job_name: "nextjs-dashboard"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["nextjs-dashboard:3000"]
+        labels:
+          app: "nextjs-dashboard"
+
+  # ── Backend Agent (Flask on :5000) ─────────────────────────────
+  - job_name: "backend-agent"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["backend:5000"]
+        labels:
+          app: "backend-agent"
+
+  # ── Prometheus itself ──────────────────────────────────────────
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

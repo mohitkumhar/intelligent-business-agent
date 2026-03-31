@@ -24,6 +24,7 @@
     "@prisma/adapter-planetscale": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "@prisma/extension-read-replicas": "^0.5.0",
+    "@react-oauth/google": "^0.13.4",
     "@sentry/nextjs": "^10.32.1",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tanstack/react-router": "1.123.2",

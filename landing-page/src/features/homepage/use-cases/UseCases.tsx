@@ -10,8 +10,8 @@ import marketingBotSrc from "./assets/marketing-bot.png";
 import marketingBuilderSrc from "./assets/marketing-builder.png";
 import salesBotSrc from "./assets/sales-bot.png";
 import salesBuilderSrc from "./assets/sales-builder.png";
-import supportAndProductBotSrc from "./assets/support-bot.png";
-import supportAndProductBuilderSrc from "./assets/support-builder.png";
+import supportBotSrc from "./assets/support-bot.png";
+import supportBuilderSrc from "./assets/support-builder.png";
 
 const useCases = [
   {
@@ -31,11 +31,11 @@ const useCases = [
     label: "Expense Tracking",
     images: {
       builder: {
-        src: supportAndProductBuilderSrc,
+        src: supportBuilderSrc,
         alt: "An example of a support bot being built in ProfitPilot",
       },
       bot: {
-        src: supportAndProductBotSrc,
+        src: supportBotSrc,
         alt: "A web widget screenshot of a support bot",
       },
     },

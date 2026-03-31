@@ -1,0 +1,37 @@
+name: PR Automation
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  pr-comment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Commenting & Labeling PR
+        env:
+          GH_TOKEN: ${{ secrets.MOHIT_GH_TOKEN }}
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          gh pr comment $PR_NUMBER \
+            --body "
+            🎉 Thanks for opening this PR!
+
+            🚀 I'll review it soon and attach the appropriate labels 🏷️
+
+            Meanwhile, please make sure:
+            ✅ All tests are passing  
+            ✅ Code is properly formatted  
+
+            Thanks again!  
+            Mohit Kumhar  
+            **Maintainer**
+            "
+
+          gh pr edit $PR_NUMBER \
+            --add-label "needs-review" \

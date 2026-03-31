@@ -1,0 +1,33 @@
+name: 📌 Security Issue
+description: Create a Security issue
+title: "security: "
+labels: ["security"]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 📄 Issue Description
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 🔄 Context / Steps
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Expected Outcome
+    validations:
+      required: false
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: ❌ Actual Outcome
+    validations:
+      required: false

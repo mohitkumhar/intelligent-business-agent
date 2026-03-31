@@ -1,159 +1,211 @@
-# ps
+add the benchmarking feature and slack integration and github issue integration and dashboard 
 
-## Title
 
-- AI Business Helper Chatbot for Small Business Owners
+### AI Business Helper Chatbot for Business Owners
+
+- Problem Statement [[Click Here](/PS.md)]
+
+---
+Note: Make sure to have a `.env` in `./agent_code` folder which container the db url
+```bash
+DATABASE_URL=postgresql://admin:root@postgres_db:5432/test_db
+```
+
+---
+DOCKER COMPOSE ENDPOINTS
+- postgres  
+   - POSTGRES USER: `admin`  
+   - POSTGRES PASSWORD: `root`  
+   - POSTGRES DEFAULT DB: `test_db`  
+   - POSTGRES PORT: `5432`  
+
+- pg-admin(for db-UI)  
+   - PGADMIN DEFAULT EMAIL: `mohitmolela@gmail.com`  
+   - PGADMIN DEFAULT PASSWORD: `root`  
+   - PORTS: `5050`  
+
+- landing-page(frontend)  
+   - PORT: `5173`  
+   - VITE_API_URL=`http://localhost:8000`  
+   - DATABASE_URL=`postgresql://admin:root@db:5432/test_db`  
+   - ENCRYPTION_SECRET=`12345678901234567890123456789012`  
+   - NEXTAUTH_URL=`http://localhost:5173`  
+   - NEXT_PUBLIC_VIEWER_URL=`http://localhost:5173`  
+
+- Flask Agent  
+   - PORT: `8000`  
+
+- loki  
+   - PORT: `3100`  
+
+- grafana  
+   - PORT: `3000`  
+---
+
+# AI Business Helper Chatbot – Database Setup Instructions
+
+<!-- # Database Setup Instructions -->
+
+## Step 1: Start PostgreSQL Container
+
+Run the following command to start your Docker services:
+
+```bash
+docker compose up -d
+```
+
+This starts the PostgreSQL container in detached mode.
+
+verify that it is running:
+
+```bash
+docker ps
+```
+
+Ensure PostgreSQL is running and mapped to port **5432**.
 
 ---
 
-## The Problem (In Simple Words)
+## Step 2: Verify PostgreSQL Is Ready
 
-Small business owners run their business every day.  
-They have to take many decisions like:
+(Optional but recommended)
 
-- How much money to spend on ads  
-- What price to keep for products  
-- Whether to hire a new employee  
-- How to manage expenses  
-- When to grow or expand  
+Check container logs:
 
-But most business owners have these problems:
+```bash
+docker logs <postgres-container-name>
+```
 
-- They do not know if their decision is right or wrong  
-- They decide based on guess, emotion, or pressure  
-- Their business data is spread in many places (Excel, apps, notebooks)  
-- They do not have time or knowledge to analyze numbers  
-- No system tells them “Stop, this decision is risky” before they act  
+You should see a message like:
+
+```
+database system is ready to accept connections
+```
 
 ---
 
-## What Happens Because of This
+## Step 3: Access the PostgreSQL Container
 
-Because of wrong or unclear decisions:
+First, list all containers:
 
-- Money gets wasted  
-- Cash problems happen  
-- Same mistakes are repeated again and again  
-- Business growth becomes slow or unstable  
-- Owners feel confused and stressed  
+```bash
+docker ps -a
+```
 
----
+Then access the PostgreSQL container:
 
-## Main Problem (One Line)
-
-Business owners do not have a smart assistant who understands their business and helps them decide what to do before making a mistake.
+```bash
+docker exec -it <container-name-or-id> /bin/bash
+```
 
 ---
 
-# PROPOSED SOLUTION (VERY SIMPLE)
+## Step 4: Create the Database
 
-## Solution Idea
+Before applying the schema, ensure the database exists.
 
-We propose an AI Business Helper App with a Chatbot.
+Inside the container:
 
-This chatbot:
+```bash
+psql -U <user>
+```
 
-- Knows everything about the business  
-- Understands numbers and past data  
-- Talks to the owner like a human advisor  
-- Helps before a decision is taken  
+Create the database:
 
-It works like a business partner, not just a tool.
+```sql
+CREATE DATABASE <database-name>;
+```
 
----
+Exit:
 
-## How the Solution Works (Easy Flow)
-
-Business Data (sales, expenses, staff, ads)  
-↓  
-AI stores business details  
-↓  
-AI analyzes current situation  
-↓  
-Owner asks question in chat  
-↓  
-AI gives clear advice & warning  
+```bash
+\q
+```
 
 ---
 
-## What the Owner Can Ask the Chatbot
+## Step 5: Copy Schema File into the Container
 
-- “Why is my profit low this month?”  
-- “Should I spend ₹10,000 on ads?”  
-- “Is this a good time to hire someone?”  
-- “What should I do next to grow?”  
+From your host machine:
 
----
-
-## What the AI Chatbot Will Do
-
-### 1. Understand the Business
-
-- Knows sales, expenses, profit  
-- Remembers past decisions  
-- Tracks current problems  
-
-### 2. Check Decisions Before Action
-
-Before the owner does anything, AI will say:
-
-- This is safe ✅  
-- This is risky ⚠️  
-- This should not be done ❌  
-
-Example:
-
-Decision: Spend ₹10,000 on ads  
-Result: Risky  
-Suggestion: Start with ₹3,000 test first  
+```bash
+docker cp path/to/host/machine/company_db_schema.sql <container-name>:/company_db_schema.sql
+```
 
 ---
 
-### 3. Show Business Health (Simple Score)
+## Step 6: Copy Data File into the Container
 
-AI shows one clear score:
-
-Business Health: 65 / 100
-
-And explains why:
-
-- Expenses are high  
-- Sales are slow  
-- Cash is limited  
+```bash
+docker cp path/to/host/machine/inserts.sql <container-name>:/inserts.sql
+```
 
 ---
 
-### 4. Give Warnings Automatically
+## Step 7: Apply the Schema
 
-AI warns the owner early:
+Inside the container:
 
-- “Money may finish in 40 days”  
-- “Expenses are increasing too fast”  
-- “This decision caused loss last time”  
+```bash
+psql -U <user> -d <database-name> -f ./company_db_schema.sql
+```
 
----
-
-### 5. Tell What to Do Today
-
-AI gives simple daily advice:
-
-- What to focus on  
-- What to stop  
-- What to fix first  
+This creates all tables and database structures.
 
 ---
 
-## Why This Solution Is Important
+## Step 8: Insert Initial Data
 
-- Business owners get clear direction  
-- Fewer wrong decisions  
-- Less money waste  
-- More confidence  
-- Better growth planning  
+```bash
+psql -U <user> -d <database-name> -f ./inserts.sql
+```
+
+This populates the tables with initial records.
 
 ---
 
-## Final Summary (Very Important)
+## Step 9: Connect to the Database
 
-This is not just a chatbot.  
-It is an AI business partner that thinks before the owner acts and protects the business from bad decisions.
+To manually access the database:
+
+```bash
+psql -U <user> -d <database-name>
+```
+
+---
+
+## Step 10: Verify Setup
+
+Inside PostgreSQL CLI:
+
+List tables:
+
+```bash
+\dt
+```
+
+List databases:
+
+```bash
+\l
+```
+
+Describe a table:
+
+```bash
+\d <table-name>
+```
+
+# Setup Flow Summary
+
+1. Start Docker container
+2. Verify PostgreSQL is running
+3. Create database
+4. Copy schema and data files
+5. Execute schema
+6. Insert data
+7. Verify tables
+
+---
+
+Your PostgreSQL database should now be fully set up and ready for use.
