@@ -1,26 +1,4 @@
 import type { DashboardPeriod } from "./dashboardPeriod";
-import {
-  mockSummary,
-  mockFinancialOverview,
-  mockSalesTarget,
-  mockTransactions,
-  mockCategories,
-  mockRevenueVsExpense,
-  mockSalesTrend,
-  mockAlertsBySeverity,
-  mockHealthScores,
-  mockTopProducts,
-  mockEmployeeStats,
-} from "./mockData";
-import {
-  filterTransactionsByPeriod,
-  mockSummaryForPeriod,
-  mockRevenueVsExpenseForPeriod,
-  mockSalesTrendForPeriod,
-  mockFinancialOverviewForPeriod,
-  mockSalesTargetForPeriod,
-  mockAlertsForPeriod,
-} from "./mockPeriod";
 import { getPeriodBounds, periodLabel } from "./dashboardPeriod";
 
 const API_BASE = "";
@@ -124,15 +102,6 @@ async function fetchJson<T>(url: string): Promise<T> {
   return res.json();
 }
 
-async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
-  try {
-    return await fetchJson<T>(url);
-  } catch {
-    console.warn(`[API] ${url} unavailable — using mock data`);
-    return fallback;
-  }
-}
-
 function escapeCsvCell(s: string): string {
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
@@ -212,22 +181,13 @@ export async function* streamChatSend(
 
 export const api = {
   getSummary: (period?: DashboardPeriod) =>
-    fetchWithFallback<DashboardSummary>(
-      withPeriod("/api/dashboard/summary", period),
-      period ? mockSummaryForPeriod(period) : mockSummary
-    ),
+    fetchJson<DashboardSummary>(withPeriod("/api/dashboard/summary", period)),
 
   getFinancialOverview: (period?: DashboardPeriod) =>
-    fetchWithFallback<FinancialOverview>(
-      withPeriod("/api/dashboard/financial-overview", period),
-      period ? mockFinancialOverviewForPeriod(period) : mockFinancialOverview
-    ),
+    fetchJson<FinancialOverview>(withPeriod("/api/dashboard/financial-overview", period)),
 
   getSalesTarget: (period?: DashboardPeriod) =>
-    fetchWithFallback<SalesTarget>(
-      withPeriod("/api/dashboard/sales-target", period),
-      period ? mockSalesTargetForPeriod(period) : mockSalesTarget
-    ),
+    fetchJson<SalesTarget>(withPeriod("/api/dashboard/sales-target", period)),
 
   getRecentTransactions: (params?: {
     search?: string;
@@ -242,59 +202,29 @@ export const api = {
     if (params?.period) searchParams.set("period", params.period);
     const qs = searchParams.toString();
     const url = `/api/dashboard/recent-transactions${qs ? `?${qs}` : ""}`;
-
-    return fetchWithFallback<{ transactions: Transaction[] }>(url, (() => {
-      let txns = params?.period
-        ? filterTransactionsByPeriod(params.period)
-        : [...mockTransactions.transactions];
-      if (params?.search) {
-        const q = params.search.toLowerCase();
-        txns = txns.filter(
-          (t) =>
-            t.description.toLowerCase().includes(q) ||
-            t.category.toLowerCase().includes(q) ||
-            String(t.transaction_id).includes(q)
-        );
-      }
-      if (params?.category) {
-        txns = txns.filter((t) => t.category === params.category);
-      }
-      if (params?.limit) {
-        txns = txns.slice(0, params.limit);
-      }
-      return { transactions: txns };
-    })());
+    return fetchJson<{ transactions: Transaction[] }>(url);
   },
 
   getCategories: () =>
-    fetchWithFallback<{ categories: string[] }>("/api/dashboard/categories", mockCategories),
+    fetchJson<{ categories: string[] }>("/api/dashboard/categories"),
 
   getRevenueVsExpense: (period?: DashboardPeriod) =>
-    fetchWithFallback<RevenueVsExpense>(
-      withPeriod("/api/dashboard/revenue-vs-expense", period),
-      period ? mockRevenueVsExpenseForPeriod(period) : mockRevenueVsExpense
-    ),
+    fetchJson<RevenueVsExpense>(withPeriod("/api/dashboard/revenue-vs-expense", period)),
 
   getSalesTrend: (period?: DashboardPeriod) =>
-    fetchWithFallback<SalesTrend>(
-      withPeriod("/api/dashboard/sales-trend", period),
-      period ? mockSalesTrendForPeriod(period) : mockSalesTrend
-    ),
+    fetchJson<SalesTrend>(withPeriod("/api/dashboard/sales-trend", period)),
 
   getAlertsBySeverity: (period?: DashboardPeriod) =>
-    fetchWithFallback<AlertsBySeverity>(
-      withPeriod("/api/dashboard/alerts-by-severity", period),
-      period ? mockAlertsForPeriod(period) : mockAlertsBySeverity
-    ),
+    fetchJson<AlertsBySeverity>(withPeriod("/api/dashboard/alerts-by-severity", period)),
 
   getHealthScores: () =>
-    fetchWithFallback<HealthScores>("/api/dashboard/health-scores", mockHealthScores),
+    fetchJson<HealthScores>("/api/dashboard/health-scores"),
 
   getTopProducts: () =>
-    fetchWithFallback<TopProducts>("/api/dashboard/top-products", mockTopProducts),
+    fetchJson<TopProducts>("/api/dashboard/top-products"),
 
   getEmployeeStats: () =>
-    fetchWithFallback<EmployeeStats>("/api/dashboard/employee-stats", mockEmployeeStats),
+    fetchJson<EmployeeStats>("/api/dashboard/employee-stats"),
 
   getBusinessInfo: () =>
     fetchJson<BusinessInfo>("/api/dashboard/business-info").catch(() => null),
@@ -302,18 +232,12 @@ export const api = {
   /** Build a CSV snapshot for the selected period (summary + transactions). */
   exportDashboardCsv: async (period: DashboardPeriod) => {
     const [summary, txRes] = await Promise.all([
-      fetchWithFallback<DashboardSummary>(
-        withPeriod("/api/dashboard/summary", period),
-        mockSummaryForPeriod(period)
-      ),
-      fetchWithFallback<{ transactions: Transaction[] }>((() => {
+      fetchJson<DashboardSummary>(withPeriod("/api/dashboard/summary", period)),
+      fetchJson<{ transactions: Transaction[] }>((() => {
         const searchParams = new URLSearchParams();
         searchParams.set("period", period);
         searchParams.set("limit", "500");
         return `/api/dashboard/recent-transactions?${searchParams.toString()}`;
-      })(), (() => {
-        let txns = filterTransactionsByPeriod(period);
-        return { transactions: txns.slice(0, 500) };
       })()),
     ]);
     const { start, end } = getPeriodBounds(period);
@@ -351,5 +275,4 @@ export const api = {
     a.click();
     window.URL.revokeObjectURL(url);
   },
-
 };

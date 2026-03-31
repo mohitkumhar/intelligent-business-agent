@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { SearchIcon, HelpCircleIcon, BellIcon } from "./Icons";
+import { SearchIcon, HelpCircleIcon, BellIcon, SunIcon, MoonIcon } from "./Icons";
+import { useTheme } from "@/context/ThemeContext";
 
 interface TopbarProps {
   onSearch: (query: string) => void;
@@ -8,6 +9,7 @@ interface TopbarProps {
 
 export default function Topbar({ onSearch }: TopbarProps) {
   const [query, setQuery] = useState("");
+  const { theme, toggleTheme } = useTheme();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -46,6 +48,13 @@ export default function Topbar({ onSearch }: TopbarProps) {
         </div>
       </div>
       <div className="topbar-right">
+        <button 
+          className="topbar-icon-btn" 
+          onClick={toggleTheme}
+          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          {theme === "light" ? <MoonIcon size={16} /> : <SunIcon size={16} />}
+        </button>
         <button className="topbar-icon-btn" title="Help">
           <HelpCircleIcon size={16} />
         </button>

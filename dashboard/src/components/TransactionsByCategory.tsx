@@ -3,12 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, RevenueVsExpense } from "@/lib/api";
 import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
+import { useTheme } from "@/context/ThemeContext";
 import { PieChartIcon } from "./Icons";
 
 Chart.register(...registerables);
 
 export default function TransactionsByCategory() {
   const { period } = useDashboardPeriod();
+  const { theme } = useTheme();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<RevenueVsExpense | null>(null);
@@ -29,6 +31,11 @@ export default function TransactionsByCategory() {
     const ctx = chartRef.current.getContext("2d");
     if (!ctx) return;
 
+    const isDark = theme === "dark";
+    const textColor = isDark ? "#94A3B8" : "#64748B";
+    const sliceBorderColor = isDark ? "#111827" : "#FFFFFF";
+    const tooltipBg = isDark ? "#1E293B" : "#0F172A";
+
     const colors = [
       "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
       "#EC4899", "#06B6D4", "#F97316", "#6366F1", "#14B8A6",
@@ -42,7 +49,7 @@ export default function TransactionsByCategory() {
           data: data.revenue,
           backgroundColor: colors.slice(0, data.labels.length),
           borderWidth: 2,
-          borderColor: "#FFFFFF",
+          borderColor: sliceBorderColor,
         }],
       },
       options: {
@@ -53,10 +60,10 @@ export default function TransactionsByCategory() {
           legend: {
             display: true,
             position: "bottom",
-            labels: { font: { family: "Inter", size: 11 }, boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: "circle", padding: 12, color: "#64748B" },
+            labels: { font: { family: "Inter", size: 11 }, boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: "circle", padding: 12, color: textColor },
           },
           tooltip: {
-            backgroundColor: "#1E293B",
+            backgroundColor: tooltipBg,
             titleFont: { family: "Inter", size: 12 },
             bodyFont: { family: "Inter", size: 11 },
             padding: 12,
@@ -68,7 +75,7 @@ export default function TransactionsByCategory() {
     });
 
     return () => { chartInstance.current?.destroy(); };
-  }, [data]);
+  }, [data, theme]);
 
   return (
     <div className="chart-card">

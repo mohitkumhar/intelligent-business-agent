@@ -36,17 +36,6 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <div className="ai-boost-card">
-          <div className="ai-icon"><SparklesIcon size={20} color="#3B82F6" /></div>
-          <div className="ai-title">Boost with AI</div>
-          <div className="ai-desc">
-            AI-powered insights tools that save hours.
-          </div>
-          <button className="ai-boost-btn">Upgrade to Pro</button>
-        </div>
-      </div>
     </aside>
   );
 }
