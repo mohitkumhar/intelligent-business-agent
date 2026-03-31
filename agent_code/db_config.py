@@ -50,6 +50,7 @@ def get_db_schema() -> str:
         return f"Error reading schema: {str(e)}"
 
 
+<<<<<<< Updated upstream
 def _assert_select_only_sql(sql: str) -> None:
     cleaned = sql.strip().lower()
     if not cleaned.startswith("select"):
@@ -58,6 +59,42 @@ def _assert_select_only_sql(sql: str) -> None:
     for keyword in forbidden:
         if keyword in cleaned:
             raise ValueError(f"Forbidden SQL keyword detected: {keyword.strip()}")
+=======
+_FORBIDDEN = [
+    "insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create ",
+]
+
+
+def _assert_read_only_select(sql: str) -> str:
+    """Normalize SQL and ensure a single read-only SELECT (or WITH … SELECT)."""
+    s = sql.strip().rstrip(";")
+    cleaned = s.lower()
+    if not (cleaned.startswith("select") or cleaned.startswith("with")):
+        raise ValueError("Only SELECT or WITH…SELECT queries are allowed for safety.")
+    if s.count(";") > 0:
+        raise ValueError("Multiple SQL statements are not allowed.")
+    for keyword in _FORBIDDEN:
+        if keyword in cleaned:
+            raise ValueError(f"Forbidden SQL keyword detected: {keyword.strip()}")
+    return s
+
+
+def explain_validate_select(sql: str) -> None:
+    """
+    Run EXPLAIN on the query without returning rows. Catches invalid aliases,
+    missing columns, and bad JOINs that LLM validators often miss.
+    """
+    s = _assert_read_only_select(sql)
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        try:
+            cur.execute("EXPLAIN (COSTS OFF) " + s)
+        finally:
+            cur.close()
+    finally:
+        conn.close()
+>>>>>>> Stashed changes
 
 
 def execute_read_query(sql: str) -> list[dict]:
@@ -66,11 +103,16 @@ def execute_read_query(sql: str) -> list[dict]:
     Returns results as a list of dicts.
     Raises ValueError if the query is not a SELECT.
     """
+<<<<<<< Updated upstream
     _assert_select_only_sql(sql)
+=======
+    s = _assert_read_only_select(sql)
+
+>>>>>>> Stashed changes
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(sql)
+        cur.execute(s)
         results = cur.fetchall()
         cur.close()
         return [dict(row) for row in results]

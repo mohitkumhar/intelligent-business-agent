@@ -133,6 +133,9 @@ services:
     stdin_open: true
     tty: true
 
+    stdin_open: true
+    tty: true
+
 volumes:
   pgdata:
   prometheus_data:

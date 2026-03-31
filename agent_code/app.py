@@ -4,6 +4,7 @@ import os
 import sqlite3
 import time
 import json
+<<<<<<< Updated upstream
 import uuid
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -22,6 +23,14 @@ from intents.metrics_request_graph.subgraph import metrics_request_graph_workflo
 
 # langgraph helpers for human-in-the-loop
 from langgraph.types import Command
+=======
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+from query_execution import stream_agent_sse_lines
+>>>>>>> Stashed changes
 
 from logger.logger import logger
 
@@ -34,8 +43,11 @@ from prometheus_client import (
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+<<<<<<< Updated upstream
 CHAT_DB_PATH = os.getenv("CHAT_DB_PATH", "chat_history.db")
 
+=======
+>>>>>>> Stashed changes
 # Prometheus metrics
 # ===============================
 AGENT_REQUEST_COUNT = Counter(
@@ -88,6 +100,7 @@ def metrics_endpoint():
     return Response(generate_latest(REGISTRY), mimetype=CONTENT_TYPE_LATEST)
 
 
+<<<<<<< Updated upstream
 # ═══════════════════════════════════════════════════════════════════
 # SQLite — chat history (ported from web/app.py)
 # ═══════════════════════════════════════════════════════════════════
@@ -288,7 +301,246 @@ def iter_query_sse(input_query: str, thread_id: str):
         logger.warning(f"Unsupported intent '{i}' for query: '{input_query}'")
         yield f"data: {json.dumps({'type': 'error', 'error': f'Intent {i} is not yet supported.', 'intent_str': ','.join(intent['intent'])})}\n\n"
         return
+=======
+logger.info("Starting Intelligent AI Agent...")
 
+try:
+    from slack_integration.flask_routes import register_slack_routes
+
+    register_slack_routes(app)
+except ImportError as e:
+    logger.warning("Slack integration not registered: %s", e)
+
+
+@app.route("/")
+def home():
+    logger.info("Home endpoint '/' was accessed.")
+    return "Intelligent AI Agent is running. Use the /api/v1/query endpoint to interact with the agent."
+
+
+@app.route('/api/v1/query', methods=['POST', 'GET'])
+def query_agent():
+
+    logger.info(f"'/api/v1/query' endpoint hit with method: {request.method}")
+    input_query = request.args.get('input-query', '')
+    thread_id = request.args.get('thread-id', '')
+    logger.info(f"Received query: '{input_query}' with thread_id: '{thread_id}'")
+
+    if not input_query:
+        logger.error("Input query is missing in the request.")
+        return jsonify({
+            "is_error": True,
+            "error": "input query is required in form data"
+        }), 400
+
+    if not thread_id:
+        logger.error("Thread ID is missing in the request.")
+        return jsonify({
+            "is_error": True,
+            "error": "thread-id is required in form data"
+        }), 400
+
+    business_id = request.args.get("business-id", "") or ""
+
+    gen = stream_agent_sse_lines(
+        input_query,
+        thread_id,
+        business_id,
+        on_chain_intent=lambda n: AGENT_INTENT_COUNT.labels(n).inc(),
+    )
+    resp = Response(stream_with_context(gen), mimetype='text/event-stream')
+    resp.headers['Cache-Control'] = 'no-cache, no-transform'
+    resp.headers['X-Accel-Buffering'] = 'no'
+    resp.headers['Connection'] = 'keep-alive'
+    return resp
+
+
+ASSIGNMENTS_FILE = "assigned_issues.json"
+
+def get_assigned_counts():
+    import json
+    if not os.path.exists(ASSIGNMENTS_FILE):
+        return {}
+    try:
+        with open(ASSIGNMENTS_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return {}
+
+def increment_assigned_count(username):
+    import json
+    counts = get_assigned_counts()
+    counts[username] = counts.get(username, 0) + 1
+    with open(ASSIGNMENTS_FILE, 'w') as f:
+        json.dump(counts, f)
+
+@app.route('/api/v1/employees', methods=['GET'])
+def get_employees():
+    import requests
+    repo = os.getenv("GITHUB_REPO", "mohitkumhar/intelligent-business-agent")
+    try:
+        res = requests.get(f"https://api.github.com/repos/{repo}/contributors")
+        counts = get_assigned_counts()
+        
+        if res.status_code != 200:
+            return jsonify({
+                "employees": [
+                    {"login": "mohitkumhar", "avatar_url": "", "assigned_issues": counts.get("mohitkumhar", 0)},
+                    {"login": "engineer_a", "avatar_url": "", "assigned_issues": counts.get("engineer_a", 0)}
+                ]
+            }), 200
+            
+        contributors = res.json()
+        employees = []
+        for c in contributors:
+            login = c.get("login", "Unknown")
+            employees.append({
+                "login": login,
+                "avatar_url": c.get("avatar_url", ""),
+                "assigned_issues": counts.get(login, 0)
+            })
+            
+        return jsonify({"employees": employees}), 200
+    except Exception as e:
+        logger.error(f"Error fetching employees: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route('/api/v1/escalate', methods=['POST'])
+def escalate_to_slack():
+    logger.info("'/api/v1/escalate' endpoint hit")
+    try:
+        data = request.get_json() or {}
+        query = data.get('query', 'No specific query')
+        summary = data.get('summary', 'No summary provided')
+
+        from slack_integration.slack_handler import SlackDelivery
+        from slack_integration.smart_assigner import pick_assignee_slack_id
+        
+        delivery = SlackDelivery()
+        
+        if not delivery.configured():
+            logger.error("Slack is not configured")
+            return jsonify({"error": "Slack is not configured or missing tokens"}), 500
+
+        ch = delivery.demo_channel_id
+        if not ch:
+            logger.error("SLACK_DEMO_CHANNEL_ID not set")
+            return jsonify({"error": "No Slack channel configured for escalation"}), 500
+
+        assignee_name = data.get('assignee_name')
+        
+        if assignee_name:
+            import requests
+            repo = os.getenv("GITHUB_REPO", "mohitkumhar/intelligent-business-agent")
+            github_token = os.getenv("GITHUB_TOKEN")
+            
+            issue_url = None
+            if github_token:
+                try:
+                    gh_res = requests.post(
+                        f"https://api.github.com/repos/{repo}/issues",
+                        headers={
+                            "Authorization": f"Bearer {github_token}",
+                            "Accept": "application/vnd.github+json"
+                        },
+                        json={
+                            "title": f"Escalated User Query: {query[:50]}...",
+                            "body": f"**Query:**\n{query}\n\n**Context:**\n```\n{summary}\n```",
+                            "assignees": [assignee_name]
+                        }
+                    )
+                    if gh_res.status_code == 201:
+                        issue_data = gh_res.json()
+                        issue_url = issue_data.get("html_url")
+                        logger.info(f"Successfully created GitHub issue: {issue_url}")
+                    else:
+                        logger.error(f"Failed to create GitHub issue: {gh_res.text}")
+                except Exception as e:
+                    logger.error(f"Exception creating GitHub issue: {e}")
+
+            increment_assigned_count(assignee_name)
+            
+            issue_text = f"\n*GitHub Issue:* <{issue_url}|View Issue>" if issue_url else ""
+            
+            blocks = [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "🚨 Web User Escalation",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*Manually Assigned to:* <https://github.com/{assignee_name}|{assignee_name}> ✅{issue_text}\n\n*Triggering Query:*\n>{query[:500]}\n\n*Conversation Context:*\n```{summary[:2000]}```"
+                    }
+                }
+            ]
+            delivery.client.chat_postMessage(channel=ch, text="Web Chatbot Escalation", blocks=blocks)
+            logger.info(f"Successfully escalated and directly assigned to {assignee_name} in channel {ch}")
+            return jsonify({"status": "ok", "github_issue": issue_url}), 200
+        else:
+            assignee_id = pick_assignee_slack_id(user_query=query, summary=summary)
+
+            blocks = [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "🚨 Web User Escalation",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*Triggering Query:*\n>{query[:500]}\n\n*Conversation Context:*\n```{summary[:2000]}```"
+                    }
+                }
+            ]
+
+        if assignee_id:
+            blocks.append({
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": f"Assign Issue",
+                            "emoji": True
+                        },
+                        "style": "primary",
+                        "value": assignee_id,
+                        "action_id": "escalation_assign"
+                    },
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Dismiss",
+                            "emoji": True
+                        },
+                        "value": "dismiss",
+                        "action_id": "escalation_dismiss"
+                    }
+                ]
+            })
+
+        delivery.client.chat_postMessage(channel=ch, text="Web Chatbot Escalation", blocks=blocks)
+        logger.info(f"Successfully escalated to channel {ch}")
+        return jsonify({"status": "ok"}), 200
+>>>>>>> Stashed changes
+
+    except Exception as e:
+        logger.error(f"Escalation via /api/v1/escalate failed: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 def _sse_stream_response(generator):
     resp = Response(stream_with_context(generator), mimetype="text/event-stream")
