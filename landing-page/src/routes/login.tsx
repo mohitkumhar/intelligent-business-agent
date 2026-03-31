@@ -3,6 +3,7 @@ import { ContentPageWrapper } from "@/components/ContentPageWrapper";
 import { createMetaTags } from "@/lib/createMetaTags";
 import { useState } from "react";
 import { onboardingUrl, dashboardUrl } from "@/constants";
+import { isUserOnboarded, normalizeEmail } from "@/lib/onboardingState";
 import { useGoogleLogin } from "@react-oauth/google";
 
 export const Route = createFileRoute("/login")({
@@ -40,35 +41,30 @@ function LoginPage() {
         // Extract basic data
         // Extract basic data
         if (user.email) {
-          console.log("Authenticated User:", user);
+          const registry: string[] = JSON.parse(localStorage.getItem("profit_pilot_registry") || "[]");
+          const emailNorm = normalizeEmail(user.email);
+          const userExists = registry.some((e) => normalizeEmail(e) === emailNorm);
+          const onboarded = isUserOnboarded(user.email);
 
-          // Check our registry
-          const registry = JSON.parse(localStorage.getItem('profit_pilot_registry') || '[]');
-          const userExists = registry.includes(user.email);
-          const isOnboarded = localStorage.getItem('profit_pilot_onboarded') === 'true';
+          localStorage.setItem(
+            "profit_pilot_user",
+            JSON.stringify({
+              full_name: user.name || user.given_name || "",
+              email: user.email,
+              phone: "",
+            }),
+          );
 
-          // Persist user info
-          localStorage.setItem('profit_pilot_user', JSON.stringify({
-            full_name: user.name || user.given_name || "",
-            email: user.email,
-            phone: ""
-          }));
-
-          if (userExists && isOnboarded) {
-            // Returning user -> Dashboard
+          if (onboarded) {
             window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(user.email)}`;
-          } else if (userExists && !isOnboarded) {
-            // Partial user -> Onboarding
-            navigate({ to: onboardingUrl });
-          } else {
-            // New user -> Signup mode
-            setMode("signup");
-            alert("No account found! We've moved you to Signup to get started.");
-            // Add to registry for future
-            const updatedRegistry = [...registry, user.email];
-            localStorage.setItem('profit_pilot_registry', JSON.stringify(updatedRegistry));
-            navigate({ to: onboardingUrl });
+            return;
           }
+
+          if (!userExists) {
+            const updatedRegistry = [...new Set([...registry, emailNorm])];
+            localStorage.setItem("profit_pilot_registry", JSON.stringify(updatedRegistry));
+          }
+          navigate({ to: onboardingUrl });
         }
       } catch (err) {
         console.error("Failed to fetch Google user info:", err);
@@ -89,33 +85,41 @@ function LoginPage() {
     setTimeout(() => {
       setIsLoading(false);
 
-      const registry = JSON.parse(localStorage.getItem('profit_pilot_registry') || '[]');
-      const userExists = registry.includes(email);
-      const isOnboarded = localStorage.getItem('profit_pilot_onboarded') === 'true';
+      const registry: string[] = JSON.parse(localStorage.getItem("profit_pilot_registry") || "[]");
+      const emailNorm = normalizeEmail(email);
+      const userExists = registry.some((e) => normalizeEmail(e) === emailNorm);
+      const onboarded = isUserOnboarded(email);
 
       if (mode === "login") {
         if (userExists) {
-          localStorage.setItem('profit_pilot_user', JSON.stringify({
-            full_name: "Returning User",
-            email: email,
-            phone: ""
-          }));
-          const redirectTo = isOnboarded ? `${dashboardUrl}?user_email=${encodeURIComponent(email)}` : onboardingUrl;
-          window.location.href = redirectTo;
+          localStorage.setItem(
+            "profit_pilot_user",
+            JSON.stringify({
+              full_name: "Returning User",
+              email: email,
+              phone: "",
+            }),
+          );
+          if (onboarded) {
+            window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(email)}`;
+          } else {
+            window.location.href = onboardingUrl;
+          }
         } else {
           setMode("signup");
           alert("Account not found! Please create your account first.");
         }
       } else {
-        // Signup
-        localStorage.setItem('profit_pilot_user', JSON.stringify({
-          full_name: fullName,
-          email: email,
-          phone: phone
-        }));
-        // Register the user
-        const updatedRegistry = [...new Set([...registry, email])];
-        localStorage.setItem('profit_pilot_registry', JSON.stringify(updatedRegistry));
+        localStorage.setItem(
+          "profit_pilot_user",
+          JSON.stringify({
+            full_name: fullName,
+            email: email,
+            phone: phone,
+          }),
+        );
+        const updatedRegistry = [...new Set([...registry, emailNorm])];
+        localStorage.setItem("profit_pilot_registry", JSON.stringify(updatedRegistry));
         navigate({ to: onboardingUrl });
       }
     }, 1500);

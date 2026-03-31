@@ -1,7 +1,16 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DashboardIcon, ChatbotIcon, SparklesIcon, FileUpIcon } from "./Icons";
+import { LANDING_PAGE_URL } from "@/lib/publicUrls";
+import { DashboardIcon, ChatbotIcon, FileUpIcon, UsersIcon } from "./Icons";
+
+function clearProfitPilotSession() {
+  if (typeof window === "undefined") return;
+  const keys = Object.keys(localStorage);
+  for (const key of keys) {
+    if (key.startsWith("profit_pilot")) localStorage.removeItem(key);
+  }
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -11,8 +20,6 @@ export default function Sidebar() {
     { label: "Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> },
     { label: "Import Data", href: "/import", icon: <FileUpIcon size={18} /> },
   ];
-  console.log("Current mainMenu:", mainMenu.map(m => m.label));
-
   return (
     <aside className="sidebar">
       {/* Logo */}
@@ -43,10 +50,20 @@ export default function Sidebar() {
         <div className="sidebar-section">
           <div className="sidebar-section-title">Account</div>
         </div>
-        <button 
+        <Link
+          href="/profile"
+          className={`nav-link ${pathname === "/profile" ? "active" : ""}`}
+        >
+          <span className="nav-icon">
+            <UsersIcon size={18} />
+          </span>
+          <span>Profile</span>
+        </Link>
+        <button
+          type="button"
           onClick={() => {
-            localStorage.clear();
-            window.location.href = "http://localhost:3000";
+            clearProfitPilotSession();
+            window.location.href = LANDING_PAGE_URL.replace(/\/$/, "");
           }}
           className="nav-link"
           style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: 'auto', padding: '12px 16px', color: '#64748B', fontWeight: 500 }}
@@ -56,17 +73,7 @@ export default function Sidebar() {
         </button>
       </nav>
 
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <div className="ai-boost-card">
-          <div className="ai-icon"><SparklesIcon size={20} color="#3B82F6" /></div>
-          <div className="ai-title">Boost with AI</div>
-          <div className="ai-desc">
-            AI-powered insights tools that save hours.
-          </div>
-          <button className="ai-boost-btn">Upgrade to Pro</button>
-        </div>
-      </div>
+      {/* Sidebar footer removed as requested */}
     </aside>
   );
 }

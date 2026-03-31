@@ -16,7 +16,8 @@ export const mockSummary: DashboardSummary = {
   total_expenses: 142300,
   net_profit: 142200,
   total_transactions: 2847,
-  active_alerts: 12,
+  active_alerts: 3,
+  alert_highest_severity: "Critical",
 };
 
 export const mockFinancialOverview: FinancialOverview = {
@@ -69,8 +70,8 @@ export const mockSalesTrend: SalesTrend = {
 };
 
 export const mockAlertsBySeverity: AlertsBySeverity = {
-  labels: ["Critical", "High", "Medium", "Low", "Info"],
-  data: [2, 3, 4, 1, 2],
+  labels: ["Critical", "Warning", "Info"],
+  data: [1, 1, 1],
 };
 
 export const mockHealthScores: HealthScores = {

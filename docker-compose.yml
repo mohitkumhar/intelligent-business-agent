@@ -76,12 +76,15 @@ services:
       dockerfile: Dockerfile
       args:
         AGENT_API_URL: http://backend:5000
+        # Must match host landing-page port (5173). Do not use 3000 — Grafana uses that port.
+        NEXT_PUBLIC_LANDING_URL: http://localhost:5173
     container_name: nextjs-dashboard
     restart: always
     ports:
       - "3001:3000"
     environment:
       - AGENT_API_URL=http://backend:5000
+      - NEXT_PUBLIC_LANDING_URL=http://localhost:5173
     depends_on:
       - backend
       - db

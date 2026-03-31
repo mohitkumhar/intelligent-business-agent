@@ -8,5 +8,6 @@ node_modules
 .ipynb_checkpoints/
 .vscode/
 __pycache__/
+agent_code/uploads/
 
 *.log

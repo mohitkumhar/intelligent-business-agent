@@ -22,8 +22,7 @@ import {
   mockAlertsForPeriod,
 } from "./mockPeriod";
 import { getPeriodBounds, periodLabel } from "./dashboardPeriod";
-
-const API_BASE = "http://localhost:5000";
+import { AGENT_API_BASE } from "./publicUrls";
 
 export interface DashboardSummary {
   total_revenue: number;
@@ -31,6 +30,22 @@ export interface DashboardSummary {
   net_profit: number;
   total_transactions: number;
   active_alerts: number;
+  /** Highest severity among active alerts (for KPI badge). */
+  alert_highest_severity?: string | null;
+  /** vs same-length window before current period (null if no comparison). */
+  revenue_change_pct?: number | null;
+  expenses_change_pct?: number | null;
+  net_profit_change_pct?: number | null;
+  transactions_change_pct?: number | null;
+}
+
+export interface ActiveAlertRow {
+  alert_id: number;
+  alert_type: string;
+  severity: string;
+  message: string;
+  status: string;
+  created_at: string | null;
 }
 
 export interface FinancialOverview {
@@ -107,10 +122,12 @@ export interface BusinessInfo {
   city: string;
   business_age: string;
   employees_range: string;
+  monthly_revenue?: string;
   biggest_challenge: string;
   finance_tracking_method: string;
   onboarding_notes?: string;
   user_name?: string;
+  user_email?: string;
 }
 
 function getStoredUserEmail(): string | null {
@@ -119,9 +136,14 @@ function getStoredUserEmail(): string | null {
   const urlParams = new URLSearchParams(window.location.search);
   const emailParam = urlParams.get("user_email");
   if (emailParam) {
-    // If found in URL, persist it for future use in this session/origin
-    const existing = localStorage.getItem("profit_pilot_user");
-    if (!existing) {
+    // Priority: always use URL param and ensure localStorage is up to date
+    try {
+      const existingStr = localStorage.getItem("profit_pilot_user");
+      const existing = existingStr ? JSON.parse(existingStr) : {};
+      if (existing.email !== emailParam) {
+        localStorage.setItem("profit_pilot_user", JSON.stringify({ ...existing, email: emailParam }));
+      }
+    } catch {
       localStorage.setItem("profit_pilot_user", JSON.stringify({ email: emailParam }));
     }
     return emailParam;
@@ -152,15 +174,28 @@ function withPeriod(url: string, period?: DashboardPeriod): string {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${appendUserEmail(url)}`, { cache: "no-store" });
+  const isMockMode = typeof window !== "undefined" && localStorage.getItem("profitpilot_mock_mode") === "true";
+  if (isMockMode) return {} as T;
+
+  const res = await fetch(`${AGENT_API_BASE}${appendUserEmail(url)}`, {
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
 async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
+  const isMockMode = typeof window !== "undefined" && localStorage.getItem("profitpilot_mock_mode") === "true";
+  
+  if (isMockMode) {
+    // Delay slightly to simulate network and make transitions more visible
+    await new Promise(r => setTimeout(r, 600));
+    return fallback;
+  }
+
   try {
     const finalUrl = appendUserEmail(url);
-    const res = await fetch(`${API_BASE}${finalUrl}`, { cache: "no-store" });
+    const res = await fetch(`${AGENT_API_BASE}${finalUrl}`, { cache: "no-store" });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return await res.json();
   } catch {
@@ -254,6 +289,39 @@ export const api = {
   getHealthScores: () =>
     fetchWithFallback<HealthScores>("/api/dashboard/health-scores", mockHealthScores),
 
+  getActiveAlerts: () =>
+    fetchWithFallback<{ alerts: ActiveAlertRow[] }>(
+      "/api/dashboard/alerts-list",
+      {
+        alerts: [
+          {
+            alert_id: 1,
+            alert_type: "Cash Flow",
+            severity: "Critical",
+            message: "Projected cash balance may fall below ₹50,000 next month.",
+            status: "Active",
+            created_at: new Date().toISOString(),
+          },
+          {
+            alert_id: 2,
+            alert_type: "Inventory",
+            severity: "Warning",
+            message: "Top-selling item 'Blue Widget' is low on stock (under 15 units).",
+            status: "Active",
+            created_at: new Date().toISOString(),
+          },
+          {
+            alert_id: 3,
+            alert_type: "Revenue",
+            severity: "Info",
+            message: "Overall revenue is up 12% compared to last week—excellent growth!",
+            status: "Active",
+            created_at: new Date().toISOString(),
+          },
+        ],
+      },
+    ),
+
   getTopProducts: () =>
     fetchWithFallback<TopProducts>("/api/dashboard/top-products", mockTopProducts),
 
@@ -316,12 +384,13 @@ export const api = {
     window.URL.revokeObjectURL(url);
   },
 
-  sendMessage: (conversationId: string, message: string) =>
-    fetchJson<{ content: string; intent: string | null }>("/api/chat/send").then(() =>
-      fetch(`${API_BASE}/api/chat/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversation_id: conversationId, message }),
-      }).then((r) => r.json())
-    ),
+  sendMessage: async (conversationId: string, message: string) => {
+    const res = await fetch(`${AGENT_API_BASE}/api/chat/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversation_id: conversationId, message }),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json() as Promise<{ content: string; intent: string | null }>;
+  },
 };

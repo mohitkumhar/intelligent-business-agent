@@ -1,13 +1,24 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, FinancialOverview } from "@/lib/api";
 import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 
 Chart.register(...registerables);
 
+function formatInrFull(n: number): string {
+  return `₹${Math.round(n).toLocaleString("en-IN")}`;
+}
+
+function formatYAxisTick(n: number): string {
+  const v = Math.abs(n);
+  if (v >= 100000) return `${(v / 100000).toFixed(1)}L`;
+  if (v >= 1000) return `${(v / 1000).toFixed(0)}k`;
+  return String(Math.round(n));
+}
+
 export default function RevenueInsights() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<FinancialOverview | null>(null);
@@ -20,10 +31,41 @@ export default function RevenueInsights() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
+
+  const chartPayload = useMemo(() => {
+    if (!data) return null;
+    const monthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    const shortLabels = data.labels.map((l) => {
+      const parts = l.split("-");
+      if (parts.length >= 2) {
+        const mi = parseInt(parts[1], 10);
+        if (!Number.isNaN(mi) && mi >= 1 && mi <= 12) return monthNames[mi - 1];
+      }
+      return l;
+    });
+
+    if (view === "monthly") {
+      return {
+        labels: shortLabels,
+        revenue: data.revenue,
+        expenses: data.expenses,
+      };
+    }
+    const rTot = data.revenue.reduce((a, b) => a + b, 0);
+    const eTot = data.expenses.reduce((a, b) => a + b, 0);
+    return {
+      labels: ["6-month total"],
+      revenue: [rTot],
+      expenses: [eTot],
+    };
+  }, [data, view]);
 
   useEffect(() => {
-    if (!data || !chartRef.current) return;
+    if (!chartPayload || !chartRef.current) return;
 
     if (chartInstance.current) {
       chartInstance.current.destroy();
@@ -38,20 +80,14 @@ export default function RevenueInsights() {
     gradient.addColorStop(0.5, "rgba(59, 130, 246, 0.6)");
     gradient.addColorStop(1, "rgba(59, 130, 246, 0.3)");
 
-    const shortLabels = data.labels.map((l) => {
-      const parts = l.split("-");
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      return monthNames[parseInt(parts[1]) - 1] || l;
-    });
-
     chartInstance.current = new Chart(ctx, {
       type: "bar",
       data: {
-        labels: shortLabels,
+        labels: chartPayload.labels,
         datasets: [
           {
             label: "Earning",
-            data: data.revenue,
+            data: chartPayload.revenue,
             backgroundColor: gradient,
             borderColor: "rgba(59, 130, 246, 1)",
             borderWidth: 0,
@@ -60,7 +96,7 @@ export default function RevenueInsights() {
           },
           {
             label: "Expenses",
-            data: data.expenses,
+            data: chartPayload.expenses,
             backgroundColor: "rgba(226, 232, 240, 0.8)",
             borderColor: "rgba(226, 232, 240, 1)",
             borderWidth: 0,
@@ -88,7 +124,7 @@ export default function RevenueInsights() {
             boxPadding: 6,
             callbacks: {
               label(ctx) {
-                return `${ctx.dataset.label}: $${(ctx.parsed?.y ?? 0).toLocaleString()}`;
+                return `${ctx.dataset.label}: ₹${(ctx.parsed?.y ?? 0).toLocaleString("en-IN")}`;
               },
             },
           },
@@ -110,9 +146,7 @@ export default function RevenueInsights() {
               font: { family: "Inter", size: 11 },
               color: "#94A3B8",
               callback(value) {
-                const num = Number(value);
-                if (num >= 1000) return `${(num / 1000).toFixed(0)}k`;
-                return String(value);
+                return formatYAxisTick(Number(value));
               },
             },
             border: { display: false },
@@ -124,20 +158,76 @@ export default function RevenueInsights() {
     return () => {
       chartInstance.current?.destroy();
     };
-  }, [data, view]);
+  }, [chartPayload, view]);
 
-  const totalRevenue = data ? data.revenue.reduce((a, b) => a + b, 0) : 0;
+  const sumRev = data ? data.revenue.reduce((a, b) => a + b, 0) : 0;
+  const sumExp = data ? data.expenses.reduce((a, b) => a + b, 0) : 0;
+  const n = data?.revenue.length || 1;
+  const avgMonthlyRevenue = data ? sumRev / n : 0;
+  const avgMonthlyExpense = data ? sumExp / n : 0;
 
   return (
-    <div className="chart-card">
+    <div className="chart-card" key={dataVersion}>
       <div className="chart-header">
         <div>
           <div className="chart-title">Revenue Insights</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4 }}>
-            <span className="chart-subtitle">
-              ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-            <span className="chart-change">↑ 4.9%</span>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              marginTop: 6,
+            }}
+          >
+            {view === "monthly" ? (
+              <>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <span className="chart-subtitle">{formatInrFull(avgMonthlyRevenue)}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#64748B",
+                      background: "#F1F5F9",
+                      padding: "3px 10px",
+                      borderRadius: 12,
+                    }}
+                  >
+                    avg / month
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "#64748B",
+                    fontWeight: 500,
+                  }}
+                >
+                  6-month earnings total {formatInrFull(sumRev)} · expenses {formatInrFull(sumExp)}
+                </span>
+              </>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <span className="chart-subtitle">{formatInrFull(sumRev)}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#64748B",
+                      background: "#F1F5F9",
+                      padding: "3px 10px",
+                      borderRadius: 12,
+                    }}
+                  >
+                    6-mo total
+                  </span>
+                </div>
+                <span style={{ fontSize: 12, color: "#64748B", fontWeight: 500 }}>
+                  Combined bars: all earnings vs expenses in this period ({n} months)
+                </span>
+              </>
+            )}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

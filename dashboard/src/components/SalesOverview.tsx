@@ -83,7 +83,7 @@ function SemiCircleGauge({ percentage }: { percentage: number }) {
 }
 
 export default function SalesOverview() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const [data, setData] = useState<SalesTarget | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -93,7 +93,7 @@ export default function SalesOverview() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
   const sales = data?.current_revenue ?? 3884.00;
   const target = data?.target_revenue ?? 20000.00;
@@ -101,7 +101,7 @@ export default function SalesOverview() {
   const progressPercent = Math.min((sales / target) * 100, 100);
 
   return (
-    <div className="chart-card flex flex-col h-full">
+    <div className="chart-card flex flex-col h-full" key={dataVersion}>
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-[15px] font-semibold text-slate-900">Sales Overview</h3>
@@ -132,11 +132,11 @@ export default function SalesOverview() {
             <div className="flex justify-between items-end mb-3">
               <div>
                 <div className="text-[11px] font-medium text-slate-500 mb-0.5">Sales</div>
-                <div className="text-base font-bold text-slate-900">${sales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                <div className="text-base font-bold text-slate-900">₹{sales.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
               </div>
               <div className="text-right">
                 <div className="text-[11px] font-medium text-slate-500 mb-0.5">Target</div>
-                <div className="text-base font-bold text-slate-900">${target.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                <div className="text-base font-bold text-slate-900">₹{target.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
               </div>
             </div>
 

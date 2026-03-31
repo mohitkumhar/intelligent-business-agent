@@ -1,5 +1,14 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_AGENT_API_URL?: string;
+  readonly VITE_DASHBOARD_URL?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 // CSS URL imports
 declare module "*.css?url" {
   const url: string;

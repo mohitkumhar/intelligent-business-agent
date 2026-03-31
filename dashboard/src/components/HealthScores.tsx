@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, HealthScores as HealthScoresData } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import { HeartPulseIcon } from "./Icons";
 
 function getScoreColor(score: number): string {
@@ -16,6 +17,7 @@ function getScoreBg(score: number): string {
 }
 
 export default function HealthScores() {
+  const { dataVersion } = useDashboardPeriod();
   const [data, setData] = useState<HealthScoresData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +26,7 @@ export default function HealthScores() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [dataVersion]);
 
   return (
     <div className="chart-card h-full flex flex-col">

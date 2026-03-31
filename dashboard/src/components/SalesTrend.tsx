@@ -8,7 +8,7 @@ import { LineChartIcon } from "./Icons";
 Chart.register(...registerables);
 
 export default function SalesTrend() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<SalesTrendData | null>(null);
@@ -20,7 +20,7 @@ export default function SalesTrend() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;
@@ -97,7 +97,7 @@ export default function SalesTrend() {
   }, [data]);
 
   return (
-    <div className="chart-card">
+    <div className="chart-card" key={dataVersion}>
       <div className="chart-header">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <LineChartIcon size={18} color="var(--accent-blue)" />

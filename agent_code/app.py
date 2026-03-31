@@ -5,9 +5,11 @@ import sqlite3
 import time
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from db_config import get_db_connection, execute_read_query_params
+from transaction_import import parse_csv_bytes, parse_xlsx_bytes
 
 load_dotenv()
 
@@ -32,6 +34,7 @@ from prometheus_client import (
 )
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB uploads
 CORS(app)  # Enable CORS for all routes
 
 CHAT_DB_PATH = os.getenv("CHAT_DB_PATH", "chat_history.db")
@@ -351,7 +354,9 @@ def onboarding():
 
     full_name = data.get("full_name")
     phone = data.get("phone")
-    email = data.get("email")
+    email = (data.get("email") or "").strip()
+    if email:
+        email = email.lower()
 
     if not all([business_name, email, full_name]):
         return jsonify({"is_error": True, "error": "Missing required fields"}), 400
@@ -359,6 +364,15 @@ def onboarding():
     conn = get_db_connection()
     try:
         cur = conn.cursor()
+
+        cur.execute("SELECT 1 FROM public.users WHERE email = %s", (email,))
+        if cur.fetchone():
+            return jsonify(
+                {
+                    "is_error": True,
+                    "error": "An account with this email already exists. Please log in instead.",
+                }
+            ), 409
 
         business_id = str(uuid.uuid4())
         cur.execute(
@@ -410,6 +424,113 @@ def onboarding():
         conn.close()
 
 
+@app.route("/api/v1/import/transactions", methods=["POST", "OPTIONS"])
+def api_import_transactions():
+    """Upload CSV or Excel (.xlsx) with columns: date, type, category, amount, description."""
+    if request.method == "OPTIONS":
+        return "", 204
+    email = (request.form.get("email") or request.args.get("email") or "").strip().lower()
+    if not email:
+        return jsonify({"error": "email is required (form field or query param)"}), 400
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "Empty filename"}), 400
+    raw = file.read()
+    fn = (file.filename or "").lower()
+    try:
+        if fn.endswith(".csv"):
+            rows = parse_csv_bytes(raw)
+        elif fn.endswith(".xlsx"):
+            rows = parse_xlsx_bytes(raw)
+        else:
+            return jsonify(
+                {"error": "Unsupported format. Use .csv or .xlsx (Excel 2007+)."}
+            ), 400
+    except Exception as e:
+        logger.warning("import parse failed: %s", e)
+        return jsonify({"error": str(e)}), 400
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT b.business_id FROM public.businesses b
+            JOIN public.users u ON u.business_id = b.business_id
+            WHERE u.email = %s
+            ORDER BY b.created_at DESC NULLS LAST
+            LIMIT 1
+            """,
+            (email,),
+        )
+        r = cur.fetchone()
+        if not r:
+            return jsonify(
+                {
+                    "error": "No business found for this email. Complete onboarding on the landing page first.",
+                }
+            ), 404
+        business_id = r[0]
+
+        batch = [(business_id, d, typ, cat, amt, desc) for d, typ, cat, amt, desc in rows]
+        cur.executemany(
+            """
+            INSERT INTO daily_transactions (business_id, transaction_date, type, category, amount, description)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            batch,
+        )
+        conn.commit()
+        n = len(batch)
+        return jsonify(
+            {
+                "success": True,
+                "imported": n,
+                "message": f"Imported {n} transaction(s) into your workspace.",
+            }
+        ), 201
+    except Exception as e:
+        conn.rollback()
+        logger.error("import insert failed: %s", e, exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/v1/import/receipt", methods=["POST", "OPTIONS"])
+def api_import_receipt():
+    """Store notebook / photo uploads for future AI extraction (file persisted on disk)."""
+    if request.method == "OPTIONS":
+        return "", 204
+    email = (request.form.get("email") or request.args.get("email") or "").strip().lower()
+    if not email:
+        return jsonify({"error": "email is required"}), 400
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "Empty filename"}), 400
+
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "receipts")
+    os.makedirs(base, exist_ok=True)
+    uid = str(uuid.uuid4())
+    ext = os.path.splitext(file.filename)[1].lower() or ".bin"
+    if ext not in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".bin"):
+        ext = ".bin"
+    path = os.path.join(base, f"{uid}{ext}")
+    file.save(path)
+    logger.info("Receipt upload saved for %s -> %s", email, path)
+    return jsonify(
+        {
+            "success": True,
+            "file_id": uid,
+            "message": "Image received and stored. AI extraction can be wired to this endpoint later.",
+        }
+    ), 201
+
+
 # ─────────────────────────────────────────────
 # REAL SQL DASHBOARD ROUTES (ported from web/app.py)
 # SQL reviewed against company_db_schema.sql — tables/columns below exist in DDL.
@@ -419,33 +540,119 @@ def onboarding():
 def get_business_by_user(cur, email=None):
     if email:
         cur.execute("""
-            SELECT b.*, u.name as user_name FROM public.businesses b
+            SELECT b.*, u.name as user_name, u.email as user_email FROM public.businesses b
             JOIN public.users u ON b.business_id = u.business_id
             WHERE u.email = %s
             ORDER BY b.created_at DESC LIMIT 1
         """, (email,))
     else:
         cur.execute("""
-            SELECT b.*, u.name as user_name FROM public.businesses b
+            SELECT b.*, u.name as user_name, u.email as user_email FROM public.businesses b
             LEFT JOIN public.users u ON b.business_id = u.business_id
             ORDER BY b.created_at DESC LIMIT 1
         """)
     return cur.fetchone()
 
 def _parse_revenue(rev_str):
-    if not rev_str: return 50000
-    try:
-        # Extract all numbers from strings like "₹1,00,000 - ₹5,00,000"
-        import re
-        nums = [int(n.replace(',', '')) for n in re.findall(r'[\d,]+', rev_str)]
-        if not nums: return 50000
-        return sum(nums) // len(nums)
-    except:
-        return 50000
+    """
+    Parse onboarding `monthly_revenue` labels (e.g. '₹50K–₹2L', 'Under ₹50K') into one INR number.
+    Uses the midpoint for ranges so KPIs match what the user selected.
+    """
+    import re
+
+    if not rev_str:
+        return 125000.0
+    s = str(rev_str).strip().replace("—", "-").replace("–", "-")
+    # Tokens: optional ₹, digits (incl. Indian grouping), optional K / L / Cr
+    token_re = re.compile(
+        r"(?:₹\s*)?([\d,.]+)\s*(K|k|L|l|CR|cr|Lakh|LAKH)?",
+        re.UNICODE,
+    )
+    amounts = []
+    for m in token_re.finditer(s):
+        raw = m.group(1).replace(",", "")
+        try:
+            val = float(raw)
+        except ValueError:
+            continue
+        suf = (m.group(2) or "").upper()
+        if suf == "K":
+            val *= 1000
+        elif suf == "L":
+            val *= 100000
+        elif suf in ("CR",):
+            val *= 10000000
+        elif "LAKH" in suf:
+            val *= 100000
+        else:
+            # e.g. "50" immediately before K in substring
+            frag = s[max(0, m.start() - 1) : min(len(s), m.end() + 3)].upper()
+            if val < 10000 and "K" in frag:
+                val *= 1000
+            elif val < 1000 and "L" in frag and "K" not in frag:
+                val *= 100000
+        amounts.append(val)
+    if not amounts:
+        return 125000.0
+    if len(amounts) == 1:
+        return float(amounts[0])
+    return float(sum(amounts) / len(amounts))
+
+
+def _dashboard_period_bounds(period: str):
+    """Match dashboard `getPeriodBounds`: this_month | last_month | ytd."""
+    today = date.today()
+    y, m, d = today.year, today.month, today.day
+    if period == "last_month":
+        first_this = date(y, m, 1)
+        last_prev = first_this - timedelta(days=1)
+        start = date(last_prev.year, last_prev.month, 1)
+        end = last_prev
+        return start, end
+    if period == "ytd":
+        return date(y, 1, 1), today
+    return date(y, m, 1), today
+
+
+def _previous_period_window(start: date, end: date):
+    """Same-length window immediately before `start` (for period-over-period KPIs)."""
+    n_days = (end - start).days + 1
+    prev_end = start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=n_days - 1)
+    return prev_start, prev_end
+
+
+def _pct_change(curr: float, prev: float):
+    if prev is None or prev == 0:
+        return None if (curr is None or curr == 0) else 100.0
+    return round((curr - prev) / prev * 100.0, 1)
+
+
+def _aggregate_txns_for_window(cur, business_id, start: date, end: date):
+    cur.execute(
+        """
+        SELECT
+            COALESCE(SUM(CASE WHEN type = 'Revenue' THEN amount END), 0) AS tr,
+            COALESCE(SUM(CASE WHEN type = 'Expense' THEN amount END), 0) AS te,
+            COUNT(*) AS tc
+        FROM daily_transactions
+        WHERE business_id = %s
+          AND transaction_date >= %s AND transaction_date <= %s
+        """,
+        (business_id, start, end),
+    )
+    row = cur.fetchone() or {}
+    return (
+        int(row.get("tc") or 0),
+        float(row.get("tr") or 0),
+        float(row.get("te") or 0),
+    )
+
 
 @app.route('/api/dashboard/summary', methods=['GET', 'OPTIONS'])
 def get_dashboard_summary():
     email = request.args.get('email')
+    period = request.args.get("period") or "this_month"
     conn = get_db_connection()
     try:
         import psycopg2.extras
@@ -453,25 +660,88 @@ def get_dashboard_summary():
         business = get_business_by_user(cur, email)
         if not business:
             return jsonify({"error": "No business found"}), 404
-            
-        base_rev = _parse_revenue(business.get('monthly_revenue'))
-        # Adjust data based on challenge
+
+        start, end = _dashboard_period_bounds(period)
+        bid = business["business_id"]
+        tc, tr, te = _aggregate_txns_for_window(cur, bid, start, end)
+        p_start, p_end = _previous_period_window(start, end)
+        p_tc, p_tr, p_te = _aggregate_txns_for_window(cur, bid, p_start, p_end)
+
+        cur.execute(
+            """
+            SELECT COUNT(*) AS ca
+            FROM alerts
+            WHERE business_id = %s AND status = 'Active'
+            """,
+            (bid,),
+        )
+        alert_row = cur.fetchone() or {}
+        active_from_db = int(alert_row.get("ca") or 0)
+
+        cur.execute(
+            """
+            SELECT severity
+            FROM alerts
+            WHERE business_id = %s AND status = 'Active'
+            ORDER BY
+              CASE severity
+                WHEN 'High' THEN 1
+                WHEN 'Medium' THEN 2
+                WHEN 'Low' THEN 3
+                ELSE 4
+              END
+            LIMIT 1
+            """,
+            (bid,),
+        )
+        sev_row = cur.fetchone()
+        highest_sev = (sev_row.get("severity") if sev_row else None) or None
+
+        kpi_extra = {
+            "revenue_change_pct": _pct_change(tr, p_tr),
+            "expenses_change_pct": _pct_change(te, p_te),
+            "net_profit_change_pct": _pct_change(tr - te, p_tr - p_te),
+            "transactions_change_pct": _pct_change(float(tc), float(p_tc)),
+        }
+
+        if tc > 0:
+            return jsonify({
+                "business_name": business['business_name'],
+                "total_revenue": int(round(tr)),
+                "total_expenses": int(round(te)),
+                "net_profit": int(round(tr - te)),
+                "total_transactions": tc,
+                "active_alerts": active_from_db,
+                "alert_highest_severity": highest_sev,
+                **kpi_extra,
+            })
+
+        base_rev = float(_parse_revenue(business.get('monthly_revenue')))
         expense_ratio = 0.6
-        alerts = 2
+        alerts = active_from_db if active_from_db else 2
         if business.get('biggest_challenge') == 'High Expenses':
             expense_ratio = 0.85
-            alerts = 5
+            alerts = max(alerts, 5)
         elif business.get('biggest_challenge') == 'Low Sales':
             base_rev *= 0.7
-            alerts = 4
-            
+            alerts = max(alerts, 4)
+
+        total_revenue = int(round(base_rev))
+        total_expenses = int(round(base_rev * expense_ratio))
+        net_profit = total_revenue - total_expenses
+
         return jsonify({
             "business_name": business['business_name'],
-            "total_revenue": base_rev,
-            "total_expenses": int(base_rev * expense_ratio),
-            "net_profit": int(base_rev * (1 - expense_ratio)),
+            "total_revenue": total_revenue,
+            "total_expenses": total_expenses,
+            "net_profit": net_profit,
             "total_transactions": 250 if base_rev < 100000 else 1200,
-            "active_alerts": alerts
+            "active_alerts": alerts,
+            "alert_highest_severity": highest_sev,
+            "revenue_change_pct": None,
+            "expenses_change_pct": None,
+            "net_profit_change_pct": None,
+            "transactions_change_pct": None,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -525,18 +795,52 @@ def get_financial_overview():
         import psycopg2.extras
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         business = get_business_by_user(cur, email)
-        if not business: return jsonify({}), 404
-        
+        if not business:
+            return jsonify({}), 404
+
+        bid = business["business_id"]
+        first_month = date.today().replace(day=1) - relativedelta(months=5)
+        cur.execute(
+            """
+            SELECT date_trunc('month', transaction_date)::date AS m,
+                   COALESCE(SUM(CASE WHEN type = 'Revenue' THEN amount END), 0) AS rev,
+                   COALESCE(SUM(CASE WHEN type = 'Expense' THEN amount END), 0) AS exp
+            FROM daily_transactions
+            WHERE business_id = %s AND transaction_date >= %s
+            GROUP BY 1
+            ORDER BY 1
+            """,
+            (bid, first_month),
+        )
+        rows = cur.fetchall()
+        by_m = {r["m"]: r for r in rows}
+        labels = []
+        revenue = []
+        expenses = []
+        for i in range(6):
+            m = first_month + relativedelta(months=i)
+            labels.append(f"{m.year}-{m.month:02d}")
+            r = by_m.get(m)
+            revenue.append(int(round(float(r["rev"] or 0))) if r else 0)
+            expenses.append(int(round(float(r["exp"] or 0))) if r else 0)
+
+        if sum(revenue) + sum(expenses) > 0:
+            net_profit = [rv - ev for rv, ev in zip(revenue, expenses)]
+            cash_balance = [int(max(0, rv * 0.2)) for rv in revenue]
+            return jsonify({
+                "labels": labels,
+                "revenue": revenue,
+                "expenses": expenses,
+                "net_profit": net_profit,
+                "cash_balance": cash_balance,
+            })
+
         base_rev = _parse_revenue(business.get('monthly_revenue'))
         labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
-        
-        # Simulating a trend based on business age
         is_new = business.get('business_age') in ['0–6 months', 'Less than 1 year']
         trend = [0.8, 0.9, 1.0, 1.1, 1.2, 1.3] if is_new else [1.0, 1.05, 0.95, 1.1, 1.0, 1.08]
-        
         revenue = [int(base_rev * t) for t in trend]
         expenses = [int(r * 0.7) for r in revenue]
-        
         return jsonify({
             "labels": labels,
             "revenue": revenue,
@@ -552,28 +856,52 @@ def get_financial_overview():
 @app.route('/api/dashboard/revenue-vs-expense', methods=['GET', 'OPTIONS'])
 def get_revenue_vs_expense():
     email = request.args.get('email')
+    period = request.args.get("period") or "this_month"
     conn = get_db_connection()
     try:
         import psycopg2.extras
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         business = get_business_by_user(cur, email)
-        if not business: return jsonify({}), 404
-        
+        if not business:
+            return jsonify({}), 404
+
+        start, end = _dashboard_period_bounds(period)
+        bid = business["business_id"]
+        cur.execute(
+            """
+            SELECT * FROM (
+                SELECT COALESCE(NULLIF(TRIM(category), ''), 'Other') AS cat,
+                       COALESCE(SUM(CASE WHEN type = 'Revenue' THEN amount END), 0) AS rev,
+                       COALESCE(SUM(CASE WHEN type = 'Expense' THEN amount END), 0) AS exp
+                FROM daily_transactions
+                WHERE business_id = %s
+                  AND transaction_date >= %s AND transaction_date <= %s
+                GROUP BY 1
+            ) s
+            ORDER BY rev + exp DESC
+            LIMIT 12
+            """,
+            (bid, start, end),
+        )
+        rows = cur.fetchall()
+        if rows:
+            labels = [r["cat"] for r in rows]
+            revenue = [int(round(float(r["rev"] or 0))) for r in rows]
+            expenses = [int(round(float(r["exp"] or 0))) for r in rows]
+            return jsonify({"labels": labels, "revenue": revenue, "expenses": expenses})
+
         cat = business.get('industry_type', 'Other')
-        # Dynamic categories based on industry
         labels = ["Operations", "Marketing", "Payroll", "Rent", "Other"]
         if cat == 'Restaurant/Food':
             labels = ["Ingredients", "Staff", "Marketing", "Rent", "Utilities"]
         elif cat == 'Manufacturing':
             labels = ["Raw Materials", "Labor", "Energy", "Logistics", "Maintenance"]
-            
         base_rev = _parse_revenue(business.get('monthly_revenue'))
         revenue = [int(base_rev * 0.4), int(base_rev * 0.3), int(base_rev * 0.3)]
         expenses = [int(base_rev * 0.25), int(base_rev * 0.15), int(base_rev * 0.2), int(base_rev * 0.1), int(base_rev * 0.1)]
-        
         return jsonify({
             "labels": labels,
-            "revenue": revenue + [0, 0], # padding for chart
+            "revenue": revenue + [0, 0],
             "expenses": expenses
         })
     except Exception as e:
@@ -583,78 +911,190 @@ def get_revenue_vs_expense():
 
 @app.route("/api/dashboard/sales-trend", methods=["GET", "OPTIONS"])
 def api_sales_trend():
-    """Daily buckets from daily_transactions — last 7 days (web parity)."""
-    cutoff = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+    """Seven daily buckets from the business's latest transaction activity (or last 7 calendar days)."""
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"labels": [], "revenue": [], "expenses": []})
+
+        bid = business["business_id"]
+        cur.execute(
+            """
+            SELECT MAX(transaction_date) AS max_txn_date
+            FROM daily_transactions WHERE business_id = %s
+            """,
+            (bid,),
+        )
+        max_d = cur.fetchone()
+        max_date = max_d["max_txn_date"] if max_d else None
+        today = date.today()
+        end = today
+        if max_date:
+            end = min(today, max_date)
+        start = end - timedelta(days=6)
+
+        cur.execute(
             """
             SELECT transaction_date,
-                   COALESCE(SUM(CASE WHEN type='Revenue' THEN amount END), 0) AS revenue,
-                   COALESCE(SUM(CASE WHEN type='Expense' THEN amount END), 0) AS expenses
+                   COALESCE(SUM(CASE WHEN type = 'Revenue' THEN amount END), 0) AS revenue,
+                   COALESCE(SUM(CASE WHEN type = 'Expense' THEN amount END), 0) AS expenses
             FROM daily_transactions
-            WHERE transaction_date >= %s
+            WHERE business_id = %s
+              AND transaction_date >= %s AND transaction_date <= %s
             GROUP BY transaction_date
             ORDER BY transaction_date
             """,
-            (cutoff,),
+            (bid, start, end),
         )
-        return jsonify(
-            {
-                "labels": [r["transaction_date"].isoformat() for r in rows],
-                "revenue": [float(r["revenue"]) for r in rows],
-                "expenses": [float(r["expenses"]) for r in rows],
-            }
-        )
+        by_day = {r["transaction_date"]: r for r in cur.fetchall()}
+        labels = []
+        rev = []
+        exp = []
+        for i in range(7):
+            d = start + timedelta(days=i)
+            labels.append(d.isoformat())
+            row = by_day.get(d)
+            rev.append(float(row["revenue"]) if row else 0.0)
+            exp.append(float(row["expenses"]) if row else 0.0)
+        return jsonify({"labels": labels, "revenue": rev, "expenses": exp})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/transactions-by-category", methods=["GET", "OPTIONS"])
 def api_transactions_by_category():
-    cutoff = (datetime.utcnow() - timedelta(hours=24)).strftime("%Y-%m-%d")
+    email = request.args.get("email")
+    period = request.args.get("period") or "this_month"
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"labels": [], "data": []})
+        start, end = _dashboard_period_bounds(period)
+        bid = business["business_id"]
+        cur.execute(
             """
-            SELECT category, COUNT(*) as cnt
+            SELECT COALESCE(NULLIF(TRIM(category), ''), 'Other') AS category, COUNT(*) AS cnt
             FROM daily_transactions
-            WHERE transaction_date >= %s
-            GROUP BY category
+            WHERE business_id = %s
+              AND transaction_date >= %s AND transaction_date <= %s
+            GROUP BY 1
             ORDER BY cnt DESC
             """,
-            (cutoff,),
+            (bid, start, end),
         )
+        rows = cur.fetchall()
         return jsonify(
             {
-                "labels": [r["category"] or "Other" for r in rows],
+                "labels": [r["category"] for r in rows],
                 "data": [int(r["cnt"]) for r in rows],
             }
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/alerts-by-severity", methods=["GET", "OPTIONS"])
 def api_alerts_by_severity():
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"labels": [], "data": []})
+        bid = business["business_id"]
+        cur.execute(
             """
             SELECT severity, COUNT(*) AS cnt
             FROM alerts
-            WHERE status = 'Active'
+            WHERE status = 'Active' AND business_id = %s
             GROUP BY severity
-            """
+            """,
+            (bid,),
         )
+        rows = cur.fetchall()
         return jsonify(
             {"labels": [r["severity"] for r in rows], "data": [int(r["cnt"]) for r in rows]}
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/dashboard/alerts-list", methods=["GET", "OPTIONS"])
+def api_alerts_list():
+    """Active alerts for the logged-in user's business (detail view / modal)."""
+    email = request.args.get("email")
+    conn = get_db_connection()
+    try:
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"alerts": []})
+        bid = business["business_id"]
+        cur.execute(
+            """
+            SELECT alert_id, alert_type, severity, message, status, created_at
+            FROM alerts
+            WHERE business_id = %s AND status = 'Active'
+            ORDER BY
+              CASE severity
+                WHEN 'High' THEN 1
+                WHEN 'Medium' THEN 2
+                WHEN 'Low' THEN 3
+                ELSE 4
+              END,
+              created_at DESC
+            """,
+            (bid,),
+        )
+        rows = cur.fetchall()
+        out = []
+        for r in rows:
+            ca = r.get("created_at")
+            out.append(
+                {
+                    "alert_id": int(r["alert_id"]),
+                    "alert_type": r.get("alert_type") or "",
+                    "severity": r.get("severity") or "",
+                    "message": r.get("message") or "",
+                    "status": r.get("status") or "",
+                    "created_at": ca.isoformat() if ca else None,
+                }
+            )
+        return jsonify({"alerts": out})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/health-scores", methods=["GET", "OPTIONS"])
 def api_health_scores():
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"businesses": [], "scores": []})
+        bid = business["business_id"]
+        cur.execute(
             """
             SELECT bhs.overall_score, bhs.cash_score,
                    bhs.profitability_score, bhs.growth_score,
@@ -662,10 +1102,13 @@ def api_health_scores():
                    b.business_name
             FROM business_health_scores bhs
             JOIN businesses b ON b.business_id = bhs.business_id
+            WHERE bhs.business_id = %s
             ORDER BY bhs.calculated_at DESC
             LIMIT 5
-            """
+            """,
+            (bid,),
         )
+        rows = cur.fetchall()
         return jsonify(
             {
                 "businesses": [r["business_name"] for r in rows],
@@ -685,19 +1128,32 @@ def api_health_scores():
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/top-products", methods=["GET", "OPTIONS"])
 def api_top_products():
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"labels": [], "stock": [], "margin": []})
+        bid = business["business_id"]
+        cur.execute(
             """
             SELECT p.product_name, p.stock_quantity, p.selling_price, p.cost_price
             FROM products p
-            ORDER BY p.stock_quantity DESC
+            WHERE p.business_id = %s
+            ORDER BY p.stock_quantity DESC NULLS LAST
             LIMIT 10
-            """
+            """,
+            (bid,),
         )
+        rows = cur.fetchall()
         return jsonify(
             {
                 "labels": [r["product_name"] for r in rows],
@@ -709,18 +1165,31 @@ def api_top_products():
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/employee-stats", methods=["GET", "OPTIONS"])
 def api_employee_stats():
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"labels": [], "counts": [], "avg_salary": []})
+        bid = business["business_id"]
+        cur.execute(
             """
             SELECT status, COUNT(*) AS cnt, COALESCE(AVG(salary),0) AS avg_salary
             FROM employees
+            WHERE business_id = %s
             GROUP BY status
-            """
+            """,
+            (bid,),
         )
+        rows = cur.fetchall()
         return jsonify(
             {
                 "labels": [r["status"] for r in rows],
@@ -730,6 +1199,8 @@ def api_employee_stats():
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/recent-transactions", methods=["GET", "OPTIONS"])
@@ -737,14 +1208,28 @@ def api_recent_transactions():
     limit = request.args.get("limit", 20, type=int)
     search = request.args.get("search", "").strip()
     category = request.args.get("category", "").strip()
+    period = request.args.get("period", "").strip()
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"transactions": []})
+
+        bid = business["business_id"]
         base_sql = """
             SELECT transaction_id, transaction_date, type, category,
                    amount, description
             FROM daily_transactions
-            WHERE 1=1
+            WHERE business_id = %s
         """
-        params = []
+        params = [bid]
+        if period in ("this_month", "last_month", "ytd"):
+            start, end = _dashboard_period_bounds(period)
+            base_sql += " AND transaction_date >= %s AND transaction_date <= %s"
+            params.extend([start, end])
         if search:
             base_sql += " AND (description ILIKE %s OR category ILIKE %s)"
             params.extend([f"%{search}%", f"%{search}%"])
@@ -753,7 +1238,8 @@ def api_recent_transactions():
             params.append(category)
         base_sql += " ORDER BY transaction_date DESC, transaction_id DESC LIMIT %s"
         params.append(limit)
-        rows = execute_read_query_params(base_sql, tuple(params))
+        cur.execute(base_sql, tuple(params))
+        rows = cur.fetchall()
         for r in rows:
             r["amount"] = float(r["amount"] or 0)
             if r.get("transaction_date"):
@@ -761,24 +1247,35 @@ def api_recent_transactions():
         return jsonify({"transactions": rows})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/sales-target", methods=["GET", "OPTIONS"])
 def api_sales_target():
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"current_revenue": 0, "target_revenue": 100000, "percentage": 0})
+        bid = business["business_id"]
+        cur.execute(
             """
             SELECT b.business_name, b.monthly_target_revenue,
-                   COALESCE(SUM(CASE WHEN dt.type='Revenue' THEN dt.amount END), 0) AS current_revenue
+                   COALESCE(SUM(CASE WHEN dt.type = 'Revenue' THEN dt.amount END), 0) AS current_revenue
             FROM businesses b
             LEFT JOIN daily_transactions dt ON dt.business_id = b.business_id
                 AND EXTRACT(MONTH FROM dt.transaction_date) = EXTRACT(MONTH FROM CURRENT_DATE)
                 AND EXTRACT(YEAR FROM dt.transaction_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+            WHERE b.business_id = %s
             GROUP BY b.business_id, b.business_name, b.monthly_target_revenue
-            ORDER BY current_revenue DESC
-            LIMIT 1
-            """
+            """,
+            (bid,),
         )
+        rows = cur.fetchall()
         if rows:
             row = rows[0]
             target = float(row["monthly_target_revenue"] or 100000)
@@ -795,17 +1292,35 @@ def api_sales_target():
         return jsonify({"current_revenue": 0, "target_revenue": 100000, "percentage": 0})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/categories", methods=["GET", "OPTIONS"])
 def api_categories():
+    email = request.args.get("email")
+    conn = get_db_connection()
     try:
-        rows = execute_read_query_params(
-            "SELECT DISTINCT category FROM daily_transactions ORDER BY category"
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        business = get_business_by_user(cur, email)
+        if not business:
+            return jsonify({"categories": []})
+        bid = business["business_id"]
+        cur.execute(
+            """
+            SELECT DISTINCT category FROM daily_transactions
+            WHERE business_id = %s AND category IS NOT NULL AND TRIM(category) <> ''
+            ORDER BY category
+            """,
+            (bid,),
         )
-        return jsonify({"categories": [r["category"] for r in rows if r["category"]]})
+        rows = cur.fetchall()
+        return jsonify({"categories": [r["category"] for r in rows]})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route("/api/dashboard/business-info", methods=["GET", "OPTIONS"])

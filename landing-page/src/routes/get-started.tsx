@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ContentPageWrapper } from "@/components/ContentPageWrapper";
 import { Button } from "@typebot.io/ui/components/Button";
 import { createMetaTags } from "@/lib/createMetaTags";
+import { agentApiBaseUrl, dashboardUrl, signinUrl } from "@/constants";
+import { markUserOnboarded, normalizeEmail } from "@/lib/onboardingState";
 import { useEffect, useState } from "react";
-import { dashboardUrl } from "@/constants";
 import { motion } from "motion/react";
 
 export const Route = createFileRoute("/get-started")({
@@ -25,6 +25,7 @@ const selectClasses =
   "w-full px-4 py-3 bg-[#111] border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-shadow appearance-none cursor-pointer";
 
 function GetStartedPage() {
+  const [sessionReady, setSessionReady] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,22 +46,28 @@ function GetStartedPage() {
     onboarding_notes: "",
   });
 
-  // Load user data from login
   useEffect(() => {
-    const savedUser = localStorage.getItem('profit_pilot_user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setFormData(prev => ({
-          ...prev,
-          full_name: user.full_name || prev.full_name,
-          email: user.email || prev.email,
-          phone: user.phone || prev.phone
-        }));
-      } catch (e) {
-        console.error("Failed to parse saved user data", e);
-      }
+    const savedUser = localStorage.getItem("profit_pilot_user");
+    if (!savedUser) {
+      window.location.replace(signinUrl);
+      return;
     }
+    try {
+      const user = JSON.parse(savedUser) as {
+        full_name?: string;
+        email?: string;
+        phone?: string;
+      };
+      setFormData((prev) => ({
+        ...prev,
+        full_name: user.full_name || prev.full_name,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+      }));
+    } catch (e) {
+      console.error("Failed to parse saved user data", e);
+    }
+    setSessionReady(true);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -84,40 +91,75 @@ function GetStartedPage() {
     setIsSubmitting(true);
     setError(null);
 
+    if (formData.challenges.length === 0) {
+      setError("Please select at least one challenge under Step 3.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const emailNorm = normalizeEmail(formData.email);
+    if (!emailNorm) {
+      setError("A valid work email is required.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const response = await fetch("http://localhost:5000/api/v1/onboarding", {
+      const response = await fetch(`${agentApiBaseUrl}/api/v1/onboarding`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          email: emailNorm,
           biggest_challenge: formData.challenges.join(", "),
         }),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        error?: string;
+        message?: string;
+        is_error?: boolean;
+      };
       if (response.ok) {
-        localStorage.setItem('profit_pilot_onboarded', 'true');
-        const userStr = localStorage.getItem('profit_pilot_user') || '{}';
-        const user = JSON.parse(userStr);
-        localStorage.setItem('profit_pilot_user', JSON.stringify({
-          ...user,
-          full_name: formData.full_name,
-          email: formData.email
-        }));
+        markUserOnboarded(emailNorm);
+        const userStr = localStorage.getItem("profit_pilot_user") || "{}";
+        const user = JSON.parse(userStr) as Record<string, unknown>;
+        localStorage.setItem(
+          "profit_pilot_user",
+          JSON.stringify({
+            ...user,
+            full_name: formData.full_name,
+            email: formData.email.trim(),
+          }),
+        );
         setIsSubmitted(true);
-        setTimeout(() => {
-          window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(formData.email)}`;
-        }, 2000);
       } else {
-        setError(result.error || "Failed to submit form");
+        setError(
+          result.error ||
+            result.message ||
+            "Failed to submit form. Please try again.",
+        );
       }
     } catch (err) {
-      setError("Connection error. Please ensure the backend is running.");
+      setError(
+        `Connection error. Is the backend running at ${agentApiBaseUrl}?`,
+      );
       console.error(err);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (!sessionReady) {
+    return (
+      <main className="dark w-full min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center m-0">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          <p className="text-white/50 text-sm">Loading…</p>
+        </div>
+      </main>
+    );
+  }
 
   if (isSubmitted) {
     return (

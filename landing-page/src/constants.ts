@@ -6,7 +6,18 @@ export const currentBaseUrl = "/";
 export const signinUrl = "/login";
 export const registerUrl = `/login`;
 export const onboardingUrl = `/get-started`;
-export const dashboardUrl = `http://localhost:3001`;
+
+/** Browser: backend Flask (onboarding + agent APIs). Override with VITE_AGENT_API_URL in .env */
+export const agentApiBaseUrl =
+  typeof import.meta !== "undefined" && import.meta.env?.VITE_AGENT_API_URL
+    ? String(import.meta.env.VITE_AGENT_API_URL).replace(/\/$/, "")
+    : "http://localhost:5000";
+
+/** Dashboard Next app URL; query ?user_email= is appended after onboarding. */
+export const dashboardUrl =
+  typeof import.meta !== "undefined" && import.meta.env?.VITE_DASHBOARD_URL
+    ? String(import.meta.env.VITE_DASHBOARD_URL).replace(/\/$/, "")
+    : "http://localhost:3001";
 export const githubRepoUrl = "https://github.com/mohitkumhar/intelligent-business-agent";
 export const linkedInUrl = "/";
 export const discordUrl = "/";
