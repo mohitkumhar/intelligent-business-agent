@@ -187,7 +187,7 @@ const Mobile = React.forwardRef<HTMLElement, Props>(function Mobile(
                   >
                     Go to Dashboard
                   </CtaButtonLink>
-                  <button 
+                  <button
                     onClick={() => {
                       localStorage.removeItem('profit_pilot_user');
                       window.location.href = "/";
@@ -305,9 +305,9 @@ const Desktop = React.forwardRef<
               <CtaButtonLink size="sm" href={dashboardUrl}>
                 Go to dashboard
               </CtaButtonLink>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   localStorage.removeItem('profit_pilot_user');
                   window.location.href = "/";
