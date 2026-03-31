@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ContentPageWrapper } from "@/components/ContentPageWrapper";
-import { WhyTypebotCta } from "@/components/cta/WhyTypebotCta";
 import { BuildingsGradientIcon } from "@/features/about/BuildingsGradientIcon";
 import { HeartGradientIcon } from "@/features/about/HeartGradientIcon";
 import { MessageSquareGradientIcon } from "@/features/about/MessageSquareGradientIcon";
@@ -10,9 +9,9 @@ import { createMetaTags } from "@/lib/createMetaTags";
 export const Route = createFileRoute("/_layout/about")({
   head: () => ({
     meta: createMetaTags({
-      title: "About | Typebot",
+      title: "About | ProfitPilot",
       description:
-        "Typebot empowers businesses to craft personalized, interactive experiences that foster deeper connections with users.",
+        "ProfitPilot empowers small business owners with AI-driven insights to make smarter decisions and grow confidently.",
       imagePath: "/images/default-og.png",
       path: "/about",
     }),
@@ -24,58 +23,57 @@ function RouteComponent() {
   return (
     <ContentPageWrapper>
       <div className="max-w-3xl mx-auto gap-16 flex flex-col">
-        <h1>Nice conversations makes good relations</h1>
+        <h1>Smart decisions build strong businesses</h1>
         <div className="flex flex-col gap-10 font-display text-3xl md:text-justify">
           <p>
-            At Typebot, we believe that{" "}
+            At ProfitPilot, we believe that{" "}
             <span className="group font-medium bg-clip-text text-transparent bg-linear-to-r from-[#c13eaa] to-[#ff491f] to-30%">
               <MessageSquareGradientIcon className="size-6 inline-flex group-hover:motion-preset-seesaw-lg" />{" "}
-              great conversations
+              data-driven conversations
             </span>{" "}
-            build strong relationships.
+            build strong businesses.
           </p>
           <p>
-            Every day, people chat with friends, colleagues, and family on
-            messaging apps because it's natural, engaging, and familiar. <br />
-            We think businesses should tap into this same dynamic because where{" "}
+            Every day, small business owners make critical decisions about
+            pricing, hiring, marketing, and expenses. We think they deserve an{" "}
             <span className="group font-medium bg-clip-text text-transparent bg-linear-to-r from-[#c13eaa] to-[#ff491f] to-20%">
               <HeartGradientIcon className="size-6 inline-flex group-hover:motion-preset-pulse-lg" />{" "}
-              people love to chat
+              AI partner who understands their numbers
             </span>
-            , conversion rates rise.
+            {" "}and warns them before things go wrong.
           </p>
           <p>
-            Most chatbots today are limited to basic customer support, but we
-            know they can be so much more. We see chatbots as tools for{" "}
+            Most business tools today are limited to dashboards and reports, but we
+            know AI can be so much more. We see AI agents as tools for{" "}
             <span className="group font-medium bg-clip-text text-transparent bg-linear-to-r from-[#c13eaa] to-[#ff491f] to-50%">
               <ZapGradientIcon className="size-6 inline-flex group-hover:motion-preset-oscillate-lg" />{" "}
-              meaningful interactions
+              proactive business intelligence
             </span>{" "}
-            that go beyond scripted responses. Our mission is to transform cold,
-            transactional chats into lively conversations that reflect the true
-            voice of your brand.
+            that go beyond static charts. Our mission is to transform cold,
+            spreadsheet-driven analysis into dynamic AI conversations that reflect
+            the true state of your business.
           </p>
           <p>
-            Typebot{" "}
+            ProfitPilot{" "}
             <span className="group font-medium bg-clip-text text-transparent bg-linear-to-r from-[#c13eaa] to-[#ff491f] to-70%">
               <BuildingsGradientIcon className="size-6 inline-flex group-hover:motion-preset-bounce" />{" "}
-              empowers businesses
+              empowers business owners
             </span>{" "}
-            to craft personalized, interactive experiences that foster deeper
-            connections with users.
+            to make confident, data-backed decisions that protect their growth
+            and bottom line.
           </p>
           <p>
-            I'm Baptiste, a software engineer passionate about user experience
-            and design.
+            We are a team of engineers passionate about AI, business intelligence,
+            and making technology accessible to everyone.
           </p>
           <p className="font-bold">
-            That's why I created Typebot—to unlock the full potential of
-            chatbots and make them intuitive, beautiful, and impactful.
+            That's why we created ProfitPilot — to unlock the full potential of
+            AI agents and make business decisions intuitive, safe, and impactful.
           </p>
-          <p>Let's bot!</p>
+          <p>Let's grow! 🚀</p>
         </div>
       </div>
-      <WhyTypebotCta />
     </ContentPageWrapper>
   );
 }
+

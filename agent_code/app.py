@@ -361,11 +361,22 @@ def onboarding():
         cur = conn.cursor()
 
         business_id = str(uuid.uuid4())
+
+        # Map monthly_revenue string to numeric target
+        revenue_map = {
+            "Under ₹50K": 50000,
+            "₹50K–₹2L": 200000,
+            "₹2L–₹10L": 1000000,
+            "₹10L–₹50L": 5000000,
+            "Above ₹50L": 10000000,
+        }
+        monthly_target = revenue_map.get(monthly_revenue, None)
+
         cur.execute(
             """
             INSERT INTO public.businesses (
-                business_id, business_name, industry_type, owner_name
-            ) VALUES (%s, %s, %s, %s)
+                business_id, business_name, industry_type, owner_name, monthly_target_revenue
+            ) VALUES (%s, %s, %s, %s, %s)
             RETURNING business_id
             """,
             (
@@ -373,6 +384,7 @@ def onboarding():
                 business_name,
                 industry_type,
                 full_name,
+                monthly_target,
             ),
         )
 
