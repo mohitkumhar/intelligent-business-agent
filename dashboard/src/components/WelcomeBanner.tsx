@@ -6,7 +6,7 @@ import type { DashboardPeriod } from "@/lib/dashboardPeriod";
 import { ExportIcon } from "./Icons";
 
 export default function WelcomeBanner() {
-  const { period, setPeriod } = useDashboardPeriod();
+  const { period, setPeriod, dataVersion } = useDashboardPeriod();
   const [business, setBusiness] = useState<BusinessInfo | null>(null);
   const [exporting, setExporting] = useState(false);
   const now = new Date();
@@ -19,7 +19,24 @@ export default function WelcomeBanner() {
 
   useEffect(() => {
     api.getBusinessInfo().then(setBusiness).catch(console.error);
-  }, []);
+  }, [dataVersion]);
+
+  useEffect(() => {
+    const name = business?.user_name?.trim();
+    if (!name) return;
+    try {
+      const raw = localStorage.getItem("profit_pilot_user");
+      const u = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      if (u.full_name === name) return;
+      localStorage.setItem(
+        "profit_pilot_user",
+        JSON.stringify({ ...u, full_name: name }),
+      );
+      window.dispatchEvent(new Event("profitpilot-user"));
+    } catch {
+      /* ignore */
+    }
+  }, [business]);
 
   const handleExport = async () => {
     try {
@@ -35,7 +52,7 @@ export default function WelcomeBanner() {
   return (
     <div className="welcome-banner">
       <div className="welcome-text">
-        <h2>Welcome back, {business?.business_name || "Urban Retail Store"}!</h2>
+        <h2>Welcome back, {business?.user_name || business?.business_name || "Guest"}!</h2>
         <p>{dateStr}</p>
       </div>
       <div className="welcome-actions">
@@ -44,7 +61,7 @@ export default function WelcomeBanner() {
             className="filter-dropdown"
             style={{ appearance: "none", paddingRight: "12px" }}
             value={period}
-            onChange={(e) => setPeriod(e.target.value as DashboardPeriod)}
+            onChange={(e: any) => setPeriod(e.target.value as DashboardPeriod)}
             aria-label="Reporting period"
           >
             <option value="this_month">This Month</option>

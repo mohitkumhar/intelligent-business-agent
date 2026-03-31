@@ -1,0 +1,6 @@
+date,type,category,amount,description
+2026-03-31,Revenue,Sales,4500.00,Main Shop sales
+2026-03-30,Revenue,Sales,1250.00,Online order #402
+2026-03-29,Expense,Rent,25000.00,Monthly office rent
+2026-03-28,Expense,Electricity,3500.00,Utility bill
+2026-03-27,Revenue,Services,6000.00,Consulting fee

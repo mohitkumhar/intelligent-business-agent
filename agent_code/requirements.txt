@@ -65,6 +65,7 @@ multidict==6.7.1
 mypy_extensions==1.1.0
 nest-asyncio==1.6.0
 numpy==2.4.2
+openpyxl==3.1.5
 ollama==0.6.1
 openai==2.26.0
 orjson==3.11.7
@@ -116,8 +117,4 @@ Werkzeug==3.1.6
 xxhash==3.6.0
 yarl==1.22.0
 zstandard==0.25.0
-<<<<<<< Updated upstream
-prometheus-client>=0.20
-flask-cors
-=======
->>>>>>> Stashed changes
+

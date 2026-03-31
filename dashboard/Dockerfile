@@ -21,6 +21,10 @@ COPY . .
 ARG AGENT_API_URL=http://backend:5000
 ENV AGENT_API_URL=$AGENT_API_URL
 
+# Inlined into client bundle at build time — landing app port in docker-compose is 5173 (not 3000; Grafana uses 3000).
+ARG NEXT_PUBLIC_LANDING_URL=http://localhost:5173
+ENV NEXT_PUBLIC_LANDING_URL=$NEXT_PUBLIC_LANDING_URL
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.

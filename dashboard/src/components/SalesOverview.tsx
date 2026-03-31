@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { api, SalesTarget } from "@/lib/api";
 import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
+import { useTheme } from "@/context/ThemeContext";
 
-function SemiCircleGauge({ percentage }: { percentage: number }) {
+function SemiCircleGauge({ percentage, isDark }: { percentage: number; isDark: boolean }) {
   const size = 200;
   const cx = size / 2;
   const cy = size / 2 + 10;
@@ -33,12 +34,12 @@ function SemiCircleGauge({ percentage }: { percentage: number }) {
     const y4 = cy + innerR * Math.sin(endRad);
 
     const isFilled = i < filledCount;
-    // Multi-color blue gradient as requested: Dark blue -> Medium blue -> Light blue unfilled
+    // Multi-color blue gradient: Dark blue -> Medium blue -> Unfilled
     const fillColor = isFilled
       ? i < total * 0.4
         ? "#1D4ED8" // Dark blue
         : "#3B82F6" // Medium blue
-      : "#DBEAFE"; // Unfilled light blue
+      : isDark ? "#1E293B" : "#DBEAFE"; // Unfilled state depends on theme
 
     return (
       <path
@@ -61,7 +62,7 @@ function SemiCircleGauge({ percentage }: { percentage: number }) {
           textAnchor="middle"
           fontSize="24"
           fontWeight="700"
-          fill="#0F172A"
+          fill={isDark ? "#FFFFFF" : "#0F172A"}
           style={{ fontFamily: 'Inter, sans-serif' }}
         >
           {percentage.toFixed(1)}%
@@ -72,7 +73,7 @@ function SemiCircleGauge({ percentage }: { percentage: number }) {
           textAnchor="middle"
           fontSize="11"
           fontWeight="500"
-          fill="#64748B"
+          fill={isDark ? "#A1A1AA" : "#64748B"}
           style={{ fontFamily: 'Inter, sans-serif' }}
         >
           Sales Growth
@@ -84,6 +85,8 @@ function SemiCircleGauge({ percentage }: { percentage: number }) {
 
 export default function SalesOverview() {
   const { period } = useDashboardPeriod();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [data, setData] = useState<SalesTarget | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -93,19 +96,19 @@ export default function SalesOverview() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
-  const sales = data?.current_revenue ?? 3884.00;
-  const target = data?.target_revenue ?? 20000.00;
-  const percentage = data?.percentage ?? 70.8;
+  const sales = data?.current_revenue ?? 0;
+  const target = data?.target_revenue ?? 0;
+  const percentage = data?.percentage ?? 0;
   const progressPercent = Math.min((sales / target) * 100, 100);
 
   return (
-    <div className="chart-card flex flex-col h-full">
+    <div className="chart-card flex flex-col h-full" key={dataVersion}>
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-[15px] font-semibold text-slate-900">Sales Overview</h3>
-        <button className="text-slate-400 hover:text-slate-600 transition-colors">
+        <h3 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Sales Overview</h3>
+        <button className="transition-colors" style={{ color: "var(--text-muted)" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="1"></circle>
             <circle cx="19" cy="12" r="1"></circle>
@@ -115,33 +118,37 @@ export default function SalesOverview() {
       </div>
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+        <div className="flex-1 flex items-center justify-center text-sm" style={{ color: "var(--text-muted)" }}>
           Loading metrics...
         </div>
       ) : (
         <div className="flex flex-col flex-1">
           {/* Gauge Section */}
           <div className="flex-1 flex items-center justify-center py-4">
-            <SemiCircleGauge percentage={percentage} />
+            <SemiCircleGauge percentage={percentage} isDark={isDark} />
           </div>
 
           {/* Bottom Section */}
           <div className="mt-auto">
-            <div className="border-t border-slate-100 my-4"></div>
+            <div className="my-4" style={{ borderTop: "1px solid var(--border-color)" }}></div>
             
             <div className="flex justify-between items-end mb-3">
               <div>
-                <div className="text-[11px] font-medium text-slate-500 mb-0.5">Sales</div>
-                <div className="text-base font-bold text-slate-900">${sales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                <div className="text-[11px] font-medium mb-0.5" style={{ color: "var(--text-secondary)" }}>Sales</div>
+                <div className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+                  ${sales.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-[11px] font-medium text-slate-500 mb-0.5">Target</div>
-                <div className="text-base font-bold text-slate-900">${target.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                <div className="text-[11px] font-medium mb-0.5" style={{ color: "var(--text-secondary)" }}>Target</div>
+                <div className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+                  ${target.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </div>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full h-1.5 bg-blue-50 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "var(--progress-bg)" }}>
               <div 
                 className="h-full bg-blue-600 rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${progressPercent}%` }}
