@@ -27,9 +27,6 @@ services:
     build:
       context: ./landing-page
       dockerfile: Dockerfile
-      args:
-        # Set NPM_CONFIG_STRICT_SSL=false in .env if npm fails with TLS / self-signed cert during build
-        NPM_CONFIG_STRICT_SSL: ${NPM_CONFIG_STRICT_SSL:-true}
     container_name: landing-page
     restart: always
     ports:
@@ -70,8 +67,6 @@ services:
       - ./.env
     environment:
       - PROMETHEUS_URL=http://prometheus:9090
-      # Ollama on your Windows/Mac host when not using Groq (Docker cannot use 127.0.0.1:11434)
-      - LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:11434}
     depends_on:
       - db
 

@@ -1,6 +1,7 @@
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Annotated
+from langchain_ollama import ChatOllama
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg_pool import ConnectionPool

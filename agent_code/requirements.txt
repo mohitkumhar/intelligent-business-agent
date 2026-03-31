@@ -44,7 +44,6 @@ langchain-classic==1.0.1
 langchain-community==0.4.1
 langchain-core==1.2.14
 langchain-ollama==1.0.1
-langchain-groq==1.1.2
 langchain-text-splitters==1.1.1
 langgraph==1.0.9
 langgraph-checkpoint==4.0.0

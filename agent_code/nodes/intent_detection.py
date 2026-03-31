@@ -1,10 +1,10 @@
+from langchain_ollama import ChatOllama
 from pydantic import BaseModel, Field
 from typing import Literal, List
 from dotenv import load_dotenv
+import os
 from logger.logger import logger
 from langchain_core.prompts import ChatPromptTemplate
-
-from llm.base_llm import intent_llm
 
 load_dotenv()
 
@@ -12,7 +12,9 @@ class StructureIntentDetectionOutput(BaseModel):
     intent: List[Literal["database_request",'general_information_request', 'greeting_request', 'logs_request', 'metrics_request' ]] = Field(description="The detected intent of the user query")
 
 
-intent_detection_llm_with_structure = intent_llm.with_structured_output(StructureIntentDetectionOutput)
+llm_base_url = os.getenv("LLM_BASE_URL", "http://127.0.0.1:11434/")
+intent_detection_llm = ChatOllama(model="llama3.1:8b", base_url=llm_base_url)
+intent_detection_llm_with_structure = intent_detection_llm.with_structured_output(StructureIntentDetectionOutput)
 
 def detect_intent(text: str):
     """Intent detection node. Uses llm to detect intent of user query"""
