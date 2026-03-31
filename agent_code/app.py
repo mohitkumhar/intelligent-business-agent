@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from db_config import get_db_connection, execute_read_query_params
 from transaction_import import parse_csv_bytes, parse_xlsx_bytes
+from ocr_processor import extract_transactions_from_image
 
 load_dotenv()
 
@@ -522,13 +523,77 @@ def api_import_receipt():
     path = os.path.join(base, f"{uid}{ext}")
     file.save(path)
     logger.info("Receipt upload saved for %s -> %s", email, path)
-    return jsonify(
-        {
-            "success": True,
-            "file_id": uid,
-            "message": "Image received and stored. AI extraction can be wired to this endpoint later.",
-        }
-    ), 201
+
+    # Process AI extraction immediately
+    try:
+        # Re-read raw bytes for OCR or use file path
+        with open(path, "rb") as f:
+            raw_bytes = f.read()
+        
+        rows = extract_transactions_from_image(raw_bytes, file.filename)
+        
+        if not rows:
+            return jsonify({"success": True, "file_id": uid, "message": "Image saved, but no transactions were extracted by AI."}), 201
+            
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT b.business_id FROM public.businesses b
+                JOIN public.users u ON u.business_id = b.business_id
+                WHERE u.email = %s
+                ORDER BY b.created_at DESC NULLS LAST
+                LIMIT 1
+                """,
+                (email,),
+            )
+            r = cur.fetchone()
+            if not r:
+                 return jsonify({"error": "No business found for this email. Complete onboarding first."}), 404
+            
+            business_id = r[0]
+            batch = [(business_id, d, typ, cat, amt, desc) for d, typ, cat, amt, desc in rows]
+            cur.executemany(
+                """
+                INSERT INTO daily_transactions (business_id, transaction_date, type, category, amount, description)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                batch,
+            )
+            conn.commit()
+            n = len(batch)
+            logger.info("AI extracted and imported %d transaction(s) for %s", n, email)
+            return jsonify(
+                {
+                    "success": True,
+                    "file_id": uid,
+                    "imported": n,
+                    "message": f"AI extracted and imported {n} transaction(s) from your handwritten ledger.",
+                }
+            ), 201
+        except Exception as db_err:
+            conn.rollback()
+            logger.error("AI import DB insert failed: %s", db_err, exc_info=True)
+            return jsonify({"error": f"Extracted data but failed to store: {str(db_err)}"}), 500
+        finally:
+            conn.close()
+
+    except ValueError as val_err:
+        # Specifically catch API Key errors or OCR parsing errors
+        logger.warning("AI extraction warning for %s: %s", email, val_err)
+        return jsonify({
+            "success": True, 
+            "file_id": uid, 
+            "message": f"Image saved. (AI Note: {str(val_err)})"
+        }), 201
+    except Exception as e:
+        logger.error("AI extraction failed for %s: %s", email, e, exc_info=True)
+        return jsonify({
+            "success": True, 
+            "file_id": uid, 
+            "message": "Image saved. AI extraction failed, but your data is safe."
+        }), 201
 
 
 # ─────────────────────────────────────────────

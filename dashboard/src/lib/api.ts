@@ -227,7 +227,7 @@ export async function* streamChatSend(
   conversationId: string,
   message: string
 ): AsyncGenerator<ChatSseEvent> {
-  const res = await fetch(`${API_BASE}/api/chat/send`, {
+  const res = await fetch(`${AGENT_API_BASE}/api/chat/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ conversation_id: conversationId, message }),
