@@ -5,11 +5,8 @@ import remarkGfm from "remark-gfm";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import { ChatbotIcon } from "@/components/Icons";
-<<<<<<< Updated upstream
 import { streamChatSend } from "@/lib/api";
-=======
 import MessageRenderer from "@/components/MessageRenderer";
->>>>>>> Stashed changes
 
 /* ─── Types ─── */
 interface Message {
@@ -19,15 +16,6 @@ interface Message {
   timestamp: number;
 }
 
-<<<<<<< Updated upstream
-export default function ChatbotPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [conversationId] = useState(() => crypto.randomUUID());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const assistantAccRef = useRef("");
-=======
 interface Conversation {
   id: string;
   title: string;
@@ -35,7 +23,6 @@ interface Conversation {
   createdAt: number;
   updatedAt: number;
 }
->>>>>>> Stashed changes
 
 interface CompletedNode {
   name: string;
@@ -170,69 +157,6 @@ export default function ChatbotPage() {
     setConversations((prev) => [fresh, ...prev]);
     setActiveId(fresh.id);
     setInput("");
-<<<<<<< Updated upstream
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: userMsg },
-      { role: "assistant", content: "" },
-    ]);
-    setLoading(true);
-    assistantAccRef.current = "";
-
-    const patchAssistant = (text: string) => {
-      setMessages((prev) => {
-        const next = [...prev];
-        const last = next.length - 1;
-        if (last >= 0 && next[last].role === "assistant") {
-          next[last] = { role: "assistant", content: text };
-        }
-        return next;
-      });
-    };
-
-    try {
-      for await (const evt of streamChatSend(conversationId, userMsg)) {
-        if (evt.type === "token" && evt.content) {
-          assistantAccRef.current += evt.content;
-          patchAssistant(assistantAccRef.current);
-        } else if (evt.type === "clarification") {
-          const clar = evt.clarification;
-          const text =
-            typeof clar === "string"
-              ? clar
-              : clar && typeof clar === "object" && clar !== null && "message" in clar
-                ? String((clar as { message?: string }).message ?? "")
-                : "Could you please clarify your question?";
-          assistantAccRef.current = text;
-          patchAssistant(text);
-        } else if (evt.type === "error") {
-          const errText = evt.error ?? "Unknown error";
-          assistantAccRef.current = `⚠️ ${errText}`;
-          patchAssistant(assistantAccRef.current);
-        }
-      }
-
-      if (assistantAccRef.current.trim() === "") {
-        patchAssistant("No response from the agent.");
-      }
-    } catch {
-      setMessages((prev) => {
-        const next = [...prev];
-        const last = next.length - 1;
-        if (last >= 0 && next[last].role === "assistant") {
-          next[last] = {
-            role: "assistant",
-            content:
-              next[last].content.trim() !== ""
-                ? next[last].content
-                : "Error: Could not reach the AI agent. Please try again.",
-          };
-        }
-        return next;
-      });
-    } finally {
-      setLoading(false);
-=======
     setHistoryOpen(false);
     setCompletedNodes([]);
   }, [status.kind]);
@@ -271,7 +195,6 @@ export default function ChatbotPage() {
       }
     } catch (error) {
       alert("Error escalating conversation.");
->>>>>>> Stashed changes
     }
   }, [messages]);
 
@@ -595,90 +518,6 @@ export default function ChatbotPage() {
                   <span className="chat-history-title">Chat History</span>
                   <button className="chat-history-close" onClick={() => setHistoryOpen(false)}>✕</button>
                 </div>
-<<<<<<< Updated upstream
-                <p style={{ fontWeight: 600, fontSize: 16, color: "var(--text-secondary)", marginBottom: 8 }}>
-                  Hello! I&apos;m your AI Business Agent.
-                </p>
-                <p>Ask me anything about your business data.</p>
-              </div>
-            )}
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: "70%",
-                    padding: "12px 18px",
-                    borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                    background: msg.role === "user" ? "var(--accent-blue)" : "var(--bg-card)",
-                    color: msg.role === "user" ? "white" : "var(--text-primary)",
-                    border: msg.role === "user" ? "none" : "1px solid var(--border-color)",
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    whiteSpace: "pre-wrap",
-                  }}
-                >
-                  {msg.role === "assistant" && msg.content === "" ? (
-                    <span style={{ color: "var(--text-muted)" }}>Thinking…</span>
-                  ) : (
-                    msg.content
-                  )}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div style={{
-            padding: "16px 32px",
-            borderTop: "1px solid var(--border-color)",
-            background: "var(--bg-card)",
-            display: "flex",
-            gap: 12,
-          }}>
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: "12px 18px",
-                border: "1px solid var(--border-color)",
-                borderRadius: "var(--radius-sm)",
-                fontSize: 14,
-                fontFamily: "Inter, sans-serif",
-                outline: "none",
-                background: "var(--bg-primary)",
-              }}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={loading || !input.trim()}
-              style={{
-                padding: "12px 24px",
-                background: loading ? "#9CA3AF" : "var(--accent-blue)",
-                color: "white",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: loading ? "not-allowed" : "pointer",
-                fontFamily: "Inter, sans-serif",
-                transition: "all 0.2s",
-              }}
-            >
-              Send
-            </button>
-=======
                 <div className="chat-history-list">
                   {conversations.map((conv) => (
                     <div key={conv.id} className={`chat-history-item ${conv.id === activeId ? "active" : ""}`} onClick={() => switchChat(conv.id)}>
@@ -855,7 +694,6 @@ export default function ChatbotPage() {
             ) : (
               <button id="chat-send-btn" onClick={sendMessage} disabled={!input.trim()} className="chat-btn send-btn">Send</button>
             )}
->>>>>>> Stashed changes
           </div>
         </div>
       </div>
