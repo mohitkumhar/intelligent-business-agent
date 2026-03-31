@@ -3,12 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, SalesTrend as SalesTrendData } from "@/lib/api";
 import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
+import { useTheme } from "@/context/ThemeContext";
 import { LineChartIcon } from "./Icons";
 
 Chart.register(...registerables);
 
 export default function SalesTrend() {
   const { period } = useDashboardPeriod();
+  const { theme } = useTheme();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<SalesTrendData | null>(null);
@@ -20,7 +22,7 @@ export default function SalesTrend() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;
@@ -28,6 +30,12 @@ export default function SalesTrend() {
 
     const ctx = chartRef.current.getContext("2d");
     if (!ctx) return;
+
+    const isDark = theme === "dark";
+    const textColor = isDark ? "#94A3B8" : "#64748B";
+    const gridColor = isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)";
+    const tooltipBg = isDark ? "#1E293B" : "#0F172A";
+    const pointBorder = isDark ? "#111827" : "#FFFFFF";
 
     const gradient = ctx.createLinearGradient(0, 0, 0, 260);
     gradient.addColorStop(0, "rgba(59, 130, 246, 0.25)");
@@ -47,7 +55,7 @@ export default function SalesTrend() {
             tension: 0.4,
             pointRadius: 4,
             pointBackgroundColor: "#3B82F6",
-            pointBorderColor: "#FFFFFF",
+            pointBorderColor: pointBorder,
             pointBorderWidth: 2,
             borderWidth: 2.5,
           },
@@ -60,7 +68,7 @@ export default function SalesTrend() {
             tension: 0.4,
             pointRadius: 4,
             pointBackgroundColor: "#EF4444",
-            pointBorderColor: "#FFFFFF",
+            pointBorderColor: pointBorder,
             pointBorderWidth: 2,
             borderWidth: 2,
             borderDash: [5, 5],
@@ -75,10 +83,10 @@ export default function SalesTrend() {
             display: true,
             position: "top",
             align: "end",
-            labels: { font: { family: "Inter", size: 11 }, boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: "circle", padding: 16, color: "#64748B" },
+            labels: { font: { family: "Inter", size: 11 }, boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: "circle", padding: 16, color: textColor },
           },
           tooltip: {
-            backgroundColor: "#1E293B",
+            backgroundColor: tooltipBg,
             titleFont: { family: "Inter", size: 12 },
             bodyFont: { family: "Inter", size: 11 },
             padding: 12,
@@ -87,17 +95,17 @@ export default function SalesTrend() {
           },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { family: "Inter", size: 11 }, color: "#94A3B8" }, border: { display: false } },
-          y: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { font: { family: "Inter", size: 11 }, color: "#94A3B8", callback(v) { const n = Number(v); return n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(v); } }, border: { display: false } },
+          x: { grid: { display: false }, ticks: { font: { family: "Inter", size: 11 }, color: textColor }, border: { display: false } },
+          y: { grid: { color: gridColor }, ticks: { font: { family: "Inter", size: 11 }, color: textColor, callback(v) { const n = Number(v); return n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(v); } }, border: { display: false } },
         },
       },
     });
 
     return () => { chartInstance.current?.destroy(); };
-  }, [data]);
+  }, [data, theme]);
 
   return (
-    <div className="chart-card">
+    <div className="chart-card" key={dataVersion}>
       <div className="chart-header">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <LineChartIcon size={18} color="var(--accent-blue)" />

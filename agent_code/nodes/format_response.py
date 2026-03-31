@@ -64,11 +64,38 @@ def format_response(intent, result, auth_meta=None, intent_meta=None):
 
 def format_response_stream(intent, result, auth_meta=None, intent_meta=None):
     """Streaming version of format_response."""
-    raw_text = _serialize(result)
+    
+    # Check if the intent is a greeting (intent is now a dict: {'intent': ['greeting_request']})
+    is_greeting = False
+    if isinstance(intent, dict) and "intent" in intent:
+        if "greeting_request" in intent["intent"] or "greeting" in intent["intent"]:
+            is_greeting = True
+    elif isinstance(intent, str) and ("greeting" in intent.lower()):
+        is_greeting = True
 
-    if intent == "greeting":
-        yield raw_text
+    # For general/greeting graphs, the actual text is in 'user_query_output'
+    if is_greeting:
+        if isinstance(result, dict) and "user_query_output" in result:
+            yield str(result["user_query_output"])
+        elif isinstance(result, str):
+            yield result
+        else:
+            yield _serialize(result)
         return
+
+    # If it's a general information request, we also want to just return the 
+    # AI's answer directly rather than reformatting it into a heavy business table.
+    is_general = False
+    if isinstance(intent, dict) and "intent" in intent:
+        if "general_information_request" in intent["intent"]:
+            is_general = True
+            
+    if is_general:
+        if isinstance(result, dict) and "user_query_output" in result:
+            yield str(result["user_query_output"])
+            return
+
+    raw_text = _serialize(result)
 
     prompt = (
         "You are a professional business-intelligence assistant.\n"
@@ -86,6 +113,7 @@ def format_response_stream(intent, result, auth_meta=None, intent_meta=None):
         "well-structured paragraphs with bullet points where helpful.\n"
         "- For **errors**: explain the issue in friendly language and suggest "
         "what the user can do next.\n"
+        "- If the Raw Data explicitly says 'No records found' or 'No data available', simply apologize and state that no data was found, without rendering empty tables or empty trend headers.\n"
         "- NEVER expose internal details like SQL queries, route names, or "
         "system internals.\n"
         "- Keep the tone professional yet approachable.\n\n"

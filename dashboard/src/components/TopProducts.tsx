@@ -2,11 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, TopProducts as TopProductsData } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import { PackageIcon } from "./Icons";
 
 Chart.register(...registerables);
 
 export default function TopProducts() {
+  const { dataVersion } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<TopProductsData | null>(null);
@@ -17,7 +19,7 @@ export default function TopProducts() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [dataVersion]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;

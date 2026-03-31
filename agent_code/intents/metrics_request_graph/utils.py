@@ -300,11 +300,23 @@ def format_metrics_response(state: MetricsRequestGraphState, config: RunnableCon
 
     analysis_raw = state.get("metrics_analysis", "{}")
     user_query = state["user_query"]
+    has_results = state.get("has_results", False)
 
     try:
         analysis = json.loads(analysis_raw)
     except json.JSONDecodeError:
         analysis = {"summary": analysis_raw}
+
+    # If no data matched, just output a simple polite text
+    if not has_results:
+        summary = analysis.get("summary", "No metric data matched your query.")
+        recs = "\\n- ".join(analysis.get("recommended_actions", []))
+        if recs:
+            summary += f"\\n\\n**Suggestions**:\\n- {recs}"
+        return {
+            "formatted_response": summary,
+            "messages": [{"role": "assistant", "content": summary}],
+        }
 
     prompt = f"""You are a professional DevOps assistant.
 

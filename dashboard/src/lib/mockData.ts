@@ -9,7 +9,9 @@ import type {
   HealthScores,
   TopProducts,
   EmployeeStats,
+  Forecast,
 } from "./api";
+
 
 export const mockSummary: DashboardSummary = {
   total_revenue: 284500,
@@ -17,6 +19,8 @@ export const mockSummary: DashboardSummary = {
   net_profit: 142200,
   total_transactions: 2847,
   active_alerts: 12,
+  revenue_change: 12.5,
+  expenses_change: 8.2,
 };
 
 export const mockFinancialOverview: FinancialOverview = {
@@ -69,8 +73,8 @@ export const mockSalesTrend: SalesTrend = {
 };
 
 export const mockAlertsBySeverity: AlertsBySeverity = {
-  labels: ["Critical", "High", "Medium", "Low", "Info"],
-  data: [2, 3, 4, 1, 2],
+  labels: ["Critical", "Warning", "Info"],
+  data: [1, 1, 1],
 };
 
 export const mockHealthScores: HealthScores = {
@@ -99,3 +103,23 @@ export const mockEmployeeStats: EmployeeStats = {
   counts: [45, 28, 16, 22, 8, 12],
   avg_salary: [95000, 72000, 68000, 55000, 65000, 78000],
 };
+
+export const mockForecast: Forecast = {
+  historical: Array.from({ length: 60 }, (_, i) => ({
+    date: new Date(Date.now() - (60 - i) * 86400000).toISOString().split("T")[0],
+    actual: 5000 + Math.random() * 2000,
+  })),
+  forecast: Array.from({ length: 30 }, (_, i) => {
+    const base = 6500 + i * 50;
+    return {
+      date: new Date(Date.now() + i * 86400000).toISOString().split("T")[0],
+      predicted: base,
+      lower_bound: base * 0.9,
+      upper_bound: base * 1.1,
+    };
+  }),
+  trend_direction: "up",
+  trend_percent: 12.5,
+  insight: "Your revenue is projected to grow by 12.5% over the next month, driven by strong seasonal trends in product sales. Consider increasing inventory for top-performing items.",
+};
+

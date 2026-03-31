@@ -1,0 +1,334 @@
+{
+  "../../../../../../../~start/default-client-entry.tsx": {
+    "file": "assets/main-BZlydRtl.js",
+    "name": "main",
+    "src": "../../../../../../../~start/default-client-entry.tsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/routes/login.tsx?tsr-split=component",
+      "src/routes/get-started.tsx?tsr-split=component",
+      "src/routes/_layout.tsx?tsr-split=component",
+      "src/routes/index.tsx?tsr-split=component",
+      "src/routes/_layout/about.tsx?tsr-split=component",
+      "src/routes/_layout/$slug.tsx?tsr-split=component"
+    ],
+    "assets": [
+      "assets/magic-background-desktop-CCl-eExN.png",
+      "assets/magic-background-CVmTe6iJ.png",
+      "assets/globals-tCoBtOpA.css",
+      "assets/code-snippet-Detv4kzj.css"
+    ]
+  },
+  "C:/Users/madha/OneDrive/Desktop/nitj/intelligent-business-agent/landing-page/src/assets/code-snippet.css": {
+    "file": "assets/code-snippet-Detv4kzj.css",
+    "src": "C:/Users/madha/OneDrive/Desktop/nitj/intelligent-business-agent/landing-page/src/assets/code-snippet.css"
+  },
+  "C:/Users/madha/OneDrive/Desktop/nitj/intelligent-business-agent/landing-page/src/assets/globals.css": {
+    "file": "assets/globals-tCoBtOpA.css",
+    "src": "C:/Users/madha/OneDrive/Desktop/nitj/intelligent-business-agent/landing-page/src/assets/globals.css"
+  },
+  "_ContentPageWrapper-CuLV9b2F.js": {
+    "file": "assets/ContentPageWrapper-CuLV9b2F.js",
+    "name": "ContentPageWrapper",
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "_PlusSignIcon-F9o2Zh79.js": {
+    "file": "assets/PlusSignIcon-F9o2Zh79.js",
+    "name": "PlusSignIcon",
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx"
+    ],
+    "assets": [
+      "assets/magic-wand-BPBJiLLx.png"
+    ]
+  },
+  "_TopBar-Ce3zZteX.js": {
+    "file": "assets/TopBar-Ce3zZteX.js",
+    "name": "TopBar",
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "_onboardingState-B8r1hepq.js": {
+    "file": "assets/onboardingState-B8r1hepq.js",
+    "name": "onboardingState"
+  },
+  "src/assets/magicBackgrounds/magic-background-desktop.png": {
+    "file": "assets/magic-background-desktop-CCl-eExN.png",
+    "src": "src/assets/magicBackgrounds/magic-background-desktop.png"
+  },
+  "src/assets/magicBackgrounds/magic-background.png": {
+    "file": "assets/magic-background-CVmTe6iJ.png",
+    "src": "src/assets/magicBackgrounds/magic-background.png"
+  },
+  "src/components/cta/assets/3d-group.png": {
+    "file": "assets/3d-group-DoBFokgg.png",
+    "src": "src/components/cta/assets/3d-group.png"
+  },
+  "src/components/cta/assets/magic-wand.png": {
+    "file": "assets/magic-wand-BPBJiLLx.png",
+    "src": "src/components/cta/assets/magic-wand.png"
+  },
+  "src/features/homepage/all-features/assets/0.png": {
+    "file": "assets/0-DYI4FFdv.png",
+    "src": "src/features/homepage/all-features/assets/0.png"
+  },
+  "src/features/homepage/all-features/assets/1.png": {
+    "file": "assets/1-B54oS6T5.png",
+    "src": "src/features/homepage/all-features/assets/1.png"
+  },
+  "src/features/homepage/all-features/assets/2.png": {
+    "file": "assets/2-eHlFQLF3.png",
+    "src": "src/features/homepage/all-features/assets/2.png"
+  },
+  "src/features/homepage/all-features/assets/3.png": {
+    "file": "assets/3-BSzbUA2_.png",
+    "src": "src/features/homepage/all-features/assets/3.png"
+  },
+  "src/features/homepage/all-features/assets/4.png": {
+    "file": "assets/4-BNQTILpL.png",
+    "src": "src/features/homepage/all-features/assets/4.png"
+  },
+  "src/features/homepage/all-features/assets/5.png": {
+    "file": "assets/5-B19jkziC.png",
+    "src": "src/features/homepage/all-features/assets/5.png"
+  },
+  "src/features/homepage/departments/assets/marketing.png": {
+    "file": "assets/marketing-Cxn4JV26.png",
+    "src": "src/features/homepage/departments/assets/marketing.png"
+  },
+  "src/features/homepage/departments/assets/product.png": {
+    "file": "assets/product-C5zzg_GO.png",
+    "src": "src/features/homepage/departments/assets/product.png"
+  },
+  "src/features/homepage/departments/assets/sales.png": {
+    "file": "assets/sales-BVDL7cE5.png",
+    "src": "src/features/homepage/departments/assets/sales.png"
+  },
+  "src/features/homepage/get-started/assets/editor-mockup.png": {
+    "file": "assets/editor-mockup-D0XcTmuU.png",
+    "src": "src/features/homepage/get-started/assets/editor-mockup.png"
+  },
+  "src/features/homepage/get-started/assets/publish-click.png": {
+    "file": "assets/publish-click-Bf7wLjej.png",
+    "src": "src/features/homepage/get-started/assets/publish-click.png"
+  },
+  "src/features/homepage/get-started/assets/signup-button.png": {
+    "file": "assets/signup-button-D_uNKn5S.png",
+    "src": "src/features/homepage/get-started/assets/signup-button.png"
+  },
+  "src/features/homepage/main-features/assets/deploy.mp4": {
+    "file": "assets/deploy-CZ50ItOt.mp4",
+    "src": "src/features/homepage/main-features/assets/deploy.mp4"
+  },
+  "src/features/homepage/main-features/assets/drag-drop.mp4": {
+    "file": "assets/drag-drop-MpiYrqEo.mp4",
+    "src": "src/features/homepage/main-features/assets/drag-drop.mp4"
+  },
+  "src/features/homepage/main-features/assets/real-time-result.mp4": {
+    "file": "assets/real-time-result-BkmfNAzr.mp4",
+    "src": "src/features/homepage/main-features/assets/real-time-result.mp4"
+  },
+  "src/features/homepage/product-principles/assets/3d-button.png": {
+    "file": "assets/3d-button-Dj4AxYUJ.png",
+    "src": "src/features/homepage/product-principles/assets/3d-button.png"
+  },
+  "src/features/homepage/testimonials/assets/anish.jpeg": {
+    "file": "assets/anish-DNrulLhx.jpeg",
+    "src": "src/features/homepage/testimonials/assets/anish.jpeg"
+  },
+  "src/features/homepage/testimonials/assets/barretta.jpeg": {
+    "file": "assets/barretta-DtXfVnO1.jpeg",
+    "src": "src/features/homepage/testimonials/assets/barretta.jpeg"
+  },
+  "src/features/homepage/testimonials/assets/invictuz.png": {
+    "file": "assets/invictuz-B1hw_YdC.png",
+    "src": "src/features/homepage/testimonials/assets/invictuz.png"
+  },
+  "src/features/homepage/testimonials/assets/joshua.jpg": {
+    "file": "assets/joshua-zXNzysXz.jpg",
+    "src": "src/features/homepage/testimonials/assets/joshua.jpg"
+  },
+  "src/features/homepage/testimonials/assets/julien.jpeg": {
+    "file": "assets/julien-DmT_fhK8.jpeg",
+    "src": "src/features/homepage/testimonials/assets/julien.jpeg"
+  },
+  "src/features/homepage/testimonials/assets/kurnia.jpeg": {
+    "file": "assets/kurnia-C8dDlURd.jpeg",
+    "src": "src/features/homepage/testimonials/assets/kurnia.jpeg"
+  },
+  "src/features/homepage/testimonials/assets/laszlo.jpeg": {
+    "file": "assets/laszlo-DUTJc4X9.jpeg",
+    "src": "src/features/homepage/testimonials/assets/laszlo.jpeg"
+  },
+  "src/features/homepage/testimonials/assets/lucas.png": {
+    "file": "assets/lucas-CrrgoKN8.png",
+    "src": "src/features/homepage/testimonials/assets/lucas.png"
+  },
+  "src/features/homepage/testimonials/assets/nicolai.jpg": {
+    "file": "assets/nicolai-cdLZG4RO.jpg",
+    "src": "src/features/homepage/testimonials/assets/nicolai.jpg"
+  },
+  "src/features/homepage/testimonials/assets/oscar.jpeg": {
+    "file": "assets/oscar-BWCNOw-u.jpeg",
+    "src": "src/features/homepage/testimonials/assets/oscar.jpeg"
+  },
+  "src/features/homepage/testimonials/assets/steve.jpg": {
+    "file": "assets/steve-Dy6sftAD.jpg",
+    "src": "src/features/homepage/testimonials/assets/steve.jpg"
+  },
+  "src/features/homepage/testimonials/assets/theo.jpeg": {
+    "file": "assets/theo-7g6raUJG.jpeg",
+    "src": "src/features/homepage/testimonials/assets/theo.jpeg"
+  },
+  "src/features/homepage/use-cases/assets/marketing-bot.png": {
+    "file": "assets/marketing-bot-BjGoM9pe.png",
+    "src": "src/features/homepage/use-cases/assets/marketing-bot.png"
+  },
+  "src/features/homepage/use-cases/assets/marketing-builder.png": {
+    "file": "assets/marketing-builder-DcC209pl.png",
+    "src": "src/features/homepage/use-cases/assets/marketing-builder.png"
+  },
+  "src/features/homepage/use-cases/assets/sales-bot.png": {
+    "file": "assets/sales-bot-BK4v7N5Z.png",
+    "src": "src/features/homepage/use-cases/assets/sales-bot.png"
+  },
+  "src/features/homepage/use-cases/assets/sales-builder.png": {
+    "file": "assets/sales-builder-5ES6o__b.png",
+    "src": "src/features/homepage/use-cases/assets/sales-builder.png"
+  },
+  "src/features/homepage/use-cases/assets/support-bot.png": {
+    "file": "assets/support-bot-i1ITp-Zs.png",
+    "src": "src/features/homepage/use-cases/assets/support-bot.png"
+  },
+  "src/features/homepage/use-cases/assets/support-builder.png": {
+    "file": "assets/support-builder-bKhdQgHX.png",
+    "src": "src/features/homepage/use-cases/assets/support-builder.png"
+  },
+  "src/lib/packages/react/index.ts": {
+    "file": "assets/index-kdkZGkD3.js",
+    "name": "index",
+    "src": "src/lib/packages/react/index.ts",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx"
+    ],
+    "dynamicImports": [
+      "src/lib/packages/react/web.ts",
+      "src/lib/packages/react/web.ts",
+      "src/lib/packages/react/web.ts"
+    ]
+  },
+  "src/lib/packages/react/web.ts": {
+    "file": "assets/web-BmNnMzb6.js",
+    "name": "web",
+    "src": "src/lib/packages/react/web.ts",
+    "isDynamicEntry": true
+  },
+  "src/routes/_layout.tsx?tsr-split=component": {
+    "file": "assets/_layout-C4ylN9bx.js",
+    "name": "_layout",
+    "src": "src/routes/_layout.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx",
+      "_TopBar-Ce3zZteX.js"
+    ]
+  },
+  "src/routes/_layout/$slug.tsx?tsr-split=component": {
+    "file": "assets/_slug-BIhFCSmK.js",
+    "name": "_slug",
+    "src": "src/routes/_layout/$slug.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx",
+      "_ContentPageWrapper-CuLV9b2F.js",
+      "_PlusSignIcon-F9o2Zh79.js"
+    ],
+    "dynamicImports": [
+      "src/lib/packages/react/index.ts"
+    ]
+  },
+  "src/routes/_layout/about.tsx?tsr-split=component": {
+    "file": "assets/about-DV1iBvkM.js",
+    "name": "about",
+    "src": "src/routes/_layout/about.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx",
+      "_ContentPageWrapper-CuLV9b2F.js"
+    ],
+    "assets": [
+      "assets/3d-group-DoBFokgg.png"
+    ]
+  },
+  "src/routes/get-started.tsx?tsr-split=component": {
+    "file": "assets/get-started-CQkM1n2F.js",
+    "name": "get-started",
+    "src": "src/routes/get-started.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx",
+      "_onboardingState-B8r1hepq.js"
+    ]
+  },
+  "src/routes/index.tsx?tsr-split=component": {
+    "file": "assets/index-CXCse6mQ.js",
+    "name": "index",
+    "src": "src/routes/index.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx",
+      "_PlusSignIcon-F9o2Zh79.js",
+      "_TopBar-Ce3zZteX.js"
+    ],
+    "assets": [
+      "assets/0-DYI4FFdv.png",
+      "assets/1-B54oS6T5.png",
+      "assets/2-eHlFQLF3.png",
+      "assets/3-BSzbUA2_.png",
+      "assets/4-BNQTILpL.png",
+      "assets/5-B19jkziC.png",
+      "assets/anish-DNrulLhx.jpeg",
+      "assets/barretta-DtXfVnO1.jpeg",
+      "assets/joshua-zXNzysXz.jpg",
+      "assets/kurnia-C8dDlURd.jpeg",
+      "assets/laszlo-DUTJc4X9.jpeg",
+      "assets/lucas-CrrgoKN8.png",
+      "assets/nicolai-cdLZG4RO.jpg",
+      "assets/marketing-Cxn4JV26.png",
+      "assets/product-C5zzg_GO.png",
+      "assets/sales-BVDL7cE5.png",
+      "assets/editor-mockup-D0XcTmuU.png",
+      "assets/publish-click-Bf7wLjej.png",
+      "assets/signup-button-D_uNKn5S.png",
+      "assets/deploy-CZ50ItOt.mp4",
+      "assets/drag-drop-MpiYrqEo.mp4",
+      "assets/real-time-result-BkmfNAzr.mp4",
+      "assets/3d-button-Dj4AxYUJ.png",
+      "assets/invictuz-B1hw_YdC.png",
+      "assets/julien-DmT_fhK8.jpeg",
+      "assets/oscar-BWCNOw-u.jpeg",
+      "assets/steve-Dy6sftAD.jpg",
+      "assets/theo-7g6raUJG.jpeg",
+      "assets/marketing-bot-BjGoM9pe.png",
+      "assets/marketing-builder-DcC209pl.png",
+      "assets/sales-bot-BK4v7N5Z.png",
+      "assets/sales-builder-5ES6o__b.png",
+      "assets/support-bot-i1ITp-Zs.png",
+      "assets/support-builder-bKhdQgHX.png"
+    ]
+  },
+  "src/routes/login.tsx?tsr-split=component": {
+    "file": "assets/login-DvA9tsn4.js",
+    "name": "login",
+    "src": "src/routes/login.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../../../~start/default-client-entry.tsx",
+      "_onboardingState-B8r1hepq.js"
+    ]
+  }
+}

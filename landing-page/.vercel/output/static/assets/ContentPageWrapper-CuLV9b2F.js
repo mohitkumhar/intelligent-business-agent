@@ -1,0 +1,1 @@
+import{j as p,e as a}from"./main-BZlydRtl.js";const x=({children:t,className:e})=>p.jsx("section",{className:a("flex flex-col max-w-7xl mx-auto gap-12 pt-32 md:pt-20 w-full pb-20 md:pb-32 px-4",e),children:t});export{x as C};

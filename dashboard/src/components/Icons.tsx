@@ -75,10 +75,18 @@ export const ReceiptIcon = ({ size = 20, color = "currentColor", className }: Ic
 
 export const TrendingUpIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-    <polyline points="16 7 22 7 22 13" />
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
   </svg>
 );
+
+export const TrendingDownIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+    <polyline points="17 18 23 18 23 12" />
+  </svg>
+);
+
 
 export const ArrowsRepeatIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -197,5 +205,21 @@ export const LineChartIcon = ({ size = 20, color = "currentColor", className }: 
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M3 3v18h18" />
     <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
+  </svg>
+);
+
+export const FileUpIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="12" y1="18" x2="12" y2="12" />
+    <polyline points="9 15 12 12 15 15" />
+  </svg>
+);
+
+export const CameraIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    <circle cx="12" cy="13" r="4" />
   </svg>
 );

@@ -1,51 +1,22 @@
-import type { DashboardPeriod } from "./dashboardPeriod";
-import {
-  mockSummary,
-  mockFinancialOverview,
-  mockSalesTarget,
-  mockTransactions,
-  mockCategories,
-  mockRevenueVsExpense,
-  mockSalesTrend,
-  mockAlertsBySeverity,
-  mockHealthScores,
-  mockTopProducts,
-  mockEmployeeStats,
-} from "./mockData";
-import {
-  filterTransactionsByPeriod,
-  mockSummaryForPeriod,
-  mockRevenueVsExpenseForPeriod,
-  mockSalesTrendForPeriod,
-  mockFinancialOverviewForPeriod,
-  mockSalesTargetForPeriod,
-  mockAlertsForPeriod,
-} from "./mockPeriod";
-import { getPeriodBounds, periodLabel } from "./dashboardPeriod";
+"use client";
 
-const API_BASE = "";
+import { AGENT_API_BASE } from "./publicUrls";
 
+/**
+ * Common Types for ProfitPilot API
+ */
 export interface DashboardSummary {
   total_revenue: number;
   total_expenses: number;
   net_profit: number;
   total_transactions: number;
   active_alerts: number;
-}
-
-export interface FinancialOverview {
-  labels: string[];
-  revenue: number[];
-  expenses: number[];
-  net_profit: number[];
-  cash_balance: number[];
-}
-
-export interface SalesTarget {
-  business_name?: string;
-  current_revenue: number;
-  target_revenue: number;
-  percentage: number;
+  alert_highest_severity?: string | null;
+  // Growth percentages (Kushal-dev logic)
+  revenue_change: number;
+  expenses_change: number;
+  net_profit_change: number;
+  transactions_change: number;
 }
 
 export interface Transaction {
@@ -57,46 +28,12 @@ export interface Transaction {
   description: string;
 }
 
-export interface RevenueVsExpense {
-  labels: string[];
-  revenue: number[];
-  expenses: number[];
-}
-
-export interface SalesTrend {
-  labels: string[];
-  revenue: number[];
-  expenses: number[];
-}
-
-export interface AlertsBySeverity {
-  labels: string[];
-  data: number[];
-}
-
-export interface HealthScores {
-  businesses: string[];
-  scores: {
-    name: string;
-    overall: number;
-    cash: number;
-    profitability: number;
-    growth: number;
-    cost_control: number;
-    risk: number;
-  }[];
-}
-
-export interface TopProducts {
-  labels: string[];
-  stock: number[];
-  margin: number[];
-}
-
-export interface EmployeeStats {
-  labels: string[];
-  counts: number[];
-  avg_salary: number[];
+export interface Forecast {
+  historical: { date: string; actual: number }[];
+  forecast: { date: string; predicted: number; lower_bound: number; upper_bound: number }[];
+  trend_direction: "up" | "down" | "stable";
+  trend_percent: number;
+  insight: string;
 }
 
 export interface BusinessInfo {
@@ -104,198 +41,140 @@ export interface BusinessInfo {
   business_name: string;
   industry_type: string;
   owner_name: string;
-  city: string;
-  business_age: string;
-  employees_range: string;
-  biggest_challenge: string;
-  finance_tracking_method: string;
-  onboarding_notes?: string;
+  city?: string;
+  business_age?: string;
+  employees_range?: string;
+  monthly_revenue?: string;
+  biggest_challenge?: string;
+  finance_tracking_method?: string;
+  user_name?: string;
+  user_email?: string;
 }
 
-function withPeriod(url: string, period?: DashboardPeriod): string {
-  if (!period) return url;
-  const sep = url.includes("?") ? "&" : "?";
-  return `${url}${sep}period=${period}`;
-}
+// Interfaces for Charts (Kushal-dev)
+export interface RevenueVsExpense { labels: string[]; revenue: number[]; expenses: number[]; }
+export interface SalesTrend { labels: string[]; revenue: number[]; expenses: number[]; }
+export interface FinancialOverview { labels: string[]; revenue: number[]; expenses: number[]; net_profit: number[]; cash_balance: number[]; }
+export interface AlertsBySeverity { labels: string[]; data: number[]; }
+export interface TopProducts { labels: string[]; stock: number[]; margin: number[]; }
+export interface EmployeeStats { labels: string[]; counts: number[]; avg_salary: number[]; }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json();
-}
-
-async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
-  try {
-    return await fetchJson<T>(url);
-  } catch {
-    console.warn(`[API] ${url} unavailable — using mock data`);
-    return fallback;
+// --- Auth & Email Sync Logic (From Testsparkhack) ---
+function getStoredUserEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailParam = urlParams.get("user_email");
+  if (emailParam) {
+    try {
+      const existing = JSON.parse(localStorage.getItem("profit_pilot_user") || "{}");
+      if (existing.email !== emailParam) {
+        localStorage.setItem("profit_pilot_user", JSON.stringify({ ...existing, email: emailParam }));
+      }
+    } catch {
+      localStorage.setItem("profit_pilot_user", JSON.stringify({ email: emailParam }));
+    }
+    return emailParam;
   }
+  try {
+    return JSON.parse(localStorage.getItem("profit_pilot_user") || "{}").email || null;
+  } catch { return null; }
 }
 
-function escapeCsvCell(s: string): string {
-  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
+function appendUserEmail(url: string): string {
+  const email = getStoredUserEmail();
+  if (!email) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}email=${encodeURIComponent(email)}`;
 }
 
-/** SSE payloads from POST /api/chat/send (Flask mirrors /api/v1/query events). */
-export type ChatSseEvent = {
-  type: string;
-  content?: string;
-  status?: string;
-  error?: string;
-  intent_str?: string;
-  clarification?: unknown;
+// --- API Wrapper Object ---
+export const api = {
+  getSummary: async (period: string): Promise<DashboardSummary> => {
+    // Note: Humein summary-sql use karna hai growth metrics ke liye
+    const res = await fetch(appendUserEmail(`/api/dashboard/summary-sql?period=${period}`));
+    if (!res.ok) throw new Error("Summary API failed");
+    return res.json();
+  },
+
+  getFinancialOverview: async () => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/financial-overview`));
+    return res.json();
+  },
+
+  getRevenueVsExpense: async (period: string) => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/revenue-vs-expense?period=${period}`));
+    return res.json();
+  },
+
+  getSalesTrend: async (period: string) => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/sales-trend?period=${period}`));
+    return res.json();
+  },
+
+  getForecast: async (period: string): Promise<Forecast> => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/forecast?period=${period}`));
+    if (!res.ok) {
+        // Fallback to mock if AI service is down
+        const { mockForecast } = await import("./mockData");
+        return mockForecast;
+    }
+    return res.json();
+  },
+
+  getRecentTransactions: async (params: { search?: string; category?: string; limit?: number; period?: string; }) => {
+    const query = new URLSearchParams();
+    if (params.search) query.set("search", params.search);
+    if (params.category) query.set("category", params.category);
+    if (params.limit) query.set("limit", params.limit.toString());
+    if (params.period) query.set("period", params.period);
+    const res = await fetch(appendUserEmail(`/api/dashboard/recent-transactions?${query.toString()}`));
+    return res.json();
+  },
+
+  getAlertsList: async () => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/alerts-list`));
+    return res.json();
+  },
+
+  getBusinessInfo: async (): Promise<BusinessInfo> => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/business-info`));
+    return res.json();
+  },
+
+  // Other endpoints
+  getCategories: async () => (await fetch(appendUserEmail(`/api/dashboard/categories`))).json(),
+  getAlertsBySeverity: async () => (await fetch(appendUserEmail(`/api/dashboard/alerts-by-severity`))).json(),
+  getHealthScores: async () => (await fetch(appendUserEmail(`/api/dashboard/health-scores`))).json(),
+  getTopProducts: async () => (await fetch(appendUserEmail(`/api/dashboard/top-products`))).json(),
+  getEmployeeStats: async () => (await fetch(appendUserEmail(`/api/dashboard/employee-stats`))).json(),
 };
 
 /**
- * Streams the LangGraph SSE response from the agent (via Next rewrite to backend).
- * Do not use fetch().json() — the body is text/event-stream.
+ * Chat Streaming Logic (Testsparkhack)
  */
-export async function* streamChatSend(
-  conversationId: string,
-  message: string
-): AsyncGenerator<ChatSseEvent> {
-  const res = await fetch(`${API_BASE}/api/chat/send`, {
+export async function* streamChatSend(conversationId: string, message: string) {
+  const res = await fetch(`${AGENT_API_BASE}/api/chat/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ conversation_id: conversationId, message }),
-    cache: "no-store",
   });
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(errText || `Chat API error: ${res.status}`);
-  }
+  if (!res.ok) throw new Error("Chat sequence failed");
   const reader = res.body?.getReader();
-  if (!reader) throw new Error("No response body");
-
+  if (!reader) return;
   const decoder = new TextDecoder();
   let buffer = "";
-
-  function* parseBufferedBlocks(): Generator<ChatSseEvent> {
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (value) buffer += decoder.decode(value, { stream: true });
     while (buffer.includes("\n\n")) {
       const i = buffer.indexOf("\n\n");
       const raw = buffer.slice(0, i).trim();
       buffer = buffer.slice(i + 2);
-      if (!raw.startsWith("data: ")) continue;
-      const payload = raw.slice(6).trim();
-      if (!payload) continue;
-      try {
-        yield JSON.parse(payload) as ChatSseEvent;
-      } catch {
-        /* skip malformed JSON */
-      }
+      if (raw.startsWith("data: ")) yield JSON.parse(raw.slice(6));
     }
-  }
-
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (value) buffer += decoder.decode(value, { stream: true });
-    if (done) buffer += decoder.decode();
-    yield* parseBufferedBlocks();
-    if (done) {
-      const tail = buffer.trim();
-      if (tail.startsWith("data: ")) {
-        const payload = tail.slice(6).trim();
-        if (payload) {
-          try {
-            yield JSON.parse(payload) as ChatSseEvent;
-          } catch {
-            /* ignore */
-          }
-        }
-      }
-      break;
-    }
+    if (done) break;
   }
 }
-
-export const api = {
-  getSummary: (period?: DashboardPeriod) =>
-    fetchWithFallback<DashboardSummary>(
-      withPeriod("/api/dashboard/summary", period),
-      period ? mockSummaryForPeriod(period) : mockSummary
-    ),
-
-  getFinancialOverview: (period?: DashboardPeriod) =>
-    fetchWithFallback<FinancialOverview>(
-      withPeriod("/api/dashboard/financial-overview", period),
-      period ? mockFinancialOverviewForPeriod(period) : mockFinancialOverview
-    ),
-
-  getSalesTarget: (period?: DashboardPeriod) =>
-    fetchWithFallback<SalesTarget>(
-      withPeriod("/api/dashboard/sales-target", period),
-      period ? mockSalesTargetForPeriod(period) : mockSalesTarget
-    ),
-
-  getRecentTransactions: (params?: {
-    search?: string;
-    category?: string;
-    limit?: number;
-    period?: DashboardPeriod;
-  }) => {
-    const searchParams = new URLSearchParams();
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.category) searchParams.set("category", params.category);
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    if (params?.period) searchParams.set("period", params.period);
-    const qs = searchParams.toString();
-    const url = `/api/dashboard/recent-transactions${qs ? `?${qs}` : ""}`;
-
-    return fetchWithFallback<{ transactions: Transaction[] }>(url, (() => {
-      let txns = params?.period
-        ? filterTransactionsByPeriod(params.period)
-        : [...mockTransactions.transactions];
-      if (params?.search) {
-        const q = params.search.toLowerCase();
-        txns = txns.filter(
-          (t) =>
-            t.description.toLowerCase().includes(q) ||
-            t.category.toLowerCase().includes(q) ||
-            String(t.transaction_id).includes(q)
-        );
-      }
-      if (params?.category) {
-        txns = txns.filter((t) => t.category === params.category);
-      }
-      if (params?.limit) {
-        txns = txns.slice(0, params.limit);
-      }
-      return { transactions: txns };
-    })());
-  },
-
-  getCategories: () =>
-    fetchWithFallback<{ categories: string[] }>("/api/dashboard/categories", mockCategories),
-
-  getRevenueVsExpense: (period?: DashboardPeriod) =>
-    fetchWithFallback<RevenueVsExpense>(
-      withPeriod("/api/dashboard/revenue-vs-expense", period),
-      period ? mockRevenueVsExpenseForPeriod(period) : mockRevenueVsExpense
-    ),
-
-  getSalesTrend: (period?: DashboardPeriod) =>
-    fetchWithFallback<SalesTrend>(
-      withPeriod("/api/dashboard/sales-trend", period),
-      period ? mockSalesTrendForPeriod(period) : mockSalesTrend
-    ),
-
-  getAlertsBySeverity: (period?: DashboardPeriod) =>
-    fetchWithFallback<AlertsBySeverity>(
-      withPeriod("/api/dashboard/alerts-by-severity", period),
-      period ? mockAlertsForPeriod(period) : mockAlertsBySeverity
-    ),
-
-  getHealthScores: () =>
-    fetchWithFallback<HealthScores>("/api/dashboard/health-scores", mockHealthScores),
-
-  getTopProducts: () =>
-    fetchWithFallback<TopProducts>("/api/dashboard/top-products", mockTopProducts),
-
-  getEmployeeStats: () =>
-    fetchWithFallback<EmployeeStats>("/api/dashboard/employee-stats", mockEmployeeStats),
-
   getBusinessInfo: () =>
     fetchJson<BusinessInfo>("/api/dashboard/business-info").catch(() => null),
 
@@ -353,3 +232,5 @@ export const api = {
   },
 
 };
+
+

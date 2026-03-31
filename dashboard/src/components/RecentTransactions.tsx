@@ -9,7 +9,7 @@ interface RecentTransactionsProps {
 }
 
 export default function RecentTransactions({ search: globalSearch }: RecentTransactionsProps) {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +32,13 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
     } finally {
       setLoading(false);
     }
-  }, [activeSearch, selectedCategory, period]);
+  }, [activeSearch, selectedCategory, period, dataVersion]);
 
   useEffect(() => {
     api.getCategories()
       .then((res) => setCategories(res.categories))
       .catch(console.error);
-  }, []);
+  }, [dataVersion]);
 
   useEffect(() => {
     setLoading(true);
@@ -120,7 +120,7 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
                     </span>
                   </td>
                   <td style={{ fontWeight: 600 }}>
-                    ${txn.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    ₹{txn.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
               ))
