@@ -7,7 +7,10 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import numpy as np
 from db_config import get_db_connection, execute_read_query_params
+from langchain_openai import ChatOpenAI
+
 
 load_dotenv()
 
@@ -35,6 +38,14 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 CHAT_DB_PATH = os.getenv("CHAT_DB_PATH", "chat_history.db")
+
+# Groq Client for Insights
+groq_llm = ChatOpenAI(
+    model_name="llama3-70b-8192",
+    openai_api_key=os.getenv("GROQ_API_KEY"),
+    openai_api_base="https://api.groq.com/openai/v1"
+)
+
 
 # Prometheus metrics
 # ===============================
@@ -423,17 +434,52 @@ def onboarding():
 
 
 # ─────────────────────────────────────────────
-# REAL SQL DASHBOARD ROUTES (ported from web/app.py)
-# SQL reviewed against company_db_schema.sql — tables/columns below exist in DDL.
-# (Drift note: onboarding INSERT may use columns not in the checked-in DDL; unrelated to these SELECTs.)
+# PERIOD HELPER (Python side)
 # ─────────────────────────────────────────────
+def get_period_dates(period):
+    """Returns start_date, end_date as YYYY-MM-DD strings."""
+    now = datetime.utcnow()
+    y, m = now.year, now.month
+    
+    if period == "this_month":
+        start = datetime(y, m, 1)
+        return start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")
+    
+    if period == "last_month":
+        last_day_prev = datetime(y, m, 1) - timedelta(days=1)
+        py, pm = last_day_prev.year, last_day_prev.month
+        start = datetime(py, pm, 1)
+        return start.strftime("%Y-%m-%d"), last_day_prev.strftime("%Y-%m-%d")
+    
+    if period == "ytd":
+        start = datetime(y, 1, 1)
+        return start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")
+    
+    # Default to last 30 days if unrecognized or "all"
+    start = now - timedelta(days=30)
+    return start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")
 
+def get_latest_business_id():
+    """Helper to get the most recent business_id."""
+    res = execute_read_query_params("SELECT business_id FROM businesses ORDER BY created_at DESC LIMIT 1")
+    return res[0]["business_id"] if res else None
 
 @app.route("/api/dashboard/summary", methods=["GET", "OPTIONS"])
 def api_dashboard_summary():
-    """KPI summary — last 24h from daily_transactions + alerts (web parity)."""
-    cutoff = (datetime.utcnow() - timedelta(hours=24)).strftime("%Y-%m-%d")
+    """KPI summary based on period + growth percentages."""
+    period = request.args.get("period", "this_month")
+    start_date, end_date = get_period_dates(period)
+    bid = get_latest_business_id()
+    
+    if not bid:
+        return jsonify({
+            "total_revenue": 0, "total_expenses": 0, "net_profit": 0, 
+            "total_transactions": 0, "active_alerts": 0,
+            "revenue_change": 0, "expenses_change": 0
+        })
+
     try:
+        # Current period data
         txn = execute_read_query_params(
             """
             SELECT
@@ -441,30 +487,61 @@ def api_dashboard_summary():
                 COALESCE(SUM(CASE WHEN type='Expense' THEN amount END), 0) AS total_expenses,
                 COUNT(*) AS total_transactions
             FROM daily_transactions
-            WHERE transaction_date >= %s
+            WHERE business_id = %s AND transaction_date BETWEEN %s AND %s
             """,
-            (cutoff,),
+            (bid, start_date, end_date),
         )
         alerts = execute_read_query_params(
             """
             SELECT COUNT(*) AS active_alerts
             FROM alerts
-            WHERE status = 'Active' AND created_at >= %s
+            WHERE business_id = %s AND status = 'Active'
             """,
-            (cutoff,),
+            (bid,),
         )
-        row = txn[0] if txn else {}
-        alert_row = alerts[0] if alerts else {}
+        
+        # Previous period for growth comparison
+        prev_start, prev_end = get_period_dates("last_month" if period == "this_month" else "prev") 
+        # (Simplified: just compare to last month if current is this month)
+        prev_txn = execute_read_query_params(
+            "SELECT COALESCE(SUM(CASE WHEN type='Revenue' THEN amount END), 0) AS total_revenue, "
+            "COALESCE(SUM(CASE WHEN type='Expense' THEN amount END), 0) AS total_expenses, "
+            "COUNT(*) AS total_transactions "
+            "FROM daily_transactions WHERE business_id = %s AND transaction_date BETWEEN %s AND %s",
+            (bid, prev_start, prev_end)
+        )
+
+        
+        curr = txn[0] if txn else {}
+        prev = prev_txn[0] if prev_txn else {}
+        
+        def calc_pct(c, p):
+            if not p or p == 0: return 0
+            return round(((c - p) / p) * 100, 1)
+
+        rev_now = float(curr.get("total_revenue", 0))
+        rev_prev = float(prev.get("total_revenue", 0))
+        exp_now = float(curr.get("total_expenses", 0))
+        exp_prev = float(prev.get("total_expenses", 0))
+        net_now = rev_now - exp_now
+        net_prev = rev_prev - exp_prev
+        txn_now = int(curr.get("total_transactions", 0))
+        txn_prev = int(prev.get("total_transactions", 0))
+
         return jsonify(
             {
-                "total_revenue": float(row.get("total_revenue", 0)),
-                "total_expenses": float(row.get("total_expenses", 0)),
-                "net_profit": float(row.get("total_revenue", 0))
-                - float(row.get("total_expenses", 0)),
-                "total_transactions": int(row.get("total_transactions", 0)),
-                "active_alerts": int(alert_row.get("active_alerts", 0)),
+                "total_revenue": rev_now,
+                "total_expenses": exp_now,
+                "net_profit": net_now,
+                "total_transactions": txn_now,
+                "active_alerts": int(alerts[0].get("active_alerts", 0)) if alerts else 0,
+                "revenue_change": calc_pct(rev_now, rev_prev),
+                "expenses_change": calc_pct(exp_now, exp_prev),
+                "net_profit_change": calc_pct(net_now, net_prev),
+                "transactions_change": calc_pct(txn_now, txn_prev)
             }
         )
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -504,19 +581,25 @@ def api_financial_overview():
 
 @app.route("/api/dashboard/revenue-vs-expense", methods=["GET", "OPTIONS"])
 def api_revenue_vs_expense():
-    """Last 24h revenue vs expense by category (web parity)."""
-    cutoff = (datetime.utcnow() - timedelta(hours=24)).strftime("%Y-%m-%d")
+    """Revenue vs expense by category based on period."""
+    period = request.args.get("period", "this_month")
+    start_date, end_date = get_period_dates(period)
+    bid = get_latest_business_id()
+    
+    if not bid:
+        return jsonify({"labels": [], "revenue": [], "expenses": []})
+
     try:
         rows = execute_read_query_params(
             """
             SELECT category, type,
                    COALESCE(SUM(amount), 0) AS total
             FROM daily_transactions
-            WHERE transaction_date >= %s
+            WHERE business_id = %s AND transaction_date BETWEEN %s AND %s
             GROUP BY category, type
             ORDER BY total DESC
             """,
-            (cutoff,),
+            (bid, start_date, end_date),
         )
         revenue_cats = {}
         expense_cats = {}
@@ -542,8 +625,14 @@ def api_revenue_vs_expense():
 
 @app.route("/api/dashboard/sales-trend", methods=["GET", "OPTIONS"])
 def api_sales_trend():
-    """Daily buckets from daily_transactions — last 7 days (web parity)."""
-    cutoff = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+    """Daily buckets from daily_transactions based on period."""
+    period = request.args.get("period", "this_month")
+    start_date, end_date = get_period_dates(period)
+    bid = get_latest_business_id()
+    
+    if not bid:
+        return jsonify({"labels": [], "revenue": [], "expenses": []})
+
     try:
         rows = execute_read_query_params(
             """
@@ -551,11 +640,11 @@ def api_sales_trend():
                    COALESCE(SUM(CASE WHEN type='Revenue' THEN amount END), 0) AS revenue,
                    COALESCE(SUM(CASE WHEN type='Expense' THEN amount END), 0) AS expenses
             FROM daily_transactions
-            WHERE transaction_date >= %s
+            WHERE business_id = %s AND transaction_date BETWEEN %s AND %s
             GROUP BY transaction_date
             ORDER BY transaction_date
             """,
-            (cutoff,),
+            (bid, start_date, end_date),
         )
         return jsonify(
             {
@@ -594,14 +683,16 @@ def api_transactions_by_category():
 
 @app.route("/api/dashboard/alerts-by-severity", methods=["GET", "OPTIONS"])
 def api_alerts_by_severity():
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"labels": [], "data": []})
     try:
         rows = execute_read_query_params(
             """
             SELECT severity, COUNT(*) AS cnt
             FROM alerts
-            WHERE status = 'Active'
+            WHERE business_id = %s AND status = 'Active'
             GROUP BY severity
-            """
+            """, (bid,)
         )
         return jsonify(
             {"labels": [r["severity"] for r in rows], "data": [int(r["cnt"]) for r in rows]}
@@ -609,21 +700,127 @@ def api_alerts_by_severity():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@app.route("/api/dashboard/health-scores", methods=["GET", "OPTIONS"])
-def api_health_scores():
+@app.route("/api/dashboard/alerts", methods=["GET", "OPTIONS"])
+def api_alerts_list():
+    """Returns detailed active alerts list."""
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"alerts": []})
+    limit = request.args.get("limit", 50, type=int)
     try:
         rows = execute_read_query_params(
             """
-            SELECT bhs.overall_score, bhs.cash_score,
-                   bhs.profitability_score, bhs.growth_score,
-                   bhs.cost_control_score, bhs.risk_score,
-                   b.business_name
-            FROM business_health_scores bhs
-            JOIN businesses b ON b.business_id = bhs.business_id
-            ORDER BY bhs.calculated_at DESC
-            LIMIT 5
+            SELECT alert_id, alert_type, severity, message, status, created_at
+            FROM alerts
+            WHERE business_id = %s AND status = 'Active'
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (bid, limit),
+        )
+        for r in rows:
+            if r.get("created_at"):
+                r["created_at"] = r["created_at"].isoformat()
+        return jsonify({"alerts": rows})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/dashboard/forecast", methods=["GET", "OPTIONS"])
+def api_forecast():
+    """Predict next 30 days revenue based on last 60 days."""
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"historical":[], "forecast":[], "insight":"No business found"})
+    
+    try:
+        # 1. Fetch historical data (60 days)
+        cutoff = (datetime.utcnow() - timedelta(days=60)).strftime("%Y-%m-%d")
+        rows = execute_read_query_params(
             """
+            SELECT transaction_date, COALESCE(SUM(amount), 0) as amount
+            FROM daily_transactions
+            WHERE business_id = %s AND type='Revenue' AND transaction_date >= %s
+            GROUP BY transaction_date ORDER BY transaction_date ASC
+            """, (bid, cutoff)
+        )
+        
+        # 2. Fill gaps with 0
+        hist_dict = {r["transaction_date"].strftime("%Y-%m-%d"): float(r["amount"]) for r in rows}
+        historical = []
+        today = datetime.utcnow().date()
+        for i in range(60, -1, -1):
+            d = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+            historical.append({"date": d, "actual": hist_dict.get(d, 0.0)})
+            
+        # 3. Forecast logic (Numpy Polyfit for linear trend)
+        x = np.arange(len(historical))
+        y = np.array([h["actual"] for h in historical])
+        z = np.polyfit(x, y, 1) # linear
+        p = np.poly1d(z)
+        
+        forecast = []
+        last_date = datetime.strptime(historical[-1]["date"], "%Y-%m-%d")
+        for i in range(1, 31):
+            pred_date = (last_date + timedelta(days=i)).strftime("%Y-%m-%d")
+            pred_val = max(0, float(p(len(historical) + i)))
+            std_dev = float(np.std(y)) if len(y) > 0 else 100.0
+            forecast.append({
+                "date": pred_date,
+                "predicted": round(pred_val, 2),
+                "lower_bound": round(max(0, pred_val - (std_dev * 0.5)), 2),
+                "upper_bound": round(pred_val + (std_dev * 0.5), 2)
+            })
+            
+        # 4. Trend Metrics
+        trend_direction = "stable"
+        if z[0] > 0.05 * (np.mean(y) if np.mean(y) > 0 else 1): trend_direction = "up"
+        elif z[0] < -0.05 * (np.mean(y) if np.mean(y) > 0 else 1): trend_direction = "down"
+        
+        trend_pct = round((z[0] * 30 / (np.mean(y) if np.mean(y) > 0 else 1)) * 100, 1) if np.mean(y) > 0 else 0
+        
+        # 5. AI Insight (Groq)
+        insight_prompt = f"""As a financial advisor, analyze this 60-day revenue trend for a business.
+        Direction: {trend_direction}
+        30-day Projected Growth: {trend_pct}%
+        Avg Daily Revenue: {np.mean(y):.2f}
+        Projected next month: {sum(f['predicted'] for f in forecast):.2f}
+        
+        Provide a 1-2 sentence tactical advice for the owner. Be concise. Do not use markdown headers."""
+        
+        try:
+            ai_res = groq_llm.invoke(insight_prompt)
+            insight = ai_res.content.strip()
+        except Exception as e:
+            logger.error(f"Groq insight error: {e}")
+            insight = f"Revenue is trending {trend_direction}. Keep a close watch on cash reserves."
+
+        return jsonify({
+            "historical": historical,
+            "forecast": forecast,
+            "trend_direction": trend_direction,
+            "trend_percent": abs(trend_pct),
+            "insight": insight
+        })
+        
+    except Exception as e:
+        logger.error(f"Forecast error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/dashboard/health-scores", methods=["GET", "OPTIONS"])
+def api_health_scores():
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"businesses": [], "scores": []})
+    try:
+        rows = execute_read_query_params(
+            """
+            SELECT b.business_name, h.overall_score, h.cash_score,
+                   h.profitability_score, h.growth_score, h.cost_control_score, h.risk_score
+            FROM business_health_scores h
+            JOIN businesses b ON h.business_id = b.business_id
+            WHERE b.business_id = %s
+            ORDER BY h.calculated_at DESC
+            LIMIT 10
+            """, (bid,)
         )
         return jsonify(
             {
@@ -648,14 +845,17 @@ def api_health_scores():
 
 @app.route("/api/dashboard/top-products", methods=["GET", "OPTIONS"])
 def api_top_products():
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"labels": [], "stock": [], "margin": []})
     try:
         rows = execute_read_query_params(
             """
             SELECT p.product_name, p.stock_quantity, p.selling_price, p.cost_price
             FROM products p
+            WHERE p.business_id = %s
             ORDER BY p.stock_quantity DESC
             LIMIT 10
-            """
+            """, (bid,)
         )
         return jsonify(
             {
@@ -672,13 +872,16 @@ def api_top_products():
 
 @app.route("/api/dashboard/employee-stats", methods=["GET", "OPTIONS"])
 def api_employee_stats():
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"labels": [], "counts": [], "avg_salary": []})
     try:
         rows = execute_read_query_params(
             """
             SELECT status, COUNT(*) AS cnt, COALESCE(AVG(salary),0) AS avg_salary
             FROM employees
+            WHERE business_id = %s
             GROUP BY status
-            """
+            """, (bid,)
         )
         return jsonify(
             {
@@ -696,14 +899,20 @@ def api_recent_transactions():
     limit = request.args.get("limit", 20, type=int)
     search = request.args.get("search", "").strip()
     category = request.args.get("category", "").strip()
+    period = request.args.get("period", "this_month")
+    start_date, end_date = get_period_dates(period)
+    bid = get_latest_business_id()
+    
+    if not bid: return jsonify({"transactions": []})
+
     try:
         base_sql = """
             SELECT transaction_id, transaction_date, type, category,
                    amount, description
             FROM daily_transactions
-            WHERE 1=1
+            WHERE business_id = %s AND transaction_date BETWEEN %s AND %s
         """
-        params = []
+        params = [bid, start_date, end_date]
         if search:
             base_sql += " AND (description ILIKE %s OR category ILIKE %s)"
             params.extend([f"%{search}%", f"%{search}%"])
@@ -724,24 +933,27 @@ def api_recent_transactions():
 
 @app.route("/api/dashboard/sales-target", methods=["GET", "OPTIONS"])
 def api_sales_target():
+    """Gauge: current revenue vs target revenue based on period."""
+    period = request.args.get("period", "this_month")
+    start_date, end_date = get_period_dates(period)
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"percentage": 0})
     try:
-        rows = execute_read_query_params(
-            """
-            SELECT b.business_name, b.monthly_target_revenue,
-                   COALESCE(SUM(CASE WHEN dt.type='Revenue' THEN dt.amount END), 0) AS current_revenue
-            FROM businesses b
-            LEFT JOIN daily_transactions dt ON dt.business_id = b.business_id
-                AND EXTRACT(MONTH FROM dt.transaction_date) = EXTRACT(MONTH FROM CURRENT_DATE)
-                AND EXTRACT(YEAR FROM dt.transaction_date) = EXTRACT(YEAR FROM CURRENT_DATE)
-            GROUP BY b.business_id, b.business_name, b.monthly_target_revenue
-            ORDER BY current_revenue DESC
-            LIMIT 1
-            """
+        biz = execute_read_query_params(
+            "SELECT business_name, monthly_target_revenue FROM businesses WHERE business_id = %s", (bid,)
         )
-        if rows:
-            row = rows[0]
+        curr = execute_read_query_params(
+            """
+            SELECT COALESCE(SUM(amount), 0) AS total
+            FROM daily_transactions
+            WHERE business_id = %s AND type='Revenue' AND transaction_date BETWEEN %s AND %s
+            """,
+            (bid, start_date, end_date),
+        )
+        if biz:
+            row = biz[0]
             target = float(row["monthly_target_revenue"] or 100000)
-            current = float(row["current_revenue"] or 0)
+            current = float(curr[0]["total"] or 0)
             pct = round((current / target * 100), 1) if target > 0 else 0
             return jsonify(
                 {
@@ -757,10 +969,12 @@ def api_sales_target():
 
 
 @app.route("/api/dashboard/categories", methods=["GET", "OPTIONS"])
-def api_categories():
+def api_get_categories():
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"categories": []})
     try:
         rows = execute_read_query_params(
-            "SELECT DISTINCT category FROM daily_transactions ORDER BY category"
+            "SELECT DISTINCT category FROM daily_transactions WHERE business_id = %s", (bid,)
         )
         return jsonify({"categories": [r["category"] for r in rows if r["category"]]})
     except Exception as e:
@@ -768,21 +982,16 @@ def api_categories():
 
 
 @app.route("/api/dashboard/business-info", methods=["GET", "OPTIONS"])
-def get_business_info():
-    conn = get_db_connection()
+def api_business_info():
+    bid = get_latest_business_id()
+    if not bid: return jsonify({"error": "No business found"}), 404
     try:
-        import psycopg2.extras
-
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM public.businesses ORDER BY created_at DESC LIMIT 1")
-        business = cur.fetchone()
-        if not business:
-            return jsonify({"error": "No business found"}), 404
-        return jsonify(business)
+        rows = execute_read_query_params(
+            "SELECT * FROM businesses WHERE business_id = %s", (bid,)
+        )
+        return jsonify(rows[0] if rows else {})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
 
 
 # ─────────────────────────────────────────────

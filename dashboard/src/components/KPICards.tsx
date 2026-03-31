@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, DashboardSummary } from "@/lib/api";
 import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import {
@@ -41,29 +42,29 @@ export default function KPICards() {
     ? [
       {
         label: "Total Revenue",
-        value: formatCurrency(data.total_revenue),
-        change: "+4.9%",
-        positive: true,
+        value: loading ? "..." : `$${data?.total_revenue.toLocaleString()}`,
+        change: loading ? "0%" : `${data?.revenue_change}%`,
+        positive: !loading && (data?.revenue_change ?? 0) >= 0,
         icon: <DollarIcon size={18} />,
-        iconBg: "#EFF6FF",
-        iconColor: "#2563EB",
-        accentColor: "#2563EB",
+        accentColor: "#3B82F6",
+        iconBg: "rgba(59, 130, 246, 0.1)",
+        iconColor: "#3B82F6",
       },
       {
         label: "Total Expenses",
-        value: formatCurrency(data.total_expenses),
-        change: "+2.7%",
-        positive: false,
+        value: loading ? "..." : `$${data?.total_expenses.toLocaleString()}`,
+        change: loading ? "0%" : `${data?.expenses_change}%`,
+        positive: !loading && (data?.expenses_change ?? 0) < 0, // Expenses down is positive
         icon: <ReceiptIcon size={18} />,
-        iconBg: "#FEF2F2",
-        iconColor: "#DC2626",
-        accentColor: "#DC2626",
+        accentColor: "#EF4444",
+        iconBg: "rgba(239, 68, 68, 0.1)",
+        iconColor: "#EF4444",
       },
       {
         label: "Net Profit",
         value: formatCurrency(data.net_profit),
-        change: data.net_profit >= 0 ? "+4.9%" : "-2.1%",
-        positive: data.net_profit >= 0,
+        change: loading ? "0%" : `${data?.net_profit_change}%`,
+        positive: !loading && (data?.net_profit_change ?? 0) >= 0,
         icon: <TrendingUpIcon size={18} />,
         iconBg: "#F0FDF4",
         iconColor: "#16A34A",
@@ -72,8 +73,8 @@ export default function KPICards() {
       {
         label: "Transactions",
         value: formatNumber(data.total_transactions),
-        change: "+3.4%",
-        positive: true,
+        change: loading ? "0%" : `${data?.transactions_change}%`,
+        positive: !loading && (data?.transactions_change ?? 0) >= 0,
         icon: <ArrowsRepeatIcon size={18} />,
         iconBg: "#FFFBEB",
         iconColor: "#D97706",
@@ -109,82 +110,94 @@ export default function KPICards() {
 
   return (
     <div style={styles.grid}>
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          style={styles.card}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-            (e.currentTarget as HTMLDivElement).style.boxShadow =
-              "0 8px 24px rgba(0,0,0,0.08)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-            (e.currentTarget as HTMLDivElement).style.boxShadow =
-              "0 1px 4px rgba(0,0,0,0.04)";
-          }}
-        >
-          {/* Top accent line */}
+      {cards.map((card) => {
+        const cardContent = (
           <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: "3px",
-              background: card.accentColor,
-              borderRadius: "12px 12px 0 0",
-              opacity: 0.7,
+            style={styles.card}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
+              (e.currentTarget as HTMLDivElement).style.boxShadow =
+                "0 8px 24px rgba(0,0,0,0.08)";
             }}
-          />
-
-          {/* Header row: icon + label + info */}
-          <div style={styles.headerRow}>
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+              (e.currentTarget as HTMLDivElement).style.boxShadow =
+                "0 1px 4px rgba(0,0,0,0.04)";
+            }}
+          >
+            {/* Top accent line */}
             <div
               style={{
-                ...styles.iconBox,
-                background: card.iconBg,
-                color: card.iconColor,
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: "3px",
+                background: card.accentColor,
+                borderRadius: "12px 12px 0 0",
+                opacity: 0.7,
               }}
-            >
-              {card.icon}
+            />
+
+            {/* Header row: icon + label + info */}
+            <div style={styles.headerRow}>
+              <div
+                style={{
+                  ...styles.iconBox,
+                  background: card.iconBg,
+                  color: card.iconColor,
+                }}
+              >
+                {card.icon}
+              </div>
+              <div style={styles.labelGroup}>
+                <span style={styles.label}>{card.label}</span>
+                <span style={{ color: "#9CA3AF", cursor: "pointer" }} title={`${card.label} info`}>
+                  <InfoIcon size={13} />
+                </span>
+              </div>
             </div>
-            <div style={styles.labelGroup}>
-              <span style={styles.label}>{card.label}</span>
-              <span style={{ color: "#9CA3AF", cursor: "pointer" }} title={`${card.label} info`}>
-                <InfoIcon size={13} />
-              </span>
-            </div>
+
+            {/* Big Value */}
+            <div style={styles.value}>{card.value}</div>
+
+            {/* Badge */}
+            {card.label === "Active Alerts" ? (
+              <div
+                style={{
+                  ...styles.badge,
+                  background: (data?.active_alerts ?? 0) > 0 ? "#FEF2F2" : "#F0FDF4",
+                  color: (data?.active_alerts ?? 0) > 0 ? "#DC2626" : "#16A34A",
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 600 }}>
+                  {(data?.active_alerts ?? 0) > 0 ? "Critical" : "All Clear"}
+                </span>
+              </div>
+
+            ) : (
+              <div
+                style={{
+                  ...styles.badge,
+                  background: card.positive ? "#F0FDF4" : "#FEF2F2",
+                  color: card.positive ? "#16A34A" : "#DC2626",
+                }}
+              >
+                <span style={{ fontSize: 12 }}>{card.positive ? "↑" : "↓"}</span>
+                <span style={{ fontSize: 12, fontWeight: 600 }}>{card.change}</span>
+              </div>
+            )}
           </div>
+        );
 
-          {/* Big Value */}
-          <div style={styles.value}>{card.value}</div>
-
-          {/* Badge */}
-          {card.label === "Active Alerts" ? (
-            <div
-              style={{
-                ...styles.badge,
-                background: "#FEF2F2",
-                color: "#DC2626",
-              }}
-            >
-              <span style={{ fontSize: 11, fontWeight: 600 }}>Critical</span>
-            </div>
-          ) : (
-            <div
-              style={{
-                ...styles.badge,
-                background: card.positive ? "#F0FDF4" : "#FEF2F2",
-                color: card.positive ? "#16A34A" : "#DC2626",
-              }}
-            >
-              <span style={{ fontSize: 12 }}>{card.positive ? "↑" : "↓"}</span>
-              <span style={{ fontSize: 12, fontWeight: 600 }}>{card.change}</span>
-            </div>
-          )}
-        </div>
-      ))}
+        return card.label === "Active Alerts" ? (
+          <Link key={card.label} href="/alerts" style={{ textDecoration: "none" }}>
+            {cardContent}
+          </Link>
+        ) : (
+          <div key={card.label}>{cardContent}</div>
+        );
+      })}
     </div>
   );
 }

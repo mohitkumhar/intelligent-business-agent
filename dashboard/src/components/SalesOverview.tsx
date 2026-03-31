@@ -98,9 +98,9 @@ export default function SalesOverview() {
       .finally(() => setLoading(false));
   }, [period]);
 
-  const sales = data?.current_revenue ?? 3884.00;
-  const target = data?.target_revenue ?? 20000.00;
-  const percentage = data?.percentage ?? 70.8;
+  const sales = data?.current_revenue ?? 0;
+  const target = data?.target_revenue ?? 0;
+  const percentage = data?.percentage ?? 0;
   const progressPercent = Math.min((sales / target) * 100, 100);
 
   return (

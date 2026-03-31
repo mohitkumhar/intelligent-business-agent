@@ -137,7 +137,6 @@ export default function RevenueInsights() {
             <span className="chart-subtitle">
               ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="chart-change">↑ 4.9%</span>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

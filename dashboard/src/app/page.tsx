@@ -16,6 +16,8 @@ import TopProducts from "@/components/TopProducts";
 import HealthScores from "@/components/HealthScores";
 import EmployeeStatistics from "@/components/EmployeeStatistics";
 import RecentTransactions from "@/components/RecentTransactions";
+import ForecastChart from "@/components/ForecastChart";
+
 
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,6 +43,12 @@ export default function DashboardPage() {
               <SalesTrend />
               <AlertsBySeverity />
             </div>
+
+            {/* Row 2.5: AI Revenue Forecast */}
+            <div className="charts-row" style={{ gridTemplateColumns: "1fr" }}>
+              <ForecastChart />
+            </div>
+
 
             {/* Row 3: Financial Overview + Top Products */}
             <div className="charts-row">
