@@ -86,7 +86,7 @@ export default function Topbar({ onSearch, title = "Overview" }: TopbarProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
-    onSearch(val);
+    onSearch?.(val);
   };
 
   return (

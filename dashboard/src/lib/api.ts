@@ -175,3 +175,62 @@ export async function* streamChatSend(conversationId: string, message: string) {
     if (done) break;
   }
 }
+  getBusinessInfo: () =>
+    fetchJson<BusinessInfo>("/api/dashboard/business-info").catch(() => null),
+
+  /** Build a CSV snapshot for the selected period (summary + transactions). */
+  exportDashboardCsv: async (period: DashboardPeriod) => {
+    const [summary, txRes] = await Promise.all([
+      fetchWithFallback<DashboardSummary>(
+        withPeriod("/api/dashboard/summary", period),
+        mockSummaryForPeriod(period)
+      ),
+      fetchWithFallback<{ transactions: Transaction[] }>((() => {
+        const searchParams = new URLSearchParams();
+        searchParams.set("period", period);
+        searchParams.set("limit", "500");
+        return `/api/dashboard/recent-transactions?${searchParams.toString()}`;
+      })(), (() => {
+        let txns = filterTransactionsByPeriod(period);
+        return { transactions: txns.slice(0, 500) };
+      })()),
+    ]);
+    const { start, end } = getPeriodBounds(period);
+    const headerLines = [
+      `Dashboard export,${periodLabel(period)}`,
+      `Date range,${start} to ${end}`,
+      "",
+      "Metric,Value",
+      `Total revenue,${summary.total_revenue}`,
+      `Total expenses,${summary.total_expenses}`,
+      `Net profit,${summary.net_profit}`,
+      `Transactions,${summary.total_transactions}`,
+      `Active alerts,${summary.active_alerts}`,
+      "",
+      "Txn ID,Date,Type,Category,Amount,Description",
+    ];
+    const rows = txRes.transactions.map((t) =>
+      [
+        String(t.transaction_id),
+        t.transaction_date,
+        t.type,
+        t.category,
+        String(t.amount),
+        t.description,
+      ]
+        .map((c) => escapeCsvCell(String(c)))
+        .join(",")
+    );
+    const csv = [...headerLines, ...rows].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dashboard_${period}_${start}_${end}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  },
+
+};
+
+

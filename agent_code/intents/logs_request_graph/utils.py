@@ -12,6 +12,7 @@ import json
 import os
 import requests
 import time
+import requests
 from datetime import date
 from dotenv import load_dotenv
 from langchain_core.runnables import RunnableConfig
@@ -305,11 +306,23 @@ def format_logs_response(state: LogsRequestGraphState, config: RunnableConfig):
     user_query = state["user_query"]
     time_range_description = state.get("time_range_description", "")
     log_line_count = state.get("log_line_count", 0)
+    has_results = state.get("has_results", False)
 
     try:
         analysis = json.loads(analysis_raw)
     except json.JSONDecodeError:
         analysis = {"summary": analysis_raw}
+
+    # Early exit if no logs generated
+    if not has_results:
+        summary = analysis.get("summary", "No logs matched your query.")
+        recs = "\\n- ".join(analysis.get("recommended_actions", []))
+        if recs:
+            summary += f"\\n\\n**Suggestions**:\\n- {recs}"
+        return {
+            "formatted_response": summary,
+            "messages": [{"role": "assistant", "content": summary}],
+        }
 
     prompt = f"""You are a professional DevOps assistant.
 
