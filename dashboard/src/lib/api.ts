@@ -296,6 +296,7 @@ export const api = {
   getEmployeeStats: () =>
     fetchWithFallback<EmployeeStats>("/api/dashboard/employee-stats", mockEmployeeStats),
 
+<<<<<<< Updated upstream
   getBusinessInfo: () =>
     fetchJson<BusinessInfo>("/api/dashboard/business-info").catch(() => null),
 
@@ -352,4 +353,49 @@ export const api = {
     window.URL.revokeObjectURL(url);
   },
 
+=======
+  // Chatbot — streaming SSE connection to the Flask agent
+  streamChat: (
+    threadId: string,
+    message: string,
+    onEvent: (evt: { type: string; [key: string]: unknown }) => void,
+    signal?: AbortSignal
+  ): Promise<void> => {
+    const params = new URLSearchParams({
+      "input-query": message,
+      "thread-id": threadId,
+    });
+
+    return fetch(`${API_BASE}/api/v1/query?${params.toString()}`, {
+      method: "POST",
+      signal,
+      headers: { Accept: "text/event-stream" },
+    }).then(async (res) => {
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+
+        for (const part of parts) {
+          for (const line of part.split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              onEvent(JSON.parse(line.slice(6)));
+            } catch { /* skip malformed */ }
+          }
+        }
+      }
+    });
+  },
+>>>>>>> Stashed changes
 };
+

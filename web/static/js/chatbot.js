@@ -310,6 +310,130 @@
     }
 
     // ── DOM Helpers ────────────────────────────────────────────────
+    const RISK_CONFIG = {
+        low:    { bg: "#d1fae5", text: "#065f46", border: "#6ee7b7", emoji: "🟢" },
+        medium: { bg: "#fef3c7", text: "#92400e", border: "#fcd34d", emoji: "🟡" },
+        high:   { bg: "#fee2e2", text: "#991b1b", border: "#fca5a5", emoji: "🔴" },
+    };
+    const BORDER_COLORS = {
+        success: "#6366f1", advisory: "#3b82f6", hybrid: "#3b82f6",
+        error: "#ef4444", partial: "#f59e0b", database: "#6366f1",
+    };
+    const SIMPLE_STATUSES = new Set(["greeting", "out_of_scope", "greeting_request"]);
+
+    /** Render assistant content into `container` — JSON card or plain markdown. */
+    function renderMessageContent(container, rawText) {
+        let parsed = null;
+        if (typeof rawText === "string" && rawText.trimStart().startsWith("{")) {
+            try { parsed = JSON.parse(rawText); } catch { /* not JSON */ }
+        }
+
+        if (!parsed) {
+            try { container.innerHTML = marked.parse(rawText); }
+            catch { container.textContent = rawText; }
+            return;
+        }
+
+        const status  = (parsed.status  || parsed.intent || "success").toLowerCase();
+        const summary = parsed.summary  || (parsed.result && parsed.result.summary) || "";
+        const recs    = Array.isArray(parsed.recommendations)
+            ? parsed.recommendations
+            : (parsed.result && Array.isArray(parsed.result.recommendations) ? parsed.result.recommendations : []);
+        const riskRaw = ((parsed.risk_level || (parsed.result && parsed.result.risk_level) || "")).toString().toLowerCase().trim();
+        const followUps = Array.isArray(parsed.follow_up_questions) ? parsed.follow_up_questions : [];
+        const queryUnderstood = parsed.query_understood || "";
+
+        if (SIMPLE_STATUSES.has(status)) {
+            try { container.innerHTML = marked.parse(summary || rawText); }
+            catch { container.textContent = summary || rawText; }
+            return;
+        }
+
+        const card = document.createElement("div");
+        card.className = "biz-response-card";
+        card.style.borderLeftColor = BORDER_COLORS[status] || "#6366f1";
+
+        if (queryUnderstood) {
+            const qu = document.createElement("div");
+            qu.className = "biz-query-understood";
+            qu.innerHTML = `<span class="biz-section-icon">🧠</span><span>${escapeHtml(queryUnderstood)}</span>`;
+            card.appendChild(qu);
+        }
+        if (summary) {
+            const s = document.createElement("div");
+            s.className = "biz-summary";
+            const icon = document.createElement("span");
+            icon.className = "biz-section-icon";
+            icon.textContent = "📋";
+            const text = document.createElement("div");
+            text.className = "biz-summary-text";
+            try { text.innerHTML = marked.parse(summary); } catch { text.textContent = summary; }
+            s.appendChild(icon);
+            s.appendChild(text);
+            card.appendChild(s);
+        }
+        if (recs.length > 0) {
+            const section = document.createElement("div");
+            section.className = "biz-section";
+            const title = document.createElement("div");
+            title.className = "biz-section-title";
+            title.innerHTML = `<span class="biz-section-icon">💡</span> Recommendations`;
+            const ul = document.createElement("ul");
+            ul.className = "biz-list";
+            recs.forEach((rec) => {
+                const li = document.createElement("li");
+                li.textContent = rec;
+                ul.appendChild(li);
+            });
+            section.appendChild(title);
+            section.appendChild(ul);
+            card.appendChild(section);
+        }
+        const riskStyle = RISK_CONFIG[riskRaw];
+        if (riskStyle) {
+            const row = document.createElement("div");
+            row.className = "biz-risk-row";
+            row.innerHTML = `
+                <span class="biz-risk-label">⚠️ Risk Level</span>
+                <span class="biz-risk-badge"
+                      style="background:${riskStyle.bg};color:${riskStyle.text};border:1px solid ${riskStyle.border}">
+                  ${riskStyle.emoji} ${riskRaw.toUpperCase()}
+                </span>`;
+            card.appendChild(row);
+        }
+        if (followUps.length > 0) {
+            const fu = document.createElement("div");
+            fu.className = "biz-followups";
+            const fuTitle = document.createElement("div");
+            fuTitle.className = "biz-followups-title";
+            fuTitle.textContent = "❓ You might also ask:";
+            fu.appendChild(fuTitle);
+            const chips = document.createElement("div");
+            chips.className = "biz-followup-chips";
+            followUps.forEach((q) => {
+                const chip = document.createElement("button");
+                chip.className = "biz-followup-chip";
+                chip.innerHTML = `<span class="biz-followup-arrow">→</span> ${escapeHtml(q)}`;
+                chip.title = q;
+                chip.addEventListener("click", () => {
+                    chatInput.value = q;
+                    autoResizeInput();
+                    sendMessage(q);
+                });
+                chips.appendChild(chip);
+            });
+            fu.appendChild(chips);
+            card.appendChild(fu);
+        }
+        if (status === "partial") {
+            const note = document.createElement("div");
+            note.className = "biz-partial-note";
+            note.textContent = "⚠️ This is a partial result — try rephrasing for a complete answer.";
+            card.appendChild(note);
+        }
+        container.appendChild(card);
+    }
+
     function appendStreamMessage(role, timestamp) {
         const bubble = document.createElement("div");
         bubble.className = `message-bubble ${role}`;
@@ -323,7 +447,7 @@
             <div class="message-avatar">${avatar}</div>
             <div class="message-body">
                 <div class="dynamic-intents"></div>
-                <div class="agent-status" style="font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 5px;"></div>
+                <div class="agent-status" style="font-size:0.8em;color:#888;font-style:italic;margin-bottom:5px;"></div>
                 <div class="message-content"></div>
                 <div class="message-time">${timeStr}</div>
             </div>
@@ -333,22 +457,18 @@
         return {
             updateContent: (text) => {
                 const contentDiv = bubble.querySelector(".message-content");
-                try {
-                    contentDiv.innerHTML = marked.parse(text);
-                } catch {
-                    contentDiv.innerHTML = escapeHtml(text);
-                }
+                contentDiv.innerHTML = "";
+                renderMessageContent(contentDiv, text);
                 scrollToBottom();
             },
             updateIntents: (intentStr) => {
-                const intentsDiv = bubble.querySelector(".dynamic-intents");
-                intentsDiv.innerHTML = buildIntentBadges(intentStr);
+                bubble.querySelector(".dynamic-intents").innerHTML = buildIntentBadges(intentStr);
             },
             updateStatus: (statusText) => {
                 const statusDiv = bubble.querySelector(".agent-status");
                 if (statusText) {
                     statusDiv.style.display = "block";
-                    statusDiv.innerHTML = '<i class="fas fa-circle-notch fa-spin" style="margin-right: 5px;"></i>' + escapeHtml(statusText);
+                    statusDiv.innerHTML = '<i class="fas fa-circle-notch fa-spin" style="margin-right:5px;"></i>' + escapeHtml(statusText);
                 } else {
                     statusDiv.style.display = "none";
                 }
@@ -366,31 +486,30 @@
             ? new Date(timestamp + "Z").toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
             : new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
-        let renderedContent = content;
-        if (role === "assistant") {
-            try {
-                renderedContent = marked.parse(content);
-            } catch {
-                renderedContent = escapeHtml(content);
-            }
-        } else {
-            renderedContent = escapeHtml(content);
-        }
-
         const intentHtml = (role === "assistant") ? buildIntentBadges(intentStr) : "";
 
         bubble.innerHTML = `
             <div class="message-avatar">${avatar}</div>
             <div class="message-body">
                 ${intentHtml}
-                <div class="message-content">${renderedContent}</div>
+                <div class="message-content"></div>
                 <div class="message-time">${timeStr}</div>
             </div>
         `;
 
+        const contentDiv = bubble.querySelector(".message-content");
+        if (role === "assistant") {
+            renderMessageContent(contentDiv, content);
+        } else {
+            contentDiv.textContent = content;
+        }
+
         chatMessages.appendChild(bubble);
         scrollToBottom();
     }
+
+
+
 
     function showTypingIndicator() {
         const el = document.createElement("div");

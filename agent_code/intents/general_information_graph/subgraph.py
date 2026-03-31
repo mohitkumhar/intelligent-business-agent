@@ -1,7 +1,6 @@
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, START, END
-from typing import TypedDict, Annotated
-from langchain_ollama import ChatOllama
+from typing import TypedDict, Annotated, NotRequired
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg_pool import ConnectionPool
@@ -23,6 +22,7 @@ class GeneralInformationGraphState(TypedDict):
     web_search_result: str
     user_query_output: str
     route: str
+    chain_prior_summaries: NotRequired[str]
     
 
 def create_postgres_memory():
@@ -96,6 +96,14 @@ def answer_user_query(state: GeneralInformationGraphState, config: RunnableConfi
         history_text += f"{role}: {msg.content}\n"
 
     logger.info(f"Constructed conversation history:\n{history_text}")
+    chain_prior = (state.get("chain_prior_summaries") or "").strip()
+    prior_section = ""
+    if chain_prior:
+        prior_section = f"""
+    Context from other agents earlier in this same user message (treat as factual for this session):
+    {chain_prior}
+    """
+
     prompt = f"""
     You are a helpful AI assistant.
 
@@ -103,7 +111,7 @@ def answer_user_query(state: GeneralInformationGraphState, config: RunnableConfi
 
     Conversation History:
     {history_text if history_text else "(No previous conversation)"}
-
+    {prior_section}
     Current User Question:
     {user_query}
 

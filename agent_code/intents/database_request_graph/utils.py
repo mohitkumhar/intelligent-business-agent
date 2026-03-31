@@ -1,3 +1,4 @@
+import re
 from intents.database_request_graph.structures import (
     DateRangeOutput,
     EntityExtractionOutput,
@@ -14,6 +15,7 @@ from intents.database_request_graph.subgraph import (
     DatabaseRequestGraphState
 )
 from db_config import get_db_schema, get_db_connection
+from intents.database_request_graph.advisory_nodes import _resolve_business_id
 
 
 AVAILABLE_TABLES: list[str] = [
@@ -33,12 +35,16 @@ AVAILABLE_TABLES: list[str] = [
 TABLE_DESCRIPTIONS: dict[str, str] = {
     "alerts": "Business alerts with severity (Low/Medium/High) and status (Active/Resolved)",
     "business_health_scores": "Overall business health metrics - cash, profitability, growth, cost-control, risk scores",
+<<<<<<< Updated upstream
     "businesses": "Business registration info - name, industry, owner, monthly revenue target, risk appetite",
+=======
+    "businesses": "Business registration — name, industry, owner, monthly_target_revenue, risk_appetite (table name is businesses, plural)",
+>>>>>>> Stashed changes
     "daily_transactions": "Daily revenue & expense transactions with categories and amounts",
     "decision_outcomes": "Outcomes of past decisions with actual profit impact",
     "decisions": "Business decisions (Marketing/Hiring/Pricing/Expansion) with risk levels and success probability",
     "employees": "Employee records - name, role, salary, status (Active/Left)",
-    "financial_records": "Monthly financial summaries - revenue, expenses, net profit, cash balance, loans",
+    "financial_records": "Monthly financial summaries — total_revenue, total_expenses, net_profit, cash_balance, loans_due (month/year)",
     "products": "Product catalog - cost price, selling price, stock quantity",
     "roles": "Roles defined for each business",
     "users": "System users with email, password hash, and role",
@@ -124,16 +130,18 @@ Available tables:
 
 From the user query, determine:
 1. Which table(s) are needed to answer this query
-2. Which specific columns are referenced (if any)
+2. Which specific columns are referenced — use **exact** PostgreSQL column names from the schema (e.g. total_revenue not \"revenue\")
 3. Your confidence level (high / medium / low)
 4. Which tables are ambiguous - i.e. you are unsure whether the user means them
 
 Concept → table mapping hints:
-  sales / revenue / income   → daily_transactions (type='Revenue')
-  expenses / costs           → daily_transactions (type='Expense')
-  profit / financial summary → financial_records
+  sales / revenue as daily line-items   → daily_transactions (columns: amount, type, transaction_date; type values 'Revenue' / 'Expense')
+  monthly revenue, P&L, "how much revenue last month" → financial_records (columns: total_revenue, total_expenses, net_profit, month, year — NOT "revenue"/"expense" alone)
+  expenses / costs (daily)   → daily_transactions
+  profit / financial summary (monthly) → financial_records
   staff / payroll            → employees
   health score               → business_health_scores
+  company / business profile / targets → businesses
   product / inventory        → products
   decision / strategy        → decisions, decision_outcomes
   alert / warning            → alerts
@@ -358,11 +366,30 @@ def fetch_table_schema(state: DatabaseRequestGraphState):
 
 
 
+def _chain_prior_block_for_sql(state: DatabaseRequestGraphState) -> str:
+    """Build optional context block; kept out of f-string braces to avoid backslash restrictions."""
+    prior = (state.get("chain_prior_summaries") or "").strip()
+    if not prior:
+        return ""
+    header = (
+        "CONTEXT FROM EARLIER STEPS IN THIS REQUEST "
+        "(use to narrow tables/filters; still validate against schema):"
+    )
+    return header + "\n" + prior + "\n"
+
+
 #  NODE 4 - SQL_generation
 # =================================
 
 def sql_generation(state: DatabaseRequestGraphState):
     """Ask the LLM to produce a SELECT query."""
+    from logger.agent_debug import log_node_enter, log_node_exit
+
+    t0 = log_node_enter(
+        "SQL_generation",
+        {**state, "intent": "database_request"},
+        "Searching your business data — drafting SQL…",
+    )
 
     user_query            = state["user_query"]
     table_schema          = state.get("table_schema", "")
@@ -393,6 +420,28 @@ Error        : {prev_error}
     elif date_end:
         date_filter = f"- Apply date filter: <= '{date_end}'"
 
+    business_id = _resolve_business_id(state)
+    # BUG4 FIX: warn loudly when business_id is missing so data-leak is visible in logs
+    if not business_id:
+        logger.warning("[WARN] business_id is empty - query will return all businesses data (potential data leak)")
+    financial_rules = ""
+    _fin_q = re.search(
+        r"\b(revenue|sales|profit|expense|cash|loans?|financial|p&l|monthly|margin)\b",
+        user_query,
+        re.IGNORECASE,
+    )
+    if business_id and (
+        "financial_records" in target_tables
+        or ("financial_records" in table_schema and _fin_q)
+    ):
+        financial_rules = f"""
+MANDATORY — financial_records + businesses scoping (prevent cross-tenant leaks):
+- Alias **financial_records AS fr** and **businesses AS b** (PostgreSQL table name is `businesses`).
+- JOIN: `INNER JOIN businesses b ON fr.business_id = b.business_id`
+- Always add: `AND b.business_id = '{business_id}'::uuid`
+- Allowed financial columns only: fr.total_revenue, fr.total_expenses, fr.net_profit, fr.cash_balance, fr.loans_due, fr.month, fr.year, fr.business_id — never `revenue` / `expenses` as bare names.
+"""
+
     prompt = f"""You are a PostgreSQL expert.  Generate **one** SQL SELECT query.
 
 DATABASE SCHEMA
@@ -400,19 +449,30 @@ DATABASE SCHEMA
 
 TARGET TABLES : {', '.join(target_tables)}
 DATE RANGE    : {date_desc}
+OPERATING BUSINESS_ID (filter all financial queries) : {business_id or '(resolve from businesses table if absent)'}
 
 RULES
 - ONLY SELECT statements.  No INSERT / UPDATE / DELETE / DROP / ALTER / TRUNCATE / CREATE.
-- Use proper JOINs when multiple tables are needed.
+- Use **only** table and column names that appear verbatim in DATABASE SCHEMA (no invented columns like \"revenue\" if the schema has total_revenue).
+- If you alias a table (e.g. financial_records AS fr), every qualified column must use that alias — never reference another alias (e.g. tr.\*) unless that alias is in FROM/JOIN.
+{financial_rules}
+- Use proper JOIN multitable queries when the schema requires it; for financial summaries always join `businesses b` as above when filtering financial_records.
 - Add meaningful column aliases.
 - ORDER BY where it improves readability.
 - LIMIT 100 unless the user explicitly asks for more.
 - Use COALESCE for NULLs in aggregated / displayed columns.
 - Use SUM / AVG / COUNT and GROUP BY when totals or averages are requested.
+- For financial_records time filters without a date column, filter by month and year integers (see schema), not transaction_date.
 {date_filter}
+
+BUG4 MANDATORY FILTER — business_id scoping for daily_transactions:
+- When querying daily_transactions (alias dt), always add: `AND dt.business_id = '{business_id}'::uuid`
+- When querying financial_records (alias fr), always add: `AND fr.business_id = '{business_id}'::uuid`
+- If business_id is empty string above, omit this filter (already warned in logs).
 
 DOMAIN HINTS
 - net_profit   = total_revenue - total_expenses  (financial_records)
+- financial_records has total_revenue, total_expenses — there is NO column named revenue or expenses on this table
 - daily_transactions.type ∈ ('Revenue', 'Expense')
 - employees.status ∈ ('Active', 'Left')
 - decisions.decision_type ∈ ('Marketing', 'Hiring', 'Pricing', 'Expansion')
@@ -424,18 +484,32 @@ DOMAIN HINTS
 USER QUESTION
 {user_query}
 
+{_chain_prior_block_for_sql(state)}
+
 Return the SQL query and a short plain-English explanation."""
 
     try:
+        logger.info("[SQL GEN] tables=%s | retry=%s", target_tables, state.get("sql_retry_count", 0))
         logger.info("Invoking sql_gen_llm to generate SQL query.")
         result = sql_gen_llm.invoke(prompt)
-        logger.info(f"SQL generation successful. SQL: {result.sql_query}")
-        return {
+        logger.info("[SQL GEN] query_preview=%s", (result.sql_query or "")[:200])
+        out = {
             "generated_sql": result.sql_query,
             "sql_explanation": result.explanation,
         }
+        log_node_exit(
+            "SQL_generation",
+            {**state, **out, "route": "sql_generated"},
+            t0,
+        )
+        return out
     except Exception as exc:
         logger.error("sql_generation failed: %s", exc, exc_info=True)
+        log_node_exit(
+            "SQL_generation",
+            {**state, "route": "sql_gen_error"},
+            t0,
+        )
         return {
             "generated_sql": "",
             "sql_explanation": f"SQL generation failed: {exc}",
@@ -483,8 +557,34 @@ def sql_validation(state: DatabaseRequestGraphState):
         if kw in cleaned:
             return _fail(f"Forbidden keyword detected: {kw.strip()}")
 
+    # Deterministic check: planner catches bad aliases / missing columns LLM often misses
+    try:
+        from db_config import explain_validate_select
+
+        explain_validate_select(generated_sql)
+    except ValueError as exc:
+        return _fail(str(exc))
+    except Exception as exc:
+        msg = str(exc).strip().split("\n")[0]
+        logger.info("[SQL VALID] planner=fail | retry=%s | err=%s", retry_count, msg[:200])
+        return _fail(msg or "SQL failed database validation (EXPLAIN).")
+
+    logger.info(
+        "[SQL VALID] planner=ok | retry=%s | sql_preview=%s",
+        retry_count,
+        (generated_sql or "")[:120].replace("\n", " "),
+    )
+
     # LLM-based deeper validation
     prompt = f"""You are a SQL validation expert.  Validate the query below.
+
+VALIDATION RULES — READ CAREFULLY BEFORE FLAGGING ERRORS:
+- BETWEEN 'date' AND 'date' with IDENTICAL dates is VALID PostgreSQL.
+  It means "filter for that exact day". Do NOT flag this as an error.
+- CURRENT_DATE - INTERVAL '1 day' is valid PostgreSQL syntax.
+- COALESCE(SUM(col), 0) is valid and preferred for nullable aggregations.
+- Only flag GENUINE SQL errors: wrong table names, wrong column names,
+  missing required clauses, or real syntax errors.  Do NOT invent issues.
 
 SQL:
 {generated_sql}
@@ -494,11 +594,12 @@ Schema:
 
 Check:
 1. Valid PostgreSQL syntax
-2. All referenced tables/columns exist in the schema
-3. Correct JOIN conditions
-4. Aggregate functions paired with GROUP BY
-5. No dangerous operations
-6. Logical sense for a business database
+2. All referenced tables/columns exist in the schema — qualified names must use an alias that appears in FROM/JOIN (e.g. if only \"fr\" is defined, reject tr.*)
+3. financial_records uses total_revenue / total_expenses, not revenue / expenses as column names
+4. Correct JOIN conditions
+5. Aggregate functions paired with GROUP BY
+6. No dangerous operations
+7. Logical sense for a business database
 
 If issues are fixable, provide corrected_sql.  Otherwise set is_valid=false."""
 
@@ -508,6 +609,7 @@ If issues are fixable, provide corrected_sql.  Otherwise set is_valid=false."""
 
         if result.is_valid:
             logger.info("SQL validation successful.")
+            logger.info("[SQL VALID] llm=is_valid | corrected=0")
             return {
                 "is_sql_valid": True,
                 "sql_validation_error": "",
@@ -542,6 +644,7 @@ If issues are fixable, provide corrected_sql.  Otherwise set is_valid=false."""
 
 def execute_query(state: DatabaseRequestGraphState):
     """Run the validated SQL against Postgres."""
+    import time as _time
 
     generated_sql = state.get("generated_sql", "")
     is_valid      = state.get("is_sql_valid", False)
@@ -565,7 +668,10 @@ def execute_query(state: DatabaseRequestGraphState):
         from db_config import execute_read_query
         import json
 
+        _t0 = _time.perf_counter()
         rows = execute_read_query(clean_sql)
+        _ms = int((_time.perf_counter() - _t0) * 1000)
+        logger.info("[SQL EXEC] rows_returned=%s | duration_ms=%s", len(rows), _ms)
         logger.info(f"Query executed successfully. Found {len(rows)} rows.")
         return {
             "query_results": json.dumps(rows, default=str, indent=2),
@@ -729,10 +835,13 @@ def business_insight_generator(state: DatabaseRequestGraphState):
             })
         }
 
+    prior = (state.get("chain_prior_summaries") or "").strip()
+    prior_block = f"\nEarlier analysis steps in this request already established:\n{prior}\nBuild on this; avoid contradicting concrete numbers from above unless the database data clearly supersedes them.\n" if prior else ""
+
     prompt = f"""You are a senior business-intelligence analyst.
 
 A small-business owner asked: "{user_query}"
-
+{prior_block}
 Here is the data retrieved from their database:
 {processed_data}
 
@@ -817,8 +926,17 @@ def format_response_of_business_insight_generator(state: DatabaseRequestGraphSta
         logger.warning(f"Could not parse processed_data JSON: {e}. Using empty dict.", exc_info=True)
         data = {}
 
-    total_records = data.get("total_records", "N/A")
+    total_records = data.get("total_records", 0)
     status        = data.get("status", "N/A")
+
+    # If there's no data, skip the heavy table formatting and just return the summary/message
+    if status == "no_data" or str(total_records) == "0":
+        msg = insight.get("summary", data.get("message", "No records found matching your query."))
+        formatted_msg = f"{msg}\n\n*Suggestion: {data.get('suggestion', 'Try modifying your search query.')}*"
+        return {
+            "formatted_response": formatted_msg,
+            "messages": [{"role": "assistant", "content": formatted_msg}],
+        }
 
     prompt = f"""You are a professional business assistant.  Format the following
 analysis into a clear, polished response for a small-business owner.

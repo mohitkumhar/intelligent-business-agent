@@ -3,7 +3,7 @@ import { useState } from "react";
 import { SearchIcon, HelpCircleIcon, BellIcon } from "./Icons";
 
 interface TopbarProps {
-  onSearch: (query: string) => void;
+  onSearch?: (query: string) => void;
 }
 
 export default function Topbar({ onSearch }: TopbarProps) {
@@ -12,7 +12,7 @@ export default function Topbar({ onSearch }: TopbarProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
-    onSearch(val);
+    onSearch?.(val);
   };
 
   const handleExport = () => {
