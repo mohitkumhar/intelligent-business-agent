@@ -107,3 +107,4 @@ yarl==1.22.0
 zstandard==0.25.0
 prometheus-client>=0.20
 flask-cors
+langchain-openai

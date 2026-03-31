@@ -37,7 +37,7 @@ services:
       - /app/node_modules
 
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://backend:5000
       - DATABASE_URL=postgresql://admin:root@db:5432/test_db
       - ENCRYPTION_SECRET=12345678901234567890123456789012
       - NEXTAUTH_URL=http://localhost:5173

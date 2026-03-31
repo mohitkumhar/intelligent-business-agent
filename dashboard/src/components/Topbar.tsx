@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { SearchIcon, HelpCircleIcon, BellIcon } from "./Icons";
+import { SearchIcon, HelpCircleIcon, BellIcon, SunIcon, MoonIcon } from "./Icons";
 import { LANDING_PAGE_URL } from "@/lib/publicUrls";
 import { syncUserEmailFromUrl, syncUserNameFromApi } from "@/lib/syncDashboardUser";
+import { useTheme } from "@/context/ThemeContext";
 
 interface TopbarProps {
   onSearch: (query: string) => void;
@@ -15,8 +16,7 @@ function readStoredName(): string {
     const u = JSON.parse(localStorage.getItem("profit_pilot_user") || "{}") as {
       full_name?: string;
     };
-    const n = (u.full_name || "").trim();
-    return n || "User";
+    return (u.full_name || "").trim() || "User";
   } catch {
     return "User";
   }
@@ -47,7 +47,11 @@ export default function Topbar({ onSearch, title = "Overview" }: TopbarProps) {
   const [userEmail, setUserEmail] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  
+  // Theme context from kushal-dev
+  const { theme, toggleTheme } = useTheme();
 
+  // User sync logic from testsparkhack
   useEffect(() => {
     syncUserEmailFromUrl();
     setDisplayName(readStoredName());
@@ -68,6 +72,7 @@ export default function Topbar({ onSearch, title = "Overview" }: TopbarProps) {
     };
   }, []);
 
+  // Dropdown click outside logic
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -101,58 +106,48 @@ export default function Topbar({ onSearch, title = "Overview" }: TopbarProps) {
           </span>
         </div>
       </div>
+      
       <div className="topbar-right">
+        {/* Theme Toggle Button (Added from kushal-dev) */}
+        <button 
+          className="topbar-icon-btn" 
+          onClick={toggleTheme}
+          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          {theme === "light" ? <MoonIcon size={16} /> : <SunIcon size={16} />}
+        </button>
+
         <button className="topbar-icon-btn" title="Help">
           <HelpCircleIcon size={16} />
         </button>
-        <button className="topbar-icon-btn" title="Bell">
+        <button className="topbar-icon-btn" title="Notifications">
           <BellIcon size={16} />
         </button>
 
+        {/* User Profile Dropdown (Added from testsparkhack) */}
         <div className="topbar-profile-wrap" ref={menuRef}>
           <button
             type="button"
             className="topbar-profile-trigger"
             onClick={() => setMenuOpen((o) => !o)}
-            aria-expanded={menuOpen}
-            aria-haspopup="true"
           >
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#1E293B",
-                maxWidth: 140,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <span className="user-name-text">
               {displayName}
             </span>
             <div className="avatar">
               {displayName.charAt(0).toUpperCase()}
             </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" aria-hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2">
               <path d="M6 9l6 6 6-6" />
             </svg>
           </button>
+          
           {menuOpen && (
-            <div className="topbar-dropdown" role="menu">
-              {userEmail ? (
-                <div className="muted" title={userEmail}>
-                  {userEmail}
-                </div>
-              ) : null}
-              <Link href="/profile" role="menuitem" onClick={() => setMenuOpen(false)}>
-                Profile
-              </Link>
-              <Link href="/import" role="menuitem" onClick={() => setMenuOpen(false)}>
-                Import data
-              </Link>
-              <button type="button" role="menuitem" onClick={() => clearSessionAndGoLanding()}>
-                Log out
-              </button>
+            <div className="topbar-dropdown">
+              {userEmail && <div className="muted">{userEmail}</div>}
+              <Link href="/profile" onClick={() => setMenuOpen(false)}>Profile</Link>
+              <Link href="/import" onClick={() => setMenuOpen(false)}>Import Data</Link>
+              <button type="button" onClick={clearSessionAndGoLanding}>Log out</button>
             </div>
           )}
         </div>

@@ -171,63 +171,10 @@ export default function RevenueInsights() {
       <div className="chart-header">
         <div>
           <div className="chart-title">Revenue Insights</div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              marginTop: 6,
-            }}
-          >
-            {view === "monthly" ? (
-              <>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                  <span className="chart-subtitle">{formatInrFull(avgMonthlyRevenue)}</span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#64748B",
-                      background: "#F1F5F9",
-                      padding: "3px 10px",
-                      borderRadius: 12,
-                    }}
-                  >
-                    avg / month
-                  </span>
-                </div>
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "#64748B",
-                    fontWeight: 500,
-                  }}
-                >
-                  6-month earnings total {formatInrFull(sumRev)} · expenses {formatInrFull(sumExp)}
-                </span>
-              </>
-            ) : (
-              <>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                  <span className="chart-subtitle">{formatInrFull(sumRev)}</span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#64748B",
-                      background: "#F1F5F9",
-                      padding: "3px 10px",
-                      borderRadius: 12,
-                    }}
-                  >
-                    6-mo total
-                  </span>
-                </div>
-                <span style={{ fontSize: 12, color: "#64748B", fontWeight: 500 }}>
-                  Combined bars: all earnings vs expenses in this period ({n} months)
-                </span>
-              </>
-            )}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4 }}>
+            <span className="chart-subtitle">
+              ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

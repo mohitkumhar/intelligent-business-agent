@@ -2,7 +2,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LANDING_PAGE_URL } from "@/lib/publicUrls";
-import { DashboardIcon, ChatbotIcon, FileUpIcon, UsersIcon } from "./Icons";
+import { 
+  DashboardIcon, 
+  ChatbotIcon, 
+  SparklesIcon, 
+  ReceiptIcon, 
+  PackageIcon, 
+  UsersIcon, 
+  AlertTriangleIcon,
+  FileUpIcon 
+} from "./Icons";
 
 function clearProfitPilotSession() {
   if (typeof window === "undefined") return;
@@ -15,11 +24,27 @@ function clearProfitPilotSession() {
 export default function Sidebar() {
   const pathname = usePathname();
 
-  const mainMenu = [
-    { label: "Dashboard", href: "/", icon: <DashboardIcon size={18} /> },
-    { label: "Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> },
+  // Management section (Testsparkhack se Import Data add kiya)
+  const dashboardMenu = [
+    { label: "Overview", href: "/", icon: <DashboardIcon size={18} /> },
+    { label: "AI Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> },
     { label: "Import Data", href: "/import", icon: <FileUpIcon size={18} /> },
   ];
+
+  // Business section (Kushal-dev se)
+  const businessMenu = [
+    { label: "Transactions", href: "/transactions", icon: <ReceiptIcon size={18} /> },
+    { label: "Inventory", href: "/inventory", icon: <PackageIcon size={18} /> },
+    { label: "Staff", href: "/staff", icon: <UsersIcon size={18} /> },
+    { label: "Alerts", href: "/alerts", icon: <AlertTriangleIcon size={18} /> },
+  ];
+
+  // System section (Kushal-dev se)
+  const systemMenu = [
+    { label: "Profile", href: "/profile", icon: <SparklesIcon size={18} /> },
+    { label: "Settings", href: "/settings", icon: <DashboardIcon size={18} /> },
+  ];
+
   return (
     <aside className="sidebar">
       {/* Logo */}
@@ -28,12 +53,12 @@ export default function Sidebar() {
         <span className="logo-text">ProfitPilot</span>
       </div>
 
-      {/* Main Menu */}
+      {/* Management Section */}
       <nav className="sidebar-nav">
         <div className="sidebar-section">
-          <div className="sidebar-section-title">Main Menu</div>
+          <div className="sidebar-section-title">Management</div>
         </div>
-        {mainMenu.map((item) => (
+        {dashboardMenu.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -45,35 +70,55 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Account Section */}
-      <nav className="sidebar-nav" style={{ marginTop: 'auto' }}>
+      {/* Business Section */}
+      <nav className="sidebar-nav" style={{ marginTop: "16px" }}>
         <div className="sidebar-section">
-          <div className="sidebar-section-title">Account</div>
+          <div className="sidebar-section-title">Business</div>
         </div>
-        <Link
-          href="/profile"
-          className={`nav-link ${pathname === "/profile" ? "active" : ""}`}
-        >
-          <span className="nav-icon">
-            <UsersIcon size={18} />
-          </span>
-          <span>Profile</span>
-        </Link>
+        {businessMenu.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`nav-link ${pathname === item.href ? "active" : ""}`}
+          >
+            <span className="nav-icon">{item.icon}</span>
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+
+      {/* System Section */}
+      <nav className="sidebar-nav" style={{ marginTop: "16px" }}>
+        <div className="sidebar-section">
+          <div className="sidebar-section-title">System</div>
+        </div>
+        {systemMenu.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`nav-link ${pathname === item.href ? "active" : ""}`}
+          >
+            <span className="nav-icon">{item.icon}</span>
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+
+      {/* Logout button (Optional but useful from testsparkhack) */}
+      <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
         <button
           type="button"
           onClick={() => {
             clearProfitPilotSession();
             window.location.href = LANDING_PAGE_URL.replace(/\/$/, "");
           }}
-          className="nav-link"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: 'auto', padding: '12px 16px', color: '#64748B', fontWeight: 500 }}
+          className="nav-link logout-btn"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', color: '#94A3B8' }}
         >
-          <span className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', width: '18px' }}>🚪</span>
+          <span className="nav-icon">🚪</span>
           <span>Logout</span>
         </button>
-      </nav>
-
-      {/* Sidebar footer removed as requested */}
+      </div>
     </aside>
   );
 }

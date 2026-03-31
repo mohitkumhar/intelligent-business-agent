@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
-:root {
+/* ─── Light Theme (default) ─────────────────────────────── */
+:root,
+[data-theme="light"] {
   --bg-primary: #F8FAFC;
   --bg-card: #FFFFFF;
-  --bg-sidebar: #121212; /* Dark sidebar from ref */
+  --bg-sidebar: #121212;
   --text-primary: #0F172A;
   --text-secondary: #475569;
   --text-muted: #94A3B8;
@@ -23,6 +25,55 @@
   --radius-sm: 8px;
   --sidebar-width: 250px;
   --sidebar-collapsed: 72px;
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-card-hover: 0 8px 24px rgba(0,0,0,0.08);
+  --skeleton-from: #f1f5f9;
+  --skeleton-mid: #e2e8f0;
+  --skeleton-to: #f1f5f9;
+  --table-row-hover: #F8FAFC;
+  --table-border: #F1F5F9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+  --progress-bg: #E2E8F0;
+  --kpi-value-color: #0F172A;
+  --kpi-label-color: #6B7280;
+  --kpi-card-bg: #FFFFFF;
+  --kpi-card-border: #F1F5F9;
+}
+
+/* ─── Dark Theme ────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-primary: #000000;
+  --bg-card: #0A0A0A;
+  --bg-sidebar: #000000;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --border-color: #27272A;
+  --accent-blue: #3B82F6;
+  --accent-blue-light: rgba(59, 130, 246, 0.15);
+  --accent-red: #EF4444;
+  --accent-red-light: rgba(239, 68, 68, 0.15);
+  --accent-green: #10B981;
+  --accent-green-light: rgba(16, 185, 129, 0.15);
+  --accent-amber: #F59E0B;
+  --accent-amber-light: rgba(245, 158, 11, 0.15);
+  --accent-orange: #F97316;
+  --accent-orange-light: rgba(249, 115, 22, 0.15);
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-card-hover: 0 8px 24px rgba(0,0,0,0.4);
+  --skeleton-from: #1E293B;
+  --skeleton-mid: #334155;
+  --skeleton-to: #1E293B;
+  --table-row-hover: #1E293B;
+  --table-border: #1E293B;
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+  --progress-bg: #18181B;
+  --kpi-value-color: #FFFFFF;
+  --kpi-label-color: #A1A1AA;
+  --kpi-card-bg: #09090B;
+  --kpi-card-border: #27272A;
 }
 
 * {
@@ -43,11 +94,22 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────── */
-::-webkit-scrollbar { width: 0; height: 0; display: none; }
-* { -ms-overflow-style: none; scrollbar-width: none; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* ─── Theme transition helper ───────────────────────────── */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
 
 /* ─── Layout ────────────────────────────────────────────── */
 .app-layout {
@@ -499,7 +561,7 @@ body {
 .kpi-value {
   font-size: 26px;
   font-weight: 600;
-  color: #0F172A; /* Dark black as requested */
+  color: var(--kpi-value-color);
   letter-spacing: -0.5px;
   margin: 2px 0;
 }
@@ -733,7 +795,7 @@ body {
 .progress-bar-bg {
   width: 100%;
   height: 7px;
-  background: #E2E8F0;
+  background: var(--progress-bg);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -869,14 +931,14 @@ body {
 }
 
 .data-table tbody tr:hover {
-  background: #F8FAFC;
+  background: var(--table-row-hover);
 }
 
 .data-table tbody td {
   padding: 14px 16px;
   font-size: 13px;
   color: var(--text-primary);
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid var(--table-border);
 }
 
 .data-table tbody tr:last-child td {
@@ -905,7 +967,7 @@ body {
 
 /* ─── Loading / Empty States ────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, var(--skeleton-from) 25%, var(--skeleton-mid) 50%, var(--skeleton-to) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
