@@ -1,13 +1,14 @@
+import os
+
 import psycopg2
 import psycopg2.extras
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://admin:root@localhost:5432/test_db"
+    "postgresql://admin:root@localhost:5432/test_db",
 )
 
 
@@ -50,27 +51,23 @@ def get_db_schema() -> str:
         return f"Error reading schema: {str(e)}"
 
 
-<<<<<<< Updated upstream
-def _assert_select_only_sql(sql: str) -> None:
-    cleaned = sql.strip().lower()
-    if not cleaned.startswith("select"):
-        raise ValueError("Only SELECT queries are allowed for safety.")
-    forbidden = ["insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create "]
-    for keyword in forbidden:
-        if keyword in cleaned:
-            raise ValueError(f"Forbidden SQL keyword detected: {keyword.strip()}")
-=======
 _FORBIDDEN = [
-    "insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create ",
+    "insert ",
+    "update ",
+    "delete ",
+    "drop ",
+    "alter ",
+    "truncate ",
+    "create ",
 ]
 
 
 def _assert_read_only_select(sql: str) -> str:
-    """Normalize SQL and ensure a single read-only SELECT (or WITH … SELECT)."""
+    """Normalize SQL and ensure a single read-only SELECT (or WITH ... SELECT)."""
     s = sql.strip().rstrip(";")
     cleaned = s.lower()
     if not (cleaned.startswith("select") or cleaned.startswith("with")):
-        raise ValueError("Only SELECT or WITH…SELECT queries are allowed for safety.")
+        raise ValueError("Only SELECT or WITH...SELECT queries are allowed for safety.")
     if s.count(";") > 0:
         raise ValueError("Multiple SQL statements are not allowed.")
     for keyword in _FORBIDDEN:
@@ -82,7 +79,7 @@ def _assert_read_only_select(sql: str) -> str:
 def explain_validate_select(sql: str) -> None:
     """
     Run EXPLAIN on the query without returning rows. Catches invalid aliases,
-    missing columns, and bad JOINs that LLM validators often miss.
+    missing columns, and bad JOINs that validators often miss.
     """
     s = _assert_read_only_select(sql)
     conn = get_db_connection()
@@ -94,21 +91,14 @@ def explain_validate_select(sql: str) -> None:
             cur.close()
     finally:
         conn.close()
->>>>>>> Stashed changes
 
 
 def execute_read_query(sql: str) -> list[dict]:
     """
     Safely executes a SELECT-only SQL query.
     Returns results as a list of dicts.
-    Raises ValueError if the query is not a SELECT.
     """
-<<<<<<< Updated upstream
-    _assert_select_only_sql(sql)
-=======
     s = _assert_read_only_select(sql)
-
->>>>>>> Stashed changes
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -127,11 +117,142 @@ def execute_read_query_params(sql: str, params: tuple | list | None = None) -> l
     Same safety rules as execute_read_query, but supports parameterized queries
     (psycopg2 %s placeholders). Use for all user-influenced predicates.
     """
-    _assert_select_only_sql(sql)
+    s = _assert_read_only_select(sql)
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(sql, params or ())
+        cur.execute(s, params or ())
+        results = cur.fetchall()
+        cur.close()
+        return [dict(row) for row in results]
+    except Exception as e:
+        raise RuntimeError(f"SQL execution error: {str(e)}")
+    finally:
+        conn.close()
+import os
+
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://admin:root@localhost:5432/test_db",
+)
+
+
+def get_db_connection():
+    """Returns a new psycopg2 connection to the PostgreSQL database."""
+    return psycopg2.connect(DATABASE_URL)
+
+
+def get_db_schema() -> str:
+    """
+    Reads all user tables and their columns from the database.
+    Returns a formatted string the LLM can use to understand the schema.
+    """
+    query = """
+        SELECT table_name, column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        ORDER BY table_name, ordinal_position;
+    """
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(query)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        schema_lines = []
+        current_table = None
+        for table_name, column_name, data_type, is_nullable in rows:
+            if table_name != current_table:
+                current_table = table_name
+                schema_lines.append(f"\nTable: {table_name}")
+                schema_lines.append("-" * 40)
+            nullable = "NULL" if is_nullable == "YES" else "NOT NULL"
+            schema_lines.append(f"  {column_name} ({data_type}, {nullable})")
+
+        return "\n".join(schema_lines)
+    except Exception as e:
+        return f"Error reading schema: {str(e)}"
+
+
+_FORBIDDEN = [
+    "insert ",
+    "update ",
+    "delete ",
+    "drop ",
+    "alter ",
+    "truncate ",
+    "create ",
+]
+
+
+def _assert_read_only_select(sql: str) -> str:
+    """Normalize SQL and ensure a single read-only SELECT (or WITH ... SELECT)."""
+    s = sql.strip().rstrip(";")
+    cleaned = s.lower()
+    if not (cleaned.startswith("select") or cleaned.startswith("with")):
+        raise ValueError("Only SELECT or WITH...SELECT queries are allowed for safety.")
+    if s.count(";") > 0:
+        raise ValueError("Multiple SQL statements are not allowed.")
+    for keyword in _FORBIDDEN:
+        if keyword in cleaned:
+            raise ValueError(f"Forbidden SQL keyword detected: {keyword.strip()}")
+    return s
+
+
+def explain_validate_select(sql: str) -> None:
+    """
+    Run EXPLAIN on the query without returning rows. Catches invalid aliases,
+    missing columns, and bad JOINs that validators often miss.
+    """
+    s = _assert_read_only_select(sql)
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        try:
+            cur.execute("EXPLAIN (COSTS OFF) " + s)
+        finally:
+            cur.close()
+    finally:
+        conn.close()
+
+
+def execute_read_query(sql: str) -> list[dict]:
+    """
+    Safely executes a SELECT-only SQL query.
+    Returns results as a list of dicts.
+    """
+    s = _assert_read_only_select(sql)
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(s)
+        results = cur.fetchall()
+        cur.close()
+        return [dict(row) for row in results]
+    except Exception as e:
+        raise RuntimeError(f"SQL execution error: {str(e)}")
+    finally:
+        conn.close()
+
+
+def execute_read_query_params(sql: str, params: tuple | list | None = None) -> list[dict]:
+    """
+    Same safety rules as execute_read_query, but supports parameterized queries
+    (psycopg2 %s placeholders). Use for all user-influenced predicates.
+    """
+    s = _assert_read_only_select(sql)
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(s, params or ())
         results = cur.fetchall()
         cur.close()
         return [dict(row) for row in results]
