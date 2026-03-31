@@ -9,20 +9,23 @@ import { PieChartIcon } from "./Icons";
 Chart.register(...registerables);
 
 export default function TransactionsByCategory() {
-  const { period } = useDashboardPeriod();
+  // Dono branches ke hooks combine kiye
+  const { period, dataVersion } = useDashboardPeriod();
   const { theme } = useTheme();
+  
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<RevenueVsExpense | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // dataVersion ko dependency mein rakha taaki import ke baad refresh ho
   useEffect(() => {
     setLoading(true);
     api.getRevenueVsExpense(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;
@@ -31,6 +34,7 @@ export default function TransactionsByCategory() {
     const ctx = chartRef.current.getContext("2d");
     if (!ctx) return;
 
+    // Dark mode supporting logic from kushal-dev
     const isDark = theme === "dark";
     const textColor = isDark ? "#94A3B8" : "#64748B";
     const sliceBorderColor = isDark ? "#111827" : "#FFFFFF";
@@ -68,7 +72,7 @@ export default function TransactionsByCategory() {
             bodyFont: { family: "Inter", size: 11 },
             padding: 12,
             cornerRadius: 8,
-            callbacks: { label: (ctx) => `${ctx.label}: $${ctx.parsed.toLocaleString()}` },
+            callbacks: { label: (ctx) => `${ctx.label}: ₹${ctx.parsed.toLocaleString()}` },
           },
         },
       },
@@ -78,7 +82,7 @@ export default function TransactionsByCategory() {
   }, [data, theme]);
 
   return (
-    <div className="chart-card">
+    <div className="chart-card" key={dataVersion}>
       <div className="chart-header">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <PieChartIcon size={18} color="var(--accent-green)" />

@@ -1,35 +1,22 @@
 "use client";
 
-/**
- * Common Types for the Business Intelligence Agent API
- */
+import { AGENT_API_BASE } from "./publicUrls";
 
+/**
+ * Common Types for ProfitPilot API
+ */
 export interface DashboardSummary {
   total_revenue: number;
   total_expenses: number;
   net_profit: number;
   total_transactions: number;
   active_alerts: number;
+  alert_highest_severity?: string | null;
+  // Growth percentages (Kushal-dev logic)
   revenue_change: number;
   expenses_change: number;
   net_profit_change: number;
   transactions_change: number;
-}
-
-
-export interface FinancialOverview {
-  labels: string[];
-  revenue: number[];
-  expenses: number[];
-  net_profit: number[];
-  cash_balance: number[];
-}
-
-export interface SalesTarget {
-  business_name: string;
-  current_revenue: number;
-  target_revenue: number;
-  percentage: number;
 }
 
 export interface Transaction {
@@ -41,58 +28,6 @@ export interface Transaction {
   description: string;
 }
 
-export interface RevenueVsExpense {
-  labels: string[];
-  revenue: number[];
-  expenses: number[];
-}
-
-export interface SalesTrend {
-  labels: string[];
-  revenue: number[];
-  expenses: number[];
-}
-
-export interface AlertsBySeverity {
-  labels: string[];
-  data: number[];
-}
-
-export interface Alert {
-  alert_id: number;
-  alert_type: string;
-  severity: string;
-  message: string;
-  status: string;
-  created_at: string;
-}
-
-
-export interface HealthScores {
-  businesses: string[];
-  scores: Array<{
-    name: string;
-    overall: number;
-    cash: number;
-    profitability: number;
-    growth: number;
-    cost_control: number;
-    risk: number;
-  }>;
-}
-
-export interface TopProducts {
-  labels: string[];
-  stock: number[];
-  margin: number[];
-}
-
-export interface EmployeeStats {
-  labels: string[];
-  counts: number[];
-  avg_salary: number[];
-}
-
 export interface Forecast {
   historical: { date: string; actual: number }[];
   forecast: { date: string; predicted: number; lower_bound: number; upper_bound: number }[];
@@ -102,7 +37,6 @@ export interface Forecast {
 }
 
 export interface BusinessInfo {
-
   business_id: string;
   business_name: string;
   industry_type: string;
@@ -113,120 +47,131 @@ export interface BusinessInfo {
   monthly_revenue?: string;
   biggest_challenge?: string;
   finance_tracking_method?: string;
-  onboarding_notes?: string;
+  user_name?: string;
+  user_email?: string;
 }
 
-/**
- * API Wrapper for dashboard components
- */
+// Interfaces for Charts (Kushal-dev)
+export interface RevenueVsExpense { labels: string[]; revenue: number[]; expenses: number[]; }
+export interface SalesTrend { labels: string[]; revenue: number[]; expenses: number[]; }
+export interface FinancialOverview { labels: string[]; revenue: number[]; expenses: number[]; net_profit: number[]; cash_balance: number[]; }
+export interface AlertsBySeverity { labels: string[]; data: number[]; }
+export interface TopProducts { labels: string[]; stock: number[]; margin: number[]; }
+export interface EmployeeStats { labels: string[]; counts: number[]; avg_salary: number[]; }
+
+// --- Auth & Email Sync Logic (From Testsparkhack) ---
+function getStoredUserEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailParam = urlParams.get("user_email");
+  if (emailParam) {
+    try {
+      const existing = JSON.parse(localStorage.getItem("profit_pilot_user") || "{}");
+      if (existing.email !== emailParam) {
+        localStorage.setItem("profit_pilot_user", JSON.stringify({ ...existing, email: emailParam }));
+      }
+    } catch {
+      localStorage.setItem("profit_pilot_user", JSON.stringify({ email: emailParam }));
+    }
+    return emailParam;
+  }
+  try {
+    return JSON.parse(localStorage.getItem("profit_pilot_user") || "{}").email || null;
+  } catch { return null; }
+}
+
+function appendUserEmail(url: string): string {
+  const email = getStoredUserEmail();
+  if (!email) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}email=${encodeURIComponent(email)}`;
+}
+
+// --- API Wrapper Object ---
 export const api = {
   getSummary: async (period: string): Promise<DashboardSummary> => {
-    const res = await fetch(`/api/dashboard/summary?period=${period}`);
-    if (!res.ok) throw new Error("Failed to fetch dashboard summary");
+    // Note: Humein summary-sql use karna hai growth metrics ke liye
+    const res = await fetch(appendUserEmail(`/api/dashboard/summary-sql?period=${period}`));
+    if (!res.ok) throw new Error("Summary API failed");
     return res.json();
   },
 
-  getFinancialOverview: async (period: string): Promise<FinancialOverview> => {
-    const res = await fetch(`/api/dashboard/financial-overview?period=${period}`);
-    if (!res.ok) throw new Error("Failed to fetch financial overview");
+  getFinancialOverview: async () => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/financial-overview`));
     return res.json();
   },
 
-  getRevenueVsExpense: async (period: string): Promise<RevenueVsExpense> => {
-    const res = await fetch(`/api/dashboard/revenue-vs-expense?period=${period}`);
-    if (!res.ok) throw new Error("Failed to fetch revenue vs expense");
+  getRevenueVsExpense: async (period: string) => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/revenue-vs-expense?period=${period}`));
     return res.json();
   },
 
-  getSalesTrend: async (period: string): Promise<SalesTrend> => {
-    const res = await fetch(`/api/dashboard/sales-trend?period=${period}`);
-    if (!res.ok) throw new Error("Failed to fetch sales trend");
+  getSalesTrend: async (period: string) => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/sales-trend?period=${period}`));
     return res.json();
   },
 
-  getRecentTransactions: async (params: {
-    search?: string;
-    category?: string;
-    limit?: number;
-    period?: string;
-  }): Promise<{ transactions: Transaction[] }> => {
+  getForecast: async (period: string): Promise<Forecast> => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/forecast?period=${period}`));
+    if (!res.ok) {
+        // Fallback to mock if AI service is down
+        const { mockForecast } = await import("./mockData");
+        return mockForecast;
+    }
+    return res.json();
+  },
+
+  getRecentTransactions: async (params: { search?: string; category?: string; limit?: number; period?: string; }) => {
     const query = new URLSearchParams();
     if (params.search) query.set("search", params.search);
     if (params.category) query.set("category", params.category);
     if (params.limit) query.set("limit", params.limit.toString());
     if (params.period) query.set("period", params.period);
-
-    const res = await fetch(`/api/dashboard/recent-transactions?${query.toString()}`);
-    if (!res.ok) throw new Error("Failed to fetch transactions");
+    const res = await fetch(appendUserEmail(`/api/dashboard/recent-transactions?${query.toString()}`));
     return res.json();
   },
 
-  getCategories: async (): Promise<{ categories: string[] }> => {
-    const res = await fetch(`/api/dashboard/categories`);
-    if (!res.ok) throw new Error("Failed to fetch categories");
-    return res.json();
-  },
-
-  getAlertsBySeverity: async (period: string): Promise<AlertsBySeverity> => {
-    const res = await fetch(`/api/dashboard/alerts-by-severity?period=${period}`);
-    if (!res.ok) throw new Error("Failed to fetch alerts by severity");
-    return res.json();
-  },
-
-  getAlertsList: async (limit: number = 50): Promise<{ alerts: Alert[] }> => {
-    const res = await fetch(`/api/dashboard/alerts?limit=${limit}`);
-    if (!res.ok) throw new Error("Failed to fetch alerts list");
-    return res.json();
-  },
-
-
-  getHealthScores: async (): Promise<HealthScores> => {
-    const res = await fetch(`/api/dashboard/health-scores`);
-    if (!res.ok) throw new Error("Failed to fetch health scores");
-    return res.json();
-  },
-
-  getTopProducts: async (): Promise<TopProducts> => {
-    const res = await fetch(`/api/dashboard/top-products`);
-    if (!res.ok) throw new Error("Failed to fetch top products");
-    return res.json();
-  },
-
-  getEmployeeStats: async (): Promise<EmployeeStats> => {
-    const res = await fetch(`/api/dashboard/employee-stats`);
-    if (!res.ok) throw new Error("Failed to fetch employee statistics");
-    return res.json();
-  },
-
-  getSalesTarget: async (period: string): Promise<SalesTarget> => {
-    const res = await fetch(`/api/dashboard/sales-target?period=${period}`);
-    if (!res.ok) throw new Error("Failed to fetch sales target");
+  getAlertsList: async () => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/alerts-list`));
     return res.json();
   },
 
   getBusinessInfo: async (): Promise<BusinessInfo> => {
-    const res = await fetch(`/api/dashboard/business-info`);
-    if (!res.ok) throw new Error("Failed to fetch business information");
+    const res = await fetch(appendUserEmail(`/api/dashboard/business-info`));
     return res.json();
   },
 
-  getForecast: async (period: string): Promise<Forecast> => {
-    // Attempt real fetch, fallback to a local mock generator if backend is unavailable
-    try {
-      const res = await fetch(`/api/dashboard/forecast?period=${period}`);
-      if (!res.ok) throw new Error("Backend error");
-      return await res.json();
-    } catch (err) {
-      console.warn("Forecast API failed, using mock data:", err);
-      const { mockForecast } = await import("./mockData");
-      return mockForecast;
-    }
-  },
-
-  exportDashboardCsv: async (period: string): Promise<void> => {
-
-    // Current backend doesn't support this yet, so we'll simulate success
-    console.log(`Exporting dashboard data for ${period}...`);
-    return new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  // Other endpoints
+  getCategories: async () => (await fetch(appendUserEmail(`/api/dashboard/categories`))).json(),
+  getAlertsBySeverity: async () => (await fetch(appendUserEmail(`/api/dashboard/alerts-by-severity`))).json(),
+  getHealthScores: async () => (await fetch(appendUserEmail(`/api/dashboard/health-scores`))).json(),
+  getTopProducts: async () => (await fetch(appendUserEmail(`/api/dashboard/top-products`))).json(),
+  getEmployeeStats: async () => (await fetch(appendUserEmail(`/api/dashboard/employee-stats`))).json(),
 };
+
+/**
+ * Chat Streaming Logic (Testsparkhack)
+ */
+export async function* streamChatSend(conversationId: string, message: string) {
+  const res = await fetch(`${AGENT_API_BASE}/api/chat/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ conversation_id: conversationId, message }),
+  });
+  if (!res.ok) throw new Error("Chat sequence failed");
+  const reader = res.body?.getReader();
+  if (!reader) return;
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (value) buffer += decoder.decode(value, { stream: true });
+    while (buffer.includes("\n\n")) {
+      const i = buffer.indexOf("\n\n");
+      const raw = buffer.slice(0, i).trim();
+      buffer = buffer.slice(i + 2);
+      if (raw.startsWith("data: ")) yield JSON.parse(raw.slice(6));
+    }
+    if (done) break;
+  }
+}

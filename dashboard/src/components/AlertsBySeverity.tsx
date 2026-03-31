@@ -8,7 +8,7 @@ import { AlertTriangleIcon } from "./Icons";
 Chart.register(...registerables);
 
 export default function AlertsBySeverity() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<AlertsData | null>(null);
@@ -20,7 +20,7 @@ export default function AlertsBySeverity() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;

@@ -3,6 +3,7 @@ import { ContentPageWrapper } from "@/components/ContentPageWrapper";
 import { createMetaTags } from "@/lib/createMetaTags";
 import { useState } from "react";
 import { onboardingUrl, dashboardUrl } from "@/constants";
+import { isUserOnboarded, normalizeEmail } from "@/lib/onboardingState";
 import { useGoogleLogin } from "@react-oauth/google";
 
 export const Route = createFileRoute("/login")({
@@ -36,39 +37,34 @@ function LoginPage() {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
         const user = await res.json();
-        
+
         // Extract basic data
         // Extract basic data
         if (user.email) {
-          console.log("Authenticated User:", user);
-          
-          // Check our registry
-          const registry = JSON.parse(localStorage.getItem('profit_pilot_registry') || '[]');
-          const userExists = registry.includes(user.email);
-          const isOnboarded = localStorage.getItem('profit_pilot_onboarded') === 'true';
+          const registry: string[] = JSON.parse(localStorage.getItem("profit_pilot_registry") || "[]");
+          const emailNorm = normalizeEmail(user.email);
+          const userExists = registry.some((e) => normalizeEmail(e) === emailNorm);
+          const onboarded = isUserOnboarded(user.email);
 
-          // Persist user info
-          localStorage.setItem('profit_pilot_user', JSON.stringify({
-            full_name: user.name || user.given_name || "",
-            email: user.email,
-            phone: ""
-          }));
+          localStorage.setItem(
+            "profit_pilot_user",
+            JSON.stringify({
+              full_name: user.name || user.given_name || "",
+              email: user.email,
+              phone: "",
+            }),
+          );
 
-          if (userExists && isOnboarded) {
-             // Returning user -> Dashboard
-             window.location.href = dashboardUrl;
-          } else if (userExists && !isOnboarded) {
-             // Partial user -> Onboarding
-             navigate({ to: onboardingUrl });
-          } else {
-             // New user -> Signup mode
-             setMode("signup");
-             alert("No account found! We've moved you to Signup to get started.");
-             // Add to registry for future
-             const updatedRegistry = [...registry, user.email];
-             localStorage.setItem('profit_pilot_registry', JSON.stringify(updatedRegistry));
-             navigate({ to: onboardingUrl });
+          if (onboarded) {
+            window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(user.email)}`;
+            return;
           }
+
+          if (!userExists) {
+            const updatedRegistry = [...new Set([...registry, emailNorm])];
+            localStorage.setItem("profit_pilot_registry", JSON.stringify(updatedRegistry));
+          }
+          navigate({ to: onboardingUrl });
         }
       } catch (err) {
         console.error("Failed to fetch Google user info:", err);
@@ -88,33 +84,42 @@ function LoginPage() {
     // Simulate auth and store data
     setTimeout(() => {
       setIsLoading(false);
-      
-      const registry = JSON.parse(localStorage.getItem('profit_pilot_registry') || '[]');
-      const userExists = registry.includes(email);
-      const isOnboarded = localStorage.getItem('profit_pilot_onboarded') === 'true';
+
+      const registry: string[] = JSON.parse(localStorage.getItem("profit_pilot_registry") || "[]");
+      const emailNorm = normalizeEmail(email);
+      const userExists = registry.some((e) => normalizeEmail(e) === emailNorm);
+      const onboarded = isUserOnboarded(email);
 
       if (mode === "login") {
         if (userExists) {
-          localStorage.setItem('profit_pilot_user', JSON.stringify({
-            full_name: "Returning User",
-            email: email,
-            phone: ""
-          }));
-          window.location.href = isOnboarded ? dashboardUrl : onboardingUrl;
+          localStorage.setItem(
+            "profit_pilot_user",
+            JSON.stringify({
+              full_name: "Returning User",
+              email: email,
+              phone: "",
+            }),
+          );
+          if (onboarded) {
+            window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(email)}`;
+          } else {
+            window.location.href = onboardingUrl;
+          }
         } else {
           setMode("signup");
           alert("Account not found! Please create your account first.");
         }
       } else {
-        // Signup
-        localStorage.setItem('profit_pilot_user', JSON.stringify({
-          full_name: fullName,
-          email: email,
-          phone: phone
-        }));
-        // Register the user
-        const updatedRegistry = [...new Set([...registry, email])];
-        localStorage.setItem('profit_pilot_registry', JSON.stringify(updatedRegistry));
+        localStorage.setItem(
+          "profit_pilot_user",
+          JSON.stringify({
+            full_name: fullName,
+            email: email,
+            phone: phone,
+          }),
+        );
+        const updatedRegistry = [...new Set([...registry, emailNorm])];
+        localStorage.setItem("profit_pilot_registry", JSON.stringify(updatedRegistry));
         navigate({ to: onboardingUrl });
       }
     }, 1500);
@@ -126,12 +131,12 @@ function LoginPage() {
       <div className="absolute inset-0 bg-[#0a0a0a]" />
       <div className="absolute inset-0 bg-[url('$magicBackgrounds/magic-background.png')] bg-no-repeat bg-cover opacity-15 pointer-events-none" />
       <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-blue-600/5 via-transparent to-[#FF5A25]/5 pointer-events-none" />
-      
+
       <div className="relative z-10 w-full max-w-[480px] px-6 py-20 flex flex-col items-center">
         <div className="w-full p-10 md:p-14 rounded-[3.5rem] bg-black/60 border border-white/10 backdrop-blur-3xl shadow-[0_32px_100px_rgba(0,0,0,0.8)] relative overflow-hidden group">
           {/* Subtle brand accent */}
           <div className="absolute -top-32 -right-32 w-80 h-80 bg-[#FF5A25]/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#FF5A25]/15 transition-colors duration-1000" />
-          
+
           <div className="relative z-10 w-full">
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-4 text-white tracking-tighter">
               {mode === "login" ? "Access Pilot" : "Join Pilot"}
@@ -187,7 +192,7 @@ function LoginPage() {
                   </div>
                 </>
               )}
-              
+
               <div className="space-y-2">
                 <label className="text-[11px] font-bold uppercase tracking-widest text-white/40 ml-2">Work Email</label>
                 <input
@@ -199,7 +204,7 @@ function LoginPage() {
                   className="w-full px-6 py-4 bg-white/[0.04] border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF5A25]/50 text-white placeholder-white/20 transition-all focus:bg-white/[0.08]"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-[11px] font-bold uppercase tracking-widest text-white/40 ml-1">Password</label>
@@ -214,7 +219,7 @@ function LoginPage() {
                   className="w-full px-6 py-4 bg-white/[0.04] border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF5A25]/50 text-white placeholder-white/20 transition-all focus:bg-white/[0.08]"
                 />
               </div>
-              
+
               <button
                 type="submit"
                 disabled={isLoading}
@@ -222,7 +227,7 @@ function LoginPage() {
               >
                 {/* Visual brilliance shine */}
                 <div className="bg-transparent group-hover:bg-white/40 w-1/4 absolute -left-[40%] group-hover:left-[120%] transition-[left] duration-0 group-hover:duration-700 blur-md -rotate-45 aspect-1/2 pointer-events-none" />
-                
+
                 {isLoading ? (
                   <div className="flex items-center gap-3 justify-center">
                     <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
@@ -236,7 +241,7 @@ function LoginPage() {
 
             <p className="mt-12 text-center text-white/30 text-xs font-bold uppercase tracking-[0.1em]">
               {mode === "login" ? "New to ProfitPilot?" : "Account holder?"}{" "}
-              <button 
+              <button
                 type="button"
                 onClick={() => setMode(mode === "login" ? "signup" : "login")}
                 className="text-white hover:text-[#FF8963] transition-colors underline underline-offset-8 decoration-white/10 hover:decoration-[#FF8963]/50"

@@ -22,7 +22,7 @@ export default function SalesTrend() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;
@@ -105,7 +105,7 @@ export default function SalesTrend() {
   }, [data, theme]);
 
   return (
-    <div className="chart-card">
+    <div className="chart-card" key={dataVersion}>
       <div className="chart-header">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <LineChartIcon size={18} color="var(--accent-blue)" />

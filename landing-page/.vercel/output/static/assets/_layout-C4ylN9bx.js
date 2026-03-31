@@ -1,0 +1,1 @@
+import{j as t,O as e}from"./main-BZlydRtl.js";import{T as s}from"./TopBar-Ce3zZteX.js";const m=function(){return t.jsxs(t.Fragment,{children:[t.jsx("div",{className:"flex w-full justify-center",children:t.jsx(s,{className:"hidden md:flex"})}),t.jsx(e,{})]})};export{m as component};

@@ -1,18 +1,37 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DashboardIcon, ChatbotIcon, SparklesIcon, ReceiptIcon, PackageIcon, UsersIcon, AlertTriangleIcon } from "./Icons";
+import { LANDING_PAGE_URL } from "@/lib/publicUrls";
+import { 
+  DashboardIcon, 
+  ChatbotIcon, 
+  SparklesIcon, 
+  ReceiptIcon, 
+  PackageIcon, 
+  UsersIcon, 
+  AlertTriangleIcon,
+  FileUpIcon 
+} from "./Icons";
 
-
+function clearProfitPilotSession() {
+  if (typeof window === "undefined") return;
+  const keys = Object.keys(localStorage);
+  for (const key of keys) {
+    if (key.startsWith("profit_pilot")) localStorage.removeItem(key);
+  }
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
 
+  // Management section (Testsparkhack se Import Data add kiya)
   const dashboardMenu = [
     { label: "Overview", href: "/", icon: <DashboardIcon size={18} /> },
     { label: "AI Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> },
+    { label: "Import Data", href: "/import", icon: <FileUpIcon size={18} /> },
   ];
 
+  // Business section (Kushal-dev se)
   const businessMenu = [
     { label: "Transactions", href: "/transactions", icon: <ReceiptIcon size={18} /> },
     { label: "Inventory", href: "/inventory", icon: <PackageIcon size={18} /> },
@@ -20,12 +39,11 @@ export default function Sidebar() {
     { label: "Alerts", href: "/alerts", icon: <AlertTriangleIcon size={18} /> },
   ];
 
-
+  // System section (Kushal-dev se)
   const systemMenu = [
     { label: "Profile", href: "/profile", icon: <SparklesIcon size={18} /> },
     { label: "Settings", href: "/settings", icon: <DashboardIcon size={18} /> },
   ];
-
 
   return (
     <aside className="sidebar">
@@ -86,7 +104,21 @@ export default function Sidebar() {
         ))}
       </nav>
 
-
+      {/* Logout button (Optional but useful from testsparkhack) */}
+      <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <button
+          type="button"
+          onClick={() => {
+            clearProfitPilotSession();
+            window.location.href = LANDING_PAGE_URL.replace(/\/$/, "");
+          }}
+          className="nav-link logout-btn"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', color: '#94A3B8' }}
+        >
+          <span className="nav-icon">🚪</span>
+          <span>Logout</span>
+        </button>
+      </div>
     </aside>
   );
 }

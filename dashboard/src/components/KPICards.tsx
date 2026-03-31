@@ -12,10 +12,14 @@ import {
   InfoIcon,
 } from "./Icons";
 
+/** INR — onboarding & KPIs use Indian revenue bands (K / L). */
 function formatCurrency(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
+  const v = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (v >= 1e7) return `${sign}₹${(v / 1e7).toFixed(2)} Cr`;
+  if (v >= 1e5) return `${sign}₹${(v / 1e5).toFixed(2)} L`;
+  if (v >= 1e3) return `${sign}₹${(v / 1e3).toFixed(1)} K`;
+  return `${sign}₹${Math.round(v).toLocaleString("en-IN")}`;
 }
 
 function formatNumber(value: number): string {
@@ -24,10 +28,27 @@ function formatNumber(value: number): string {
   return value.toLocaleString();
 }
 
+function formatPct(pct: number | null | undefined): string {
+  if (pct == null || Number.isNaN(pct)) return "—";
+  const sign = pct > 0 ? "+" : "";
+  return `${sign}${pct.toFixed(1)}%`;
+}
+
+function severityBadgeLabel(sev: string | null | undefined): string {
+  if (!sev) return "Active";
+  if (sev === "High") return "Critical";
+  if (sev === "Medium") return "Medium";
+  if (sev === "Low") return "Low";
+  return sev;
+}
+
 export default function KPICards() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const [alertRows, setAlertRows] = useState<ActiveAlertRow[]>([]);
+  const [alertsLoading, setAlertsLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -36,7 +57,26 @@ export default function KPICards() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
+
+  useEffect(() => {
+    if (!alertsOpen) return;
+    setAlertsLoading(true);
+    api
+      .getActiveAlerts()
+      .then((r) => setAlertRows(r.alerts))
+      .catch(console.error)
+      .finally(() => setAlertsLoading(false));
+  }, [alertsOpen]);
+
+  useEffect(() => {
+    if (!alertsOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAlertsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [alertsOpen]);
 
   const cards = data
     ? [
@@ -127,6 +167,18 @@ export default function KPICards() {
           >
             {/* Top accent line */}
             <div
+              key={card.label}
+              role={clickable ? "button" : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onClick={() => {
+                if (clickable) setAlertsOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (clickable && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  setAlertsOpen(true);
+                }
+              }}
               style={{
                 position: "absolute",
                 top: 0,
@@ -272,5 +324,83 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundSize: "200% 100%",
     animation: "shimmer 1.5s infinite",
     borderRadius: "6px",
+  },
+  modalBackdrop: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.45)",
+    zIndex: 1000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  modalPanel: {
+    background: "#fff",
+    borderRadius: 16,
+    maxWidth: 480,
+    width: "100%",
+    maxHeight: "min(80vh, 520px)",
+    overflow: "auto",
+    padding: "20px 22px",
+    boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
+  },
+  modalHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#0F172A",
+  },
+  modalClose: {
+    border: "none",
+    background: "transparent",
+    fontSize: 24,
+    lineHeight: 1,
+    cursor: "pointer",
+    color: "#64748B",
+    padding: "0 4px",
+  },
+  alertList: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  alertItem: {
+    border: "1px solid #E2E8F0",
+    borderRadius: 10,
+    padding: "12px 14px",
+  },
+  alertTop: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+    flexWrap: "wrap",
+  },
+  sevPill: {
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "2px 8px",
+    borderRadius: 6,
+  },
+  alertMessage: {
+    margin: 0,
+    fontSize: 14,
+    color: "#1E293B",
+    lineHeight: 1.45,
+  },
+  alertMeta: {
+    margin: "8px 0 0",
+    fontSize: 11,
+    color: "#94A3B8",
   },
 };

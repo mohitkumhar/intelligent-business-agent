@@ -2,11 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Chart, registerables } from "chart.js";
 import { api, EmployeeStats as EmployeeStatsData } from "@/lib/api";
+import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import { UsersIcon } from "./Icons";
 
 Chart.register(...registerables);
 
 export default function EmployeeStatistics() {
+  const { dataVersion } = useDashboardPeriod();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<EmployeeStatsData | null>(null);
@@ -17,7 +19,7 @@ export default function EmployeeStatistics() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [dataVersion]);
 
   useEffect(() => {
     if (!data || !chartRef.current) return;

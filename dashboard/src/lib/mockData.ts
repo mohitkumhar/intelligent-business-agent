@@ -73,8 +73,8 @@ export const mockSalesTrend: SalesTrend = {
 };
 
 export const mockAlertsBySeverity: AlertsBySeverity = {
-  labels: ["Critical", "High", "Medium", "Low", "Info"],
-  data: [2, 3, 4, 1, 2],
+  labels: ["Critical", "Warning", "Info"],
+  data: [1, 1, 1],
 };
 
 export const mockHealthScores: HealthScores = {

@@ -96,7 +96,7 @@ export default function SalesOverview() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dataVersion]);
 
   const sales = data?.current_revenue ?? 0;
   const target = data?.target_revenue ?? 0;
@@ -104,7 +104,7 @@ export default function SalesOverview() {
   const progressPercent = Math.min((sales / target) * 100, 100);
 
   return (
-    <div className="chart-card flex flex-col h-full">
+    <div className="chart-card flex flex-col h-full" key={dataVersion}>
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Sales Overview</h3>
