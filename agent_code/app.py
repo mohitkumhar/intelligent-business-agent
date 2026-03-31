@@ -378,18 +378,18 @@ def onboarding():
         cur.execute(
             """
             INSERT INTO public.businesses (
-                business_id, business_name, industry_type, owner_name, 
-                city, business_age, employees_range, monthly_revenue,
-                biggest_challenge, finance_tracking_method, onboarding_notes
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                business_id, business_name, industry_type, owner_name
+            ) VALUES (%s, %s, %s, %s)
             RETURNING business_id
-        """, (
-            business_id, business_name, industry_type, full_name,
-            city, business_age, employees_range, monthly_revenue,
-            biggest_challenge, finance_tracking_method, onboarding_notes
-        ))
-        
-        # 2. Insert role
+            """,
+            (
+                business_id,
+                business_name,
+                industry_type,
+                full_name,
+            ),
+        )
+
         cur.execute(
             """
             INSERT INTO public.roles (business_id, role_name, description)
@@ -403,11 +403,11 @@ def onboarding():
         cur.execute(
             """
             INSERT INTO public.users (
-                business_id, role_id, name, email, password_hash, phone
-            ) VALUES (%s, %s, %s, %s, %s, %s)
+                business_id, role_id, name, email, password_hash
+            ) VALUES (%s, %s, %s, %s, %s)
             RETURNING user_id
             """,
-            (business_id, role_id, full_name, email, "no_password_set", phone),
+            (business_id, role_id, full_name, email, "no_password_set"),
         )
 
         conn.commit()

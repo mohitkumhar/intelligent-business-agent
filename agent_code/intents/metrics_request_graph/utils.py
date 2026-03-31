@@ -7,6 +7,7 @@ Graph flow:
 
 import json
 import os
+import time
 import requests
 from datetime import date
 from dotenv import load_dotenv
@@ -33,7 +34,7 @@ metrics_analysis_llm = base_llm.with_structured_output(MetricsAnalysisOutput)
 # ── Available metrics reference (fed to the LLM for better query generation) ──
 AVAILABLE_METRICS = """
 ## Web Dashboard (web-dashboard:5001)
-- web_requests_total{method, endpoint, status}  — HTTP request counter
+- web_http_requests_total{method, endpoint, status}  — HTTP request counter
 - web_request_duration_seconds{method, endpoint} — HTTP request latency histogram
 - chat_messages_total{role}                      — Chat messages sent (user/assistant)
 - chat_agent_latency_seconds                     — Round-trip time to the agent API
@@ -100,10 +101,10 @@ User Query: {user_query}"""
         logger.error(f"[metrics] parse_metrics_query failed: {exc}", exc_info=True)
         # Sensible defaults — broad overview
         return {
-            "metric_names": ["agent_requests_total", "web_requests_total"],
+            "metric_names": ["agent_requests_total", "web_http_requests_total"],
             "promql_queries": [
                 "rate(agent_requests_total[5m])",
-                "rate(web_requests_total[5m])",
+                "rate(web_http_requests_total[5m])",
             ],
             "lookback_minutes": 60,
             "step_seconds": 15,
