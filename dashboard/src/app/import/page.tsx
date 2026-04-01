@@ -27,8 +27,10 @@ type TabId = "excel" | "accounting" | "manual" | "none";
 export default function ImportPage() {
   const [activeTab, setActiveTab] = useState<TabId>("manual");
   const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewData, setPreviewData] = useState<any[] | null>(null);
+  const [previewHash, setPreviewHash] = useState<string | null>(null);
   const router = useRouter();
 
   const excelRef = useRef<HTMLInputElement>(null);
@@ -37,6 +39,8 @@ export default function ImportPage() {
 
   const postSpreadsheet = async (file: File, source: string) => {
     const email = getUserEmail() || "demo@profitpilot.ai";
+    const token = localStorage.getItem("profit_pilot_token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
     setUploading(true);
     setFlash(null);
     const fd = new FormData();
@@ -46,11 +50,11 @@ export default function ImportPage() {
     try {
       const res = await fetch(`${AGENT_API_BASE}/api/v1/import/transactions`, {
         method: "POST",
+        headers: headers as HeadersInit,
         body: fd,
       });
       const data = await res.json();
 
-      localStorage.setItem("profitpilot_mock_mode", "true");
       setFlash({
         kind: res.ok ? "success" : "error",
         text: data.message || (res.ok ? "Imported successfully!" : data.error || "Failed."),
@@ -65,30 +69,60 @@ export default function ImportPage() {
     }
   };
 
-  const postReceipt = async (file: File) => {
+  const postNotebook = async (file: File) => {
     const email = getUserEmail() || "demo@profitpilot.ai";
+    const token = localStorage.getItem("profit_pilot_token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : ({} as HeadersInit);
     setUploading(true);
     setFlash(null);
     const fd = new FormData();
     fd.append("file", file);
     fd.append("email", email);
     try {
-      const res = await fetch(`${AGENT_API_BASE}/api/v1/import/receipt`, {
+      const res = await fetch(`${AGENT_API_BASE}/api/v1/import/notebook`, {
         method: "POST",
+        headers,
         body: fd,
       });
       const data = await res.json();
 
-      localStorage.setItem("profitpilot_mock_mode", "true");
-      setFlash({
-        kind: res.ok ? "success" : "error",
-        text: data.message || (res.ok ? "Handwriting extracted successfully!" : data.error || "Processing failed."),
-      });
-
-      dispatchDashboardRefresh();
-      if (res.ok) setTimeout(() => router.push("/"), 2000);
+      if (res.ok) {
+        setPreviewData(data.transactions);
+        setPreviewHash(data.hash);
+        setFlash({ kind: "success", text: "Handwriting extracted! Please review below." });
+      } else {
+        setFlash({ kind: "error", text: data.error || "Processing failed." });
+      }
     } catch {
       setFlash({ kind: "error", text: "Extraction service unavailable." });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleConfirmNotebook = async () => {
+    if (!previewData || !previewHash) return;
+    const token = localStorage.getItem("profit_pilot_token");
+    setUploading(true);
+    try {
+      const res = await fetch(`${AGENT_API_BASE}/api/v1/import/confirm-notebook`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ transactions: previewData, hash: previewHash }),
+      });
+      const resData = await res.json();
+      if (res.ok) {
+        setFlash({ kind: "success", text: resData.message || "Saved successfully!" });
+        dispatchDashboardRefresh();
+        setTimeout(() => router.push("/"), 2000);
+      } else {
+        setFlash({ kind: "error", text: resData.error || "Failed to save." });
+      }
+    } catch {
+      setFlash({ kind: "error", text: "Failed to connect to server." });
     } finally {
       setUploading(false);
     }
@@ -101,7 +135,7 @@ export default function ImportPage() {
     if (!f) return;
 
     if (activeTab === "manual") {
-      if (f.type.startsWith("image/")) postReceipt(f);
+      if (f.type.startsWith("image/")) postNotebook(f);
       else setFlash({ kind: "error", text: "Please upload an image for handwriting extraction." });
     } else {
       postSpreadsheet(f, activeTab);
@@ -174,38 +208,78 @@ export default function ImportPage() {
 
           {activeTab === "manual" ? (
             <div className="manual-upload-container">
-              <p className="manual-upload-tagline">
-                "No problem! Take a photo of your latest ledger entries and our AI will extract the data for you."
-              </p>
-
-              <div
-                className={`manual-drop-zone ${isDragging ? "drag-over" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-                onClick={() => imageRef.current?.click()}
-              >
-                <div className="camera-icon-wrapper">
-                  <CameraIcon size={48} />
+              {previewData ? (
+                <div className="preview-container animate-fadeInUp">
+                  <h3 className="section-title">Preview Extracted Data</h3>
+                  <div className="preview-table-wrapper">
+                    <table className="preview-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Category</th>
+                          <th>Amount</th>
+                          <th>Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewData.map((row, idx) => (
+                          <tr key={idx}>
+                            <td>{row.date}</td>
+                            <td>{row.type}</td>
+                            <td>{row.category}</td>
+                            <td>{row.amount}</td>
+                            <td>{row.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="preview-actions">
+                    <button className="import-btn-secondary" onClick={() => setPreviewData(null)} disabled={uploading}>
+                      Cancel & Retry
+                    </button>
+                    <button className="import-btn-primary" onClick={handleConfirmNotebook} disabled={uploading}>
+                      {uploading ? "Saving..." : "Confirm & Save"}
+                    </button>
+                  </div>
                 </div>
-                <span className="upload-text-main">
-                  {uploading ? "Analyzing Handwriting..." : "Upload Image of Notebook"}
-                </span>
-                <p style={{ color: "#64748B", marginTop: 12, fontSize: 13 }}>Drag & drop or Click to browse</p>
-                <input
-                  ref={imageRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) postReceipt(f);
-                  }}
-                />
-              </div>
+              ) : (
+                <>
+                  <p className="manual-upload-tagline">
+                    "No problem! Take a photo of your latest ledger entries and our AI will extract the data for you."
+                  </p>
+
+                  <div
+                    className={`manual-drop-zone ${isDragging ? "drag-over" : ""}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    onClick={() => imageRef.current?.click()}
+                  >
+                    <div className="camera-icon-wrapper">
+                      <CameraIcon size={48} />
+                    </div>
+                    <span className="upload-text-main">
+                      {uploading ? "Analyzing Handwriting..." : "Upload Image of Notebook"}
+                    </span>
+                    <p style={{ color: "#64748B", marginTop: 12, fontSize: 13 }}>Drag & drop or Click to browse</p>
+                    <input
+                      ref={imageRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) postNotebook(f);
+                      }}
+                    />
+                  </div>
+                </>
+              )}
 
               <div style={{ marginTop: 40, width: "100%", maxWidth: 800 }}>
                 <h4 style={{ color: "white", marginBottom: 16, fontSize: 15 }}>How it works</h4>

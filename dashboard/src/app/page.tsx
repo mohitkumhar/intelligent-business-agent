@@ -19,8 +19,17 @@ import RecentTransactions from "@/components/RecentTransactions";
 import ForecastChart from "@/components/ForecastChart";
 
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function DashboardPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    // Auth bypass for demo
+    // localStorage.setItem("profit_pilot_token", "demo-token");
+  }, []);
 
   return (
     <DashboardPeriodProvider>

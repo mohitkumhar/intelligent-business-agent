@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import { ChatbotIcon } from "@/components/Icons";
+import { streamChatSend } from "@/lib/api";
 import MessageRenderer from "@/components/MessageRenderer";
 
 /* ─── Types ─── */

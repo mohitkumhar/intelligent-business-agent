@@ -85,6 +85,7 @@ function SemiCircleGauge({ percentage, isDark }: { percentage: number; isDark: b
 
 export default function SalesOverview() {
   const { period, dataVersion } = useDashboardPeriod();
+
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [data, setData] = useState<SalesTarget | null>(null);

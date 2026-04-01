@@ -19,6 +19,7 @@ function formatYAxisTick(n: number): string {
 
 export default function RevenueInsights() {
   const { period, dataVersion } = useDashboardPeriod();
+
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [data, setData] = useState<FinancialOverview | null>(null);
@@ -173,8 +174,9 @@ export default function RevenueInsights() {
           <div className="chart-title">Revenue Insights</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4 }}>
             <span className="chart-subtitle">
-              ${sumRev.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹{sumRev.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
+
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

@@ -29,7 +29,7 @@ def extract_transactions_from_image(image_bytes: bytes, filename: str) -> list[t
         mime_type = "image/webp"
 
     # Gemini Vision API Endpoint (Generative Language API)
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
     prompt = """
     Extract all transaction data from this handwritten ledger or receipt image. 
@@ -79,43 +79,57 @@ def extract_transactions_from_image(image_bytes: bytes, filename: str) -> list[t
         
         # Parse text from Gemini response
         if "candidates" in resp_json and len(resp_json["candidates"]) > 0:
-            text_result = resp_json["candidates"][0]["content"]["parts"][0]["text"]
+            candidate = resp_json["candidates"][0]
+            if "content" not in candidate or "parts" not in candidate["content"]:
+                raise ValueError("Incomplete response from Gemini API.")
+                
+            text_result = candidate["content"]["parts"][0]["text"]
             logger.info("Successfully received OCR response from Gemini.")
             
-            # Use JSON parsing
+            # Requirement #3: Safe JSON parsing with specific error types
             try:
+                # Remove markdown code fences if LLM accidentally included them
+                if "```" in text_result:
+                    cleaned = text_result.split("```")[1]
+                    if cleaned.startswith("json"): cleaned = cleaned[4:]
+                    text_result = cleaned.strip()
+                
                 data = json.loads(text_result)
                 if not isinstance(data, list):
-                    # Sometimes LLMs wrap in an object
-                    if "transactions" in data:
+                    if isinstance(data, dict) and "transactions" in data:
                         data = data["transactions"]
                     else:
-                        raise ValueError("Unexpected JSON structure from Gemini")
+                        raise ValueError("Gemini returned an object instead of a list.")
                 
-                # Convert to the list of tuples expected by the database insert logic
+                if not data:
+                    raise ValueError("No transactions found in this image.")
+
                 transactions = []
-                for item in data:
+                for idx, item in enumerate(data):
                     try:
-                        d = datetime.strptime(item.get("date", ""), "%Y-%m-%d").date()
+                        dt_str = item.get("date", "")
+                        if not dt_str: continue # Skip if no date
+                        
+                        d = datetime.strptime(dt_str, "%Y-%m-%d").date()
                         t = str(item.get("type", "Revenue")).capitalize()
-                        if t not in ("Revenue", "Expense"):
-                            t = "Revenue"
                         c = str(item.get("category", "General"))[:100]
                         a = float(item.get("amount", 0))
                         desc = str(item.get("description", c))[:500]
                         
                         transactions.append((d, t, c, a, desc))
-                    except (ValueError, TypeError) as e:
-                        logger.warning(f"Skipping malformed row: {item} - {e}")
+                    except Exception as e:
+                        logger.warning(f"Skipping row {idx} due to parsing error: {e}")
                         continue
                 
+                if not transactions:
+                    raise ValueError("Found entries, but none were valid transaction formats.")
+                    
                 return transactions
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse Gemini JSON output: {text_result}")
-                raise ValueError("AI could not extract structured data. Please try a clearer image.")
+                logger.error(f"JSON Decode Error: {text_result}")
+                raise ValueError(f"AI returned unreadable data: {str(e)[:100]}")
         else:
-            logger.error(f"Empty response from Gemini: {resp_json}")
-            raise ValueError("No data returned from AI extraction.")
+            raise ValueError("The AI service could not read this notebook page.")
 
     except Exception as e:
         logger.error(f"Error during Gemini OCR processing: {str(e)}", exc_info=True)

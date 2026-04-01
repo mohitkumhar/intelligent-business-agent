@@ -1,0 +1,44 @@
+backend  | 2026-03-31 17:15:50 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:15:50 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:15:50 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:15:50 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:15:50 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:15:51 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  |  * Serving Flask app 'app'
+backend  |  * Debug mode: on
+backend  | 2026-03-31 17:15:52 - werkzeug - INFO - _internal.py:97 - _log - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+backend  |  * Running on all addresses (0.0.0.0)
+backend  |  * Running on http://127.0.0.1:5000
+backend  |  * Running on http://172.18.0.3:5000
+backend  | 2026-03-31 17:15:52 - werkzeug - INFO - _internal.py:97 - _log - [33mPress CTRL+C to quit[0m
+backend  | 2026-03-31 17:15:52 - werkzeug - INFO - _internal.py:97 - _log -  * Restarting with stat
+backend  | 2026-03-31 17:15:53 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:15:54 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:15:54 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:15:54 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:15:54 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:15:54 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:15:54 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:15:55 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:15:55 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:15:55 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:15:55 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:15:55 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:15:55 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:15:55 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | 2026-03-31 17:15:55 - werkzeug - WARNING - _internal.py:97 - _log -  * Debugger is active!
+backend  | 2026-03-31 17:15:55 - werkzeug - INFO - _internal.py:97 - _log -  * Debugger PIN: 755-441-509
+backend  | 2026-03-31 17:15:56 - werkzeug - INFO - _internal.py:97 - _log - 172.18.0.1 - - [31/Mar/2026 17:15:56] "[33mGET / HTTP/1.1[0m" 404 -
+backend  | 2026-03-31 17:16:53 - werkzeug - INFO - _internal.py:97 - _log - 172.18.0.1 - - [31/Mar/2026 17:16:53] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+backend  | 2026-03-31 17:16:56 - werkzeug - INFO - _internal.py:97 - _log - 172.18.0.1 - - [31/Mar/2026 17:16:56] "[33mGET / HTTP/1.1[0m" 404 -
+backend  | 2026-03-31 17:16:57 - werkzeug - INFO - _internal.py:97 - _log - 172.18.0.1 - - [31/Mar/2026 17:16:57] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+backend  | 2026-03-31 17:17:03 - werkzeug - INFO - _internal.py:97 - _log - 172.18.0.1 - - [31/Mar/2026 17:17:03] "[33mGET / HTTP/1.1[0m" 404 -
+backend  | 2026-03-31 17:17:03 - werkzeug - INFO - _internal.py:97 - _log - 172.18.0.1 - - [31/Mar/2026 17:17:03] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -

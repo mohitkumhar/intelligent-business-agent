@@ -224,12 +224,6 @@ export const CameraIcon = ({ size = 20, color = "currentColor", className }: Ico
   </svg>
 );
 
-export const MinusIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
-
 export const SunIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="5" />
@@ -250,6 +244,13 @@ export const MoonIcon = ({ size = 20, color = "currentColor", className }: IconP
   </svg>
 );
 
+export const UserIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
 export const SettingsIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="3" />
@@ -257,9 +258,11 @@ export const SettingsIcon = ({ size = 20, color = "currentColor", className }: I
   </svg>
 );
 
-export const UserIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
+export const MinusIcon = ({ size = 20, color = "currentColor", className }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
+
+
+
