@@ -570,6 +570,62 @@ def telegram_webhook():
         return jsonify({"error": str(exc)}), 500
 
 
+# ── Personal WhatsApp gateway endpoint ────────────────────────────────────────
+# Called by the whatsapp_gateway Node.js service (whatsapp-web.js).
+# Accepts JSON: { from_number, type, body, media_base64?, mime_type? }
+# Returns JSON: { reply }
+@app.route("/api/v1/whatsapp-personal/process", methods=["POST"])
+def whatsapp_personal_process():
+    try:
+        data        = request.get_json(force=True) or {}
+        from_number = str(data.get("from_number") or "").strip()
+        msg_type    = str(data.get("type") or "text").strip()
+        body        = str(data.get("body") or "").strip()
+        media_b64   = data.get("media_base64")
+        mime_type   = str(data.get("mime_type") or "image/jpeg").strip()
+
+        if not from_number:
+            return jsonify({"error": "from_number is required"}), 400
+
+        business_id = _resolve_business_id(from_number)
+
+        if msg_type == "image" and media_b64:
+            image_bytes = base64.b64decode(media_b64)
+            extracted   = _extract_bill_data_from_image(image_bytes, mime_type)
+            normalized  = _normalize_bill_fields(extracted)
+            tx_id       = _insert_bill_transaction(
+                business_id,
+                from_number,
+                f"wa-personal-{from_number}",
+                normalized,
+                extracted,
+            )
+            analysis = _analyze_transaction(tx_id, business_id)
+            reply = (
+                f"\u2705 Bill recorded successfully!\n"
+                f"Transaction ID: {tx_id}\n"
+                f"Amount: {normalized['amount']}\n"
+                f"Type: {normalized['type']}\n"
+                f"Category: {normalized['category']}\n\n"
+                f"\U0001f4ca Analysis:\n{analysis}"
+            )
+        elif body:
+            thread_id = f"wa-personal-{from_number}"
+            if body.lower().startswith("analyze all"):
+                reply = _analyze_business_data(business_id, body)
+            else:
+                reply = _run_agent_to_text(body, thread_id, business_id)
+        else:
+            return jsonify({"reply": ""})
+
+        logger.info("WhatsApp personal [%s] replied (%d chars)", from_number, len(reply))
+        return jsonify({"reply": reply})
+
+    except Exception as exc:
+        logger.error("WhatsApp personal process failed: %s", exc, exc_info=True)
+        return jsonify({"error": str(exc)}), 500
+
+
 ASSIGNMENTS_FILE = "assigned_issues.json"
 
 

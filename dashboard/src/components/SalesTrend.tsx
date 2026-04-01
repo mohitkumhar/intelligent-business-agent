@@ -9,7 +9,7 @@ import { LineChartIcon } from "./Icons";
 Chart.register(...registerables);
 
 export default function SalesTrend() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const { theme } = useTheme();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);

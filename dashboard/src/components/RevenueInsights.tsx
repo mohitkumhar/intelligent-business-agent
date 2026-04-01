@@ -173,7 +173,7 @@ export default function RevenueInsights() {
           <div className="chart-title">Revenue Insights</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4 }}>
             <span className="chart-subtitle">
-              ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${sumRev.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
         </div>

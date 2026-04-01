@@ -9,7 +9,7 @@ import { BarChartIcon } from "./Icons";
 Chart.register(...registerables);
 
 export default function RevenueVsExpenses() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const { theme } = useTheme();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);

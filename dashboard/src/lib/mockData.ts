@@ -21,6 +21,8 @@ export const mockSummary: DashboardSummary = {
   active_alerts: 12,
   revenue_change: 12.5,
   expenses_change: 8.2,
+  net_profit_change: 15.3,
+  transactions_change: 6.8,
 };
 
 export const mockFinancialOverview: FinancialOverview = {

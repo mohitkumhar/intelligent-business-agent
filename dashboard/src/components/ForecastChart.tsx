@@ -108,7 +108,7 @@ export default function ForecastChart() {
             />
             <Tooltip 
               contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}
-              formatter={(value: number | string) => [`$${Number(value).toLocaleString()}`, "Amount"]}
+              formatter={(value: any) => [`$${Number(value).toLocaleString()}`, "Amount"]}
             />
             <Legend verticalAlign="top" height={36}/>
             

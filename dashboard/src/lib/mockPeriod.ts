@@ -44,6 +44,10 @@ export function mockSummaryForPeriod(period: DashboardPeriod): DashboardSummary 
     net_profit: total_revenue - total_expenses,
     total_transactions: n,
     active_alerts: Math.max(0, Math.round(mockSummary.active_alerts * scale)),
+    revenue_change: mockSummary.revenue_change,
+    expenses_change: mockSummary.expenses_change,
+    net_profit_change: mockSummary.net_profit_change,
+    transactions_change: mockSummary.transactions_change,
   };
 }
 

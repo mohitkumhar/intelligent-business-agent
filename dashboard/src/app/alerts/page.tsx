@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
-import { api, Alert } from "@/lib/api";
+import { api } from "@/lib/api";
+import type { Alert } from "@/lib/api";
 import { AlertTriangleIcon } from "@/components/Icons";
 import { DashboardPeriodProvider } from "@/context/DashboardPeriodContext";
 

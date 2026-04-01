@@ -84,7 +84,7 @@ function SemiCircleGauge({ percentage, isDark }: { percentage: number; isDark: b
 }
 
 export default function SalesOverview() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [data, setData] = useState<SalesTarget | null>(null);
@@ -92,7 +92,7 @@ export default function SalesOverview() {
 
   useEffect(() => {
     setLoading(true);
-    api.getSalesTarget(period)
+    api.getSalesTrend(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));

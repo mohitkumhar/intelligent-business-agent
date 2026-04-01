@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { api, DashboardSummary } from "@/lib/api";
+import { api } from "@/lib/api";
+import type { DashboardSummary, Alert } from "@/lib/api";
 import { useDashboardPeriod } from "@/context/DashboardPeriodContext";
 import {
   DollarIcon,
@@ -47,7 +48,7 @@ export default function KPICards() {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [alertsOpen, setAlertsOpen] = useState(false);
-  const [alertRows, setAlertRows] = useState<ActiveAlertRow[]>([]);
+  const [alertRows, setAlertRows] = useState<Alert[]>([]);
   const [alertsLoading, setAlertsLoading] = useState(false);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function KPICards() {
     if (!alertsOpen) return;
     setAlertsLoading(true);
     api
-      .getActiveAlerts()
+      .getAlertsList()
       .then((r) => setAlertRows(r.alerts))
       .catch(console.error)
       .finally(() => setAlertsLoading(false));
@@ -151,6 +152,7 @@ export default function KPICards() {
   return (
     <div style={styles.grid}>
       {cards.map((card) => {
+        const clickable = card.label === "Active Alerts";
         const cardContent = (
           <div
             style={styles.card}
