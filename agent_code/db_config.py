@@ -50,16 +50,6 @@ def get_db_schema() -> str:
         return f"Error reading schema: {str(e)}"
 
 
-<<<<<<< Updated upstream
-def _assert_select_only_sql(sql: str) -> None:
-    cleaned = sql.strip().lower()
-    if not cleaned.startswith("select"):
-        raise ValueError("Only SELECT queries are allowed for safety.")
-    forbidden = ["insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create "]
-    for keyword in forbidden:
-        if keyword in cleaned:
-            raise ValueError(f"Forbidden SQL keyword detected: {keyword.strip()}")
-=======
 _FORBIDDEN = [
     "insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create ",
 ]
@@ -94,7 +84,7 @@ def explain_validate_select(sql: str) -> None:
             cur.close()
     finally:
         conn.close()
->>>>>>> Stashed changes
+
 
 
 def execute_read_query(sql: str) -> list[dict]:
@@ -103,12 +93,8 @@ def execute_read_query(sql: str) -> list[dict]:
     Returns results as a list of dicts.
     Raises ValueError if the query is not a SELECT.
     """
-<<<<<<< Updated upstream
-    _assert_select_only_sql(sql)
-=======
     s = _assert_read_only_select(sql)
 
->>>>>>> Stashed changes
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -127,7 +113,7 @@ def execute_read_query_params(sql: str, params: tuple | list | None = None) -> l
     Same safety rules as execute_read_query, but supports parameterized queries
     (psycopg2 %s placeholders). Use for all user-influenced predicates.
     """
-    _assert_select_only_sql(sql)
+    _assert_read_only_select(sql)
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

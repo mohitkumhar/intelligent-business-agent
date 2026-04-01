@@ -49,7 +49,9 @@ export interface BusinessInfo {
   finance_tracking_method?: string;
   user_name?: string;
   user_email?: string;
+  onboarding_notes?: string;
 }
+
 
 // Interfaces for Charts (Kushal-dev)
 export interface RevenueVsExpense { labels: string[]; revenue: number[]; expenses: number[]; }
@@ -58,6 +60,13 @@ export interface FinancialOverview { labels: string[]; revenue: number[]; expens
 export interface AlertsBySeverity { labels: string[]; data: number[]; }
 export interface TopProducts { labels: string[]; stock: number[]; margin: number[]; }
 export interface EmployeeStats { labels: string[]; counts: number[]; avg_salary: number[]; }
+export interface SalesTarget { business_name: string; current_revenue: number; target_revenue: number; percentage: number; }
+export interface Alert { alert_id: number; created_at: string; alert_type: string; severity: string; message: string; status: string; }
+export interface HealthScore { name: string; overall: number; cash: number; profitability: number; growth: number; cost_control: number; risk: number; }
+export interface HealthScores { businesses: string[]; scores: HealthScore[]; }
+
+
+
 
 // --- Auth & Email Sync Logic (From Testsparkhack) ---
 function getStoredUserEmail(): string | null {
@@ -88,18 +97,31 @@ function appendUserEmail(url: string): string {
 }
 
 // --- API Wrapper Object ---
+function getHeaders() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("profit_pilot_token") : null;
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+  } as HeadersInit;
+}
+
 export const api = {
   getSummary: async (period: string): Promise<DashboardSummary> => {
-    // Note: Humein summary-sql use karna hai growth metrics ke liye
-    const res = await fetch(appendUserEmail(`/api/dashboard/summary-sql?period=${period}`));
+    const res = await fetch(appendUserEmail(`/api/dashboard/summary-sql?period=${period}`), { headers: getHeaders() });
     if (!res.ok) throw new Error("Summary API failed");
     return res.json();
   },
 
-  getFinancialOverview: async () => {
-    const res = await fetch(appendUserEmail(`/api/dashboard/financial-overview`));
+  getFinancialOverview: async (period?: string): Promise<FinancialOverview> => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/financial-overview${period ? `?period=${period}` : ""}`), { headers: getHeaders() });
     return res.json();
   },
+
+  getSalesTarget: async (period: string): Promise<SalesTarget> => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/sales-target?period=${period}`), { headers: getHeaders() });
+    return res.json();
+  },
+
 
   getRevenueVsExpense: async (period: string) => {
     const res = await fetch(appendUserEmail(`/api/dashboard/revenue-vs-expense?period=${period}`));
@@ -131,10 +153,11 @@ export const api = {
     return res.json();
   },
 
-  getAlertsList: async () => {
-    const res = await fetch(appendUserEmail(`/api/dashboard/alerts-list`));
+  getAlertsList: async (period?: string) => {
+    const res = await fetch(appendUserEmail(`/api/dashboard/alerts-list${period ? `?period=${period}` : ""}`));
     return res.json();
   },
+
 
   getBusinessInfo: async (): Promise<BusinessInfo> => {
     const res = await fetch(appendUserEmail(`/api/dashboard/business-info`));
@@ -143,11 +166,29 @@ export const api = {
 
   // Other endpoints
   getCategories: async () => (await fetch(appendUserEmail(`/api/dashboard/categories`))).json(),
-  getAlertsBySeverity: async () => (await fetch(appendUserEmail(`/api/dashboard/alerts-by-severity`))).json(),
-  getHealthScores: async () => (await fetch(appendUserEmail(`/api/dashboard/health-scores`))).json(),
-  getTopProducts: async () => (await fetch(appendUserEmail(`/api/dashboard/top-products`))).json(),
-  getEmployeeStats: async () => (await fetch(appendUserEmail(`/api/dashboard/employee-stats`))).json(),
+  getAlertsBySeverity: async (period?: string) => (await fetch(appendUserEmail(`/api/dashboard/alerts-by-severity${period ? `?period=${period}` : ""}`))).json(),
+  getHealthScores: async (period?: string) => (await fetch(appendUserEmail(`/api/dashboard/health-scores${period ? `?period=${period}` : ""}`))).json(),
+  getTopProducts: async (period?: string) => (await fetch(appendUserEmail(`/api/dashboard/top-products${period ? `?period=${period}` : ""}`))).json(),
+  getEmployeeStats: async (period?: string) => (await fetch(appendUserEmail(`/api/dashboard/employee-stats${period ? `?period=${period}` : ""}`))).json(),
+
+
+  /** Export data as CSV (Restored) */
+  exportDashboardCsv: async (period: string) => {
+    const params = new URLSearchParams({ period });
+    const res = await fetch(appendUserEmail(`/api/dashboard/export-csv?${params.toString()}`));
+    if (!res.ok) throw new Error("Export failed");
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `profitpilot_export_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };
+
 
 /**
  * Chat Streaming Logic (Testsparkhack)
@@ -175,62 +216,6 @@ export async function* streamChatSend(conversationId: string, message: string) {
     if (done) break;
   }
 }
-  getBusinessInfo: () =>
-    fetchJson<BusinessInfo>("/api/dashboard/business-info").catch(() => null),
 
-  /** Build a CSV snapshot for the selected period (summary + transactions). */
-  exportDashboardCsv: async (period: DashboardPeriod) => {
-    const [summary, txRes] = await Promise.all([
-      fetchWithFallback<DashboardSummary>(
-        withPeriod("/api/dashboard/summary", period),
-        mockSummaryForPeriod(period)
-      ),
-      fetchWithFallback<{ transactions: Transaction[] }>((() => {
-        const searchParams = new URLSearchParams();
-        searchParams.set("period", period);
-        searchParams.set("limit", "500");
-        return `/api/dashboard/recent-transactions?${searchParams.toString()}`;
-      })(), (() => {
-        let txns = filterTransactionsByPeriod(period);
-        return { transactions: txns.slice(0, 500) };
-      })()),
-    ]);
-    const { start, end } = getPeriodBounds(period);
-    const headerLines = [
-      `Dashboard export,${periodLabel(period)}`,
-      `Date range,${start} to ${end}`,
-      "",
-      "Metric,Value",
-      `Total revenue,${summary.total_revenue}`,
-      `Total expenses,${summary.total_expenses}`,
-      `Net profit,${summary.net_profit}`,
-      `Transactions,${summary.total_transactions}`,
-      `Active alerts,${summary.active_alerts}`,
-      "",
-      "Txn ID,Date,Type,Category,Amount,Description",
-    ];
-    const rows = txRes.transactions.map((t) =>
-      [
-        String(t.transaction_id),
-        t.transaction_date,
-        t.type,
-        t.category,
-        String(t.amount),
-        t.description,
-      ]
-        .map((c) => escapeCsvCell(String(c)))
-        .join(",")
-    );
-    const csv = [...headerLines, ...rows].join("\r\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `dashboard_${period}_${start}_${end}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  },
-
-};
 
 

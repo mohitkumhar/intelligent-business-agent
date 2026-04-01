@@ -1,0 +1,502 @@
+backend  | 2026-03-31 17:03:57 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:03:58 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:03:59 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:03:59 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:03:59 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:03 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:03 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:04 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:04 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:04 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:07 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:07 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:08 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:08 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:08 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:11 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:11 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:11 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:11 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:11 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:14 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:14 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:15 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:15 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:15 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:18 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:19 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:19 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:19 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:19 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:24 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:24 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:25 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:25 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:25 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:34 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:34 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:35 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:35 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:35 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 22, in <module>
+backend  |     from intents.database_request_graph.subgraph import database_request_graph_workflow
+backend  |   File "/app/intents/database_request_graph/subgraph.py", line 70
+backend  |     <<<<<<< Updated upstream
+backend  |     ^^
+backend  | SyntaxError: invalid syntax
+backend  | 2026-03-31 17:04:50 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:04:51 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:04:51 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:04:51 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:04:51 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:04:52 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:05:11 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:05:11 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:05:12 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:05:13 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:05:13 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:05:13 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:05:13 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:05:16 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:05:16 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:05:16 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:05:16 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:05:16 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:05:16 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:05:16 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:05:17 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:05:17 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:05:17 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:05:17 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:05:17 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:05:17 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:05:17 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:05:20 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:05:20 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:05:21 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:05:41 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:05:42 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:05:42 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:05:42 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:05:42 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:05:42 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:05:42 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:05:48 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:05:49 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:05:49 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:05:49 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:05:49 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:05:50 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:05:53 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:05:53 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:05:54 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:05:55 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:05:55 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:05:55 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:05:59 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:06:00 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:06:00 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:06:00 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:06:00 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:06:00 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:06:00 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:06:01 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:06:01 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:06:01 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:06:01 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:06:01 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:06:01 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:06:01 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:06:05 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:06:05 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:06:05 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:06:05 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:06:05 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:06:06 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:06:07 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:06:11 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:06:11 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:06:11 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:06:11 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:06:11 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:06:11 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:06:11 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:06:12 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:06:12 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:06:12 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:06:12 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:06:12 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:06:12 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:06:12 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:06:18 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:06:18 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:06:19 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:06:20 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:06:20 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:06:20 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:06:20 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:06:29 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:06:29 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:06:30 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:06:31 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:06:31 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:06:31 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:06:46 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:06:46 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:06:47 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+backend  | 2026-03-31 17:07:15 - intelligent_ai_agent - INFO - base_llm.py:15 - <module> - Initializing LLM via OpenRouter: model=openai/gpt-4o-mini (set OPENROUTER_MODEL, OPENROUTER_API_KEY to configure)
+backend  | 2026-03-31 17:07:15 - intelligent_ai_agent - INFO - base_llm.py:31 - <module> - Base LLM initialized successfully.
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:180 - <module> - Generating general information graph workflow...
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:31 - create_postgres_memory - Setting up PostgresSaver memory...
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:182 - <module> - General information graph workflow generated successfully.
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:257 - <module> - Generating database request graph workflow...
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:119 - _create_postgres_memory - Setting up Postgres checkpointer for graph state persistence.
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:259 - <module> - Database / advisory graph workflow generated successfully.
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [logs] Generating logs request graph workflow...
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [logs] Setting up Postgres checkpointer for logs graph.
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [logs] Logs request graph workflow generated successfully.
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:75 - <module> - [metrics] Generating metrics request graph workflow...
+backend  | 2026-03-31 17:07:16 - intelligent_ai_agent - INFO - subgraph.py:39 - _create_postgres_memory - [metrics] Setting up Postgres checkpointer for metrics graph.
+backend  | 2026-03-31 17:07:17 - intelligent_ai_agent - INFO - subgraph.py:77 - <module> - [metrics] Metrics request graph workflow generated successfully.
+backend  | Traceback (most recent call last):
+backend  |   File "/app/app.py", line 38, in <module>
+backend  |     groq_llm = ChatOpenAI(
+backend  |                ^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 118, in __init__
+backend  |     super().__init__(*args, **kwargs)
+backend  |   File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 250, in __init__
+backend  |     validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+backend  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/langchain_openai/chat_models/base.py", line 1071, in validate_environment
+backend  |     self.root_async_client = openai.AsyncOpenAI(
+backend  |                              ^^^^^^^^^^^^^^^^^^^
+backend  |   File "/usr/local/lib/python3.11/site-packages/openai/_client.py", line 514, in __init__
+backend  |     raise OpenAIError(
+backend  | openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable

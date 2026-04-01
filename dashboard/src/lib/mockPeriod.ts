@@ -44,8 +44,14 @@ export function mockSummaryForPeriod(period: DashboardPeriod): DashboardSummary 
     net_profit: total_revenue - total_expenses,
     total_transactions: n,
     active_alerts: Math.max(0, Math.round(mockSummary.active_alerts * scale)),
+    revenue_change: 0,
+    expenses_change: 0,
+    net_profit_change: 0,
+    transactions_change: 0,
   };
 }
+
+
 
 export function mockRevenueVsExpenseForPeriod(period: DashboardPeriod): RevenueVsExpense {
   const tx = filterTransactionsByPeriod(period);

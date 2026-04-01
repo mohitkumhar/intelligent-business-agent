@@ -26,7 +26,7 @@ def seed_data():
     cur.execute("TRUNCATE business_health_scores, alerts, daily_transactions, financial_records, products, employees, users, roles, businesses RESTART IDENTITY CASCADE;")
 
     print("Seeding Businesses...")
-    biz_id = str(uuid.uuid4())
+    biz_id = "550e8400-e29b-41d4-a716-446655440000"
     biz_name = "Urban Retail Store"
     cur.execute("""
         INSERT INTO businesses (business_id, business_name, industry_type, owner_name, monthly_target_revenue)

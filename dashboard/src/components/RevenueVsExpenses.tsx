@@ -9,7 +9,8 @@ import { BarChartIcon } from "./Icons";
 Chart.register(...registerables);
 
 export default function RevenueVsExpenses() {
-  const { period } = useDashboardPeriod();
+  const { period, dataVersion } = useDashboardPeriod();
+
   const { theme } = useTheme();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
@@ -43,18 +44,18 @@ export default function RevenueVsExpenses() {
     chartInstance.current = new Chart(ctx, {
       type: "bar",
       data: {
-        labels: data.labels,
+        labels: data?.labels || [],
         datasets: [
           {
             label: "Revenue",
-            data: data.revenue,
+            data: data?.revenue || [],
             backgroundColor: gradient,
             borderRadius: 6,
             borderSkipped: false,
           },
           {
             label: "Expenses",
-            data: data.expenses,
+            data: data?.expenses || [],
             backgroundColor: "rgba(239, 68, 68, 0.7)",
             borderRadius: 6,
             borderSkipped: false,

@@ -18,6 +18,8 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+const agentApiBaseUrl = "http://localhost:5000";
+
 function LoginPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -25,6 +27,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Implement actual Google Login
@@ -78,51 +81,45 @@ function LoginPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate auth and store data
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+      const payload = mode === "login" 
+        ? { email, password } 
+        : { email, password, name: fullName, business_name: businessName, phone };
 
-      const registry: string[] = JSON.parse(localStorage.getItem("profit_pilot_registry") || "[]");
-      const emailNorm = normalizeEmail(email);
-      const userExists = registry.some((e) => normalizeEmail(e) === emailNorm);
+      const res = await fetch(`${agentApiBaseUrl}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Authentication failed");
+        return;
+      }
+
+      // Store token and user info
+      localStorage.setItem("profit_pilot_token", data.token);
+      localStorage.setItem("profit_pilot_user", JSON.stringify(data.user || { email }));
+      
+      // Determine next step
       const onboarded = isUserOnboarded(email);
-
-      if (mode === "login") {
-        if (userExists) {
-          localStorage.setItem(
-            "profit_pilot_user",
-            JSON.stringify({
-              full_name: "Returning User",
-              email: email,
-              phone: "",
-            }),
-          );
-          if (onboarded) {
-            window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(email)}`;
-          } else {
-            window.location.href = onboardingUrl;
-          }
-        } else {
-          setMode("signup");
-          alert("Account not found! Please create your account first.");
-        }
+      if (onboarded) {
+        window.location.href = `${dashboardUrl}?user_email=${encodeURIComponent(email)}`;
       } else {
-        localStorage.setItem(
-          "profit_pilot_user",
-          JSON.stringify({
-            full_name: fullName,
-            email: email,
-            phone: phone,
-          }),
-        );
-        const updatedRegistry = [...new Set([...registry, emailNorm])];
-        localStorage.setItem("profit_pilot_registry", JSON.stringify(updatedRegistry));
         navigate({ to: onboardingUrl });
       }
-    }, 1500);
+    } catch (err) {
+      console.error("Auth error:", err);
+      alert("Failed to connect to backend");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -176,6 +173,17 @@ function LoginPage() {
                       placeholder="Jane Doe"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      className="w-full px-6 py-4 bg-white/[0.04] border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF5A25]/50 text-white placeholder-white/20 transition-all focus:bg-white/[0.08]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-white/40 ml-2">Business Name</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Acme Corp"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
                       className="w-full px-6 py-4 bg-white/[0.04] border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF5A25]/50 text-white placeholder-white/20 transition-all focus:bg-white/[0.08]"
                     />
                   </div>

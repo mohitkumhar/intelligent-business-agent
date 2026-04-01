@@ -104,12 +104,14 @@ export default function ForecastChart() {
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 12, fill: "#94A3B8" }}
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={(value: any) => `₹${Number(value).toLocaleString("en-IN")}`}
+
             />
             <Tooltip 
               contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}
-              formatter={(value: number | string) => [`$${Number(value).toLocaleString()}`, "Amount"]}
+              formatter={(value: any) => [`₹${Number(value || 0).toLocaleString("en-IN")}`, "Amount"]}
             />
+
             <Legend verticalAlign="top" height={36}/>
             
             {/* Confidence Band */}

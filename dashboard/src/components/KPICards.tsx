@@ -12,6 +12,14 @@ import {
   InfoIcon,
 } from "./Icons";
 
+interface ActiveAlertRow {
+  alert_id: number;
+  severity: "Low" | "Medium" | "High";
+  message: string;
+  created_at: string;
+}
+
+
 /** INR — onboarding & KPIs use Indian revenue bands (K / L). */
 function formatCurrency(value: number): string {
   const v = Math.abs(value);
@@ -63,11 +71,12 @@ export default function KPICards() {
     if (!alertsOpen) return;
     setAlertsLoading(true);
     api
-      .getActiveAlerts()
-      .then((r) => setAlertRows(r.alerts))
+      .getAlertsList()
+      .then((r) => setAlertRows(r.alerts || []))
       .catch(console.error)
       .finally(() => setAlertsLoading(false));
   }, [alertsOpen]);
+
 
   useEffect(() => {
     if (!alertsOpen) return;
@@ -82,8 +91,8 @@ export default function KPICards() {
     ? [
       {
         label: "Total Revenue",
-        value: loading ? "..." : `$${data?.total_revenue.toLocaleString()}`,
-        change: loading ? "0%" : `${data?.revenue_change}%`,
+        value: loading ? "..." : `$${(data?.total_revenue || 0).toLocaleString()}`,
+        change: loading ? "0%" : `${(data?.revenue_change || 0)}%`,
         positive: !loading && (data?.revenue_change ?? 0) >= 0,
         icon: <DollarIcon size={18} />,
         accentColor: "#3B82F6",
@@ -92,9 +101,9 @@ export default function KPICards() {
       },
       {
         label: "Total Expenses",
-        value: loading ? "..." : `$${data?.total_expenses.toLocaleString()}`,
-        change: loading ? "0%" : `${data?.expenses_change}%`,
-        positive: !loading && (data?.expenses_change ?? 0) < 0, // Expenses down is positive
+        value: loading ? "..." : `$${(data?.total_expenses || 0).toLocaleString()}`,
+        change: loading ? "0%" : `${(data?.expenses_change || 0)}%`,
+        positive: !loading && (data?.expenses_change ?? 0) < 0,
         icon: <ReceiptIcon size={18} />,
         accentColor: "#EF4444",
         iconBg: "rgba(239, 68, 68, 0.1)",
@@ -102,8 +111,8 @@ export default function KPICards() {
       },
       {
         label: "Net Profit",
-        value: formatCurrency(data.net_profit),
-        change: loading ? "0%" : `${data?.net_profit_change}%`,
+        value: formatCurrency(data.net_profit || 0),
+        change: loading ? "0%" : `${(data?.net_profit_change || 0)}%`,
         positive: !loading && (data?.net_profit_change ?? 0) >= 0,
         icon: <TrendingUpIcon size={18} />,
         iconBg: "#F0FDF4",
@@ -112,8 +121,8 @@ export default function KPICards() {
       },
       {
         label: "Transactions",
-        value: formatNumber(data.total_transactions),
-        change: loading ? "0%" : `${data?.transactions_change}%`,
+        value: formatNumber(data.total_transactions || 0),
+        change: loading ? "0%" : `${(data?.transactions_change || 0)}%`,
         positive: !loading && (data?.transactions_change ?? 0) >= 0,
         icon: <ArrowsRepeatIcon size={18} />,
         iconBg: "#FFFBEB",
@@ -122,7 +131,7 @@ export default function KPICards() {
       },
       {
         label: "Active Alerts",
-        value: formatNumber(data.active_alerts),
+        value: formatNumber(data.active_alerts || 0),
         change: "",
         positive: false,
         icon: <AlertTriangleIcon size={18} />,
@@ -168,13 +177,13 @@ export default function KPICards() {
             {/* Top accent line */}
             <div
               key={card.label}
-              role={clickable ? "button" : undefined}
-              tabIndex={clickable ? 0 : undefined}
+              role={card.label === "Active Alerts" ? "button" : undefined}
+              tabIndex={card.label === "Active Alerts" ? 0 : undefined}
               onClick={() => {
-                if (clickable) setAlertsOpen(true);
+                if (card.label === "Active Alerts") setAlertsOpen(true);
               }}
               onKeyDown={(e) => {
-                if (clickable && (e.key === "Enter" || e.key === " ")) {
+                if (card.label === "Active Alerts" && (e.key === "Enter" || e.key === " ")) {
                   e.preventDefault();
                   setAlertsOpen(true);
                 }

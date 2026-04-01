@@ -1,0 +1,19 @@
+
+> landing-page@0.0.1 dev
+> dotenv -e ./.env -- vite dev --port 3003 --host 0.0.0.0 --port 5173
+
+[1G[0KStarting content-collections with config content-collections.ts
+Start watching
+Start initial build
+build started ...
+Generated route tree in 9107ms
+... finished build of [33m1[39m collection and [33m85[39m documents in 22915ms
+
+  [32m[1mVITE[22m v7.0.0[39m  [2mready in [0m[1m33308[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.18.0.8:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[vite] connected.
+[2m10:26:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized: [33mreact-dom/client, @tanstack/react-start, @tanstack/react-router, zod, @react-oauth/google, motion/react, class-variance-authority, tailwind-merge, @base-ui-components/react, cookie, @paralleldrive/cuid2, uuidv7, @t3-oss/env-nextjs[32m[39m
+[2m10:26:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ optimized dependencies changed. reloading[39m
