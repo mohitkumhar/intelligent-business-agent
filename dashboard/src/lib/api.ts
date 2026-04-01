@@ -157,8 +157,6 @@ export const api = {
     const res = await fetch(appendUserEmail(`/api/dashboard/sales-trend?period=${period}`));
     return res.json();
   },
-  getRevenueVsExpense: async (period: string) => (await fetch(appendUserEmail(`/api/dashboard/revenue-vs-expense?period=${period}`))).json(),
-  getSalesTrend: async (period: string) => (await fetch(appendUserEmail(`/api/dashboard/sales-trend?period=${period}`))).json(),
 
   getForecast: async (period: string): Promise<Forecast> => {
     const res = await fetch(appendUserEmail(`/api/dashboard/forecast?period=${period}`));
@@ -218,34 +216,6 @@ export const api = {
 
 /**
  * Chat Streaming Logic (Testsparkhack)
- */
-export async function* streamChatSend(conversationId: string, message: string) {
-  const res = await fetch(`${AGENT_API_BASE}/api/chat/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ conversation_id: conversationId, message }),
-  });
-  if (!res.ok) throw new Error("Chat sequence failed");
-  const reader = res.body?.getReader();
-  if (!reader) return;
-  const decoder = new TextDecoder();
-  let buffer = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (value) buffer += decoder.decode(value, { stream: true });
-    while (buffer.includes("\n\n")) {
-      const i = buffer.indexOf("\n\n");
-      const raw = buffer.slice(0, i).trim();
-      buffer = buffer.slice(i + 2);
-      if (raw.startsWith("data: ")) yield JSON.parse(raw.slice(6));
-    }
-    if (done) break;
-  }
-}
-
-
-/**
- * Chat Streaming Logic
  */
 export async function* streamChatSend(conversationId: string, message: string) {
   const res = await fetch(`${AGENT_API_BASE}/api/chat/send`, {
