@@ -1,6 +1,9 @@
 "use client";
 
 import { AGENT_API_BASE } from "./publicUrls";
+import type { DashboardPeriod } from "./dashboardPeriod";
+import { getPeriodBounds, periodLabel } from "./dashboardPeriod";
+import { mockSummaryForPeriod, filterTransactionsByPeriod } from "./mockPeriod";
 
 /**
  * Common Types for ProfitPilot API
@@ -12,7 +15,7 @@ export interface DashboardSummary {
   total_transactions: number;
   active_alerts: number;
   alert_highest_severity?: string | null;
-  // Growth percentages (Kushal-dev logic)
+  // Growth percentages
   revenue_change: number;
   expenses_change: number;
   net_profit_change: number;
@@ -26,6 +29,15 @@ export interface Transaction {
   category: string;
   amount: number;
   description: string;
+}
+
+export interface Alert {
+  alert_id: number;
+  created_at: string;
+  alert_type: string;
+  severity: string;
+  message: string;
+  status: string;
 }
 
 export interface Forecast {
@@ -68,25 +80,16 @@ export interface HealthScores { businesses: string[]; scores: HealthScore[]; }
 
 
 
-// --- Auth & Email Sync Logic (From Testsparkhack) ---
+// --- Helpers ---
 function getStoredUserEmail(): string | null {
   if (typeof window === "undefined") return null;
-  const urlParams = new URLSearchParams(window.location.search);
-  const emailParam = urlParams.get("user_email");
-  if (emailParam) {
-    try {
-      const existing = JSON.parse(localStorage.getItem("profit_pilot_user") || "{}");
-      if (existing.email !== emailParam) {
-        localStorage.setItem("profit_pilot_user", JSON.stringify({ ...existing, email: emailParam }));
-      }
-    } catch {
-      localStorage.setItem("profit_pilot_user", JSON.stringify({ email: emailParam }));
-    }
-    return emailParam;
-  }
   try {
-    return JSON.parse(localStorage.getItem("profit_pilot_user") || "{}").email || null;
-  } catch { return null; }
+    const raw = localStorage.getItem("profit_pilot_user");
+    if (!raw) return null;
+    return JSON.parse(raw).email || null;
+  } catch {
+    return null;
+  }
 }
 
 function appendUserEmail(url: string): string {
@@ -94,6 +97,28 @@ function appendUserEmail(url: string): string {
   if (!email) return url;
   const sep = url.includes("?") ? "&" : "?";
   return `${url}${sep}email=${encodeURIComponent(email)}`;
+}
+
+function withPeriod(baseUrl: string, period: DashboardPeriod): string {
+  const sep = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${sep}period=${period}`;
+}
+
+async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
+  try {
+    const res = await fetch(appendUserEmail(url));
+    if (!res.ok) return fallback;
+    return res.json();
+  } catch {
+    return fallback;
+  }
+}
+
+function escapeCsvCell(cell: string): string {
+  if (cell.includes(",") || cell.includes("\"") || cell.includes("\n")) {
+    return `"${cell.replace(/"/g, "\"\"")}"`;
+  }
+  return cell;
 }
 
 // --- API Wrapper Object ---
@@ -132,13 +157,14 @@ export const api = {
     const res = await fetch(appendUserEmail(`/api/dashboard/sales-trend?period=${period}`));
     return res.json();
   },
+  getRevenueVsExpense: async (period: string) => (await fetch(appendUserEmail(`/api/dashboard/revenue-vs-expense?period=${period}`))).json(),
+  getSalesTrend: async (period: string) => (await fetch(appendUserEmail(`/api/dashboard/sales-trend?period=${period}`))).json(),
 
   getForecast: async (period: string): Promise<Forecast> => {
     const res = await fetch(appendUserEmail(`/api/dashboard/forecast?period=${period}`));
     if (!res.ok) {
-        // Fallback to mock if AI service is down
-        const { mockForecast } = await import("./mockData");
-        return mockForecast;
+      const { mockForecast } = await import("./mockData");
+      return mockForecast;
     }
     return res.json();
   },
@@ -218,4 +244,29 @@ export async function* streamChatSend(conversationId: string, message: string) {
 }
 
 
-
+/**
+ * Chat Streaming Logic
+ */
+export async function* streamChatSend(conversationId: string, message: string) {
+  const res = await fetch(`${AGENT_API_BASE}/api/chat/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ conversation_id: conversationId, message }),
+  });
+  if (!res.ok) throw new Error("Chat sequence failed");
+  const reader = res.body?.getReader();
+  if (!reader) return;
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (value) buffer += decoder.decode(value, { stream: true });
+    while (buffer.includes("\n\n")) {
+      const i = buffer.indexOf("\n\n");
+      const raw = buffer.slice(0, i).trim();
+      buffer = buffer.slice(i + 2);
+      if (raw.startsWith("data: ")) yield JSON.parse(raw.slice(6));
+    }
+    if (done) break;
+  }
+}

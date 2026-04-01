@@ -1,13 +1,14 @@
+import os
+
 import psycopg2
 import psycopg2.extras
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://admin:root@localhost:5432/test_db"
+    "postgresql://admin:root@localhost:5432/test_db",
 )
 
 
@@ -51,16 +52,22 @@ def get_db_schema() -> str:
 
 
 _FORBIDDEN = [
-    "insert ", "update ", "delete ", "drop ", "alter ", "truncate ", "create ",
+    "insert ",
+    "update ",
+    "delete ",
+    "drop ",
+    "alter ",
+    "truncate ",
+    "create ",
 ]
 
 
 def _assert_read_only_select(sql: str) -> str:
-    """Normalize SQL and ensure a single read-only SELECT (or WITH … SELECT)."""
+    """Normalize SQL and ensure a single read-only SELECT (or WITH ... SELECT)."""
     s = sql.strip().rstrip(";")
     cleaned = s.lower()
     if not (cleaned.startswith("select") or cleaned.startswith("with")):
-        raise ValueError("Only SELECT or WITH…SELECT queries are allowed for safety.")
+        raise ValueError("Only SELECT or WITH...SELECT queries are allowed for safety.")
     if s.count(";") > 0:
         raise ValueError("Multiple SQL statements are not allowed.")
     for keyword in _FORBIDDEN:
@@ -72,7 +79,7 @@ def _assert_read_only_select(sql: str) -> str:
 def explain_validate_select(sql: str) -> None:
     """
     Run EXPLAIN on the query without returning rows. Catches invalid aliases,
-    missing columns, and bad JOINs that LLM validators often miss.
+    missing columns, and bad JOINs that validators often miss.
     """
     s = _assert_read_only_select(sql)
     conn = get_db_connection()
@@ -91,7 +98,6 @@ def execute_read_query(sql: str) -> list[dict]:
     """
     Safely executes a SELECT-only SQL query.
     Returns results as a list of dicts.
-    Raises ValueError if the query is not a SELECT.
     """
     s = _assert_read_only_select(sql)
 
@@ -117,7 +123,7 @@ def execute_read_query_params(sql: str, params: tuple | list | None = None) -> l
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(sql, params or ())
+        cur.execute(s, params or ())
         results = cur.fetchall()
         cur.close()
         return [dict(row) for row in results]

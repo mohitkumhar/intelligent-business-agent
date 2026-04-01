@@ -65,6 +65,22 @@ services:
     depends_on:
       - db
 
+  whatsapp-gateway:
+    build:
+      context: ./whatsapp_gateway
+      dockerfile: Dockerfile
+    container_name: whatsapp_gateway
+    restart: unless-stopped
+    environment:
+      - BACKEND_URL=http://backend:5000
+      - MY_WHATSAPP_NUMBER=919926565563
+    volumes:
+      - wwebjs_auth:/app/.wwebjs_auth
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
   dashboard:
     build:
       context: ./dashboard

@@ -161,7 +161,6 @@ export default function ChatbotPage() {
     setCompletedNodes([]);
   }, [status.kind]);
 
-
   const confirmEscalate = useCallback(async (msgIndex: number, assigneeName?: string) => {
     const aiMsg = messages[msgIndex];
     if (!aiMsg || aiMsg.role !== "assistant") return;

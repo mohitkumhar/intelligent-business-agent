@@ -93,7 +93,7 @@ export default function SalesOverview() {
 
   useEffect(() => {
     setLoading(true);
-    api.getSalesTarget(period)
+    api.getSalesTrend(period)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
