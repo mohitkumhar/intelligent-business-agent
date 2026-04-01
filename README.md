@@ -1,6 +1,7 @@
 add the benchmarking feature and slack integration and github issue integration and dashboard 
 
 **Run this URL in browser to start telegram bot:** `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://xyz123.ngrok-free.app/api/v1/telegram/webhook`
+**To Verify if T. Bot is running:**: `https://api.telegram.org/bot<TOKEN>/getWebhookInfo`
 
 ### AI Business Helper Chatbot for Business Owners
 
