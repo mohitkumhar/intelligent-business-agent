@@ -4,22 +4,25 @@ import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import { api } from "@/lib/api";
 import type { Alert } from "@/lib/api";
-import { AlertTriangleIcon } from "@/components/Icons";
 import { DashboardPeriodProvider } from "@/context/DashboardPeriodContext";
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.getAlertsList()
-      .then((data) => setAlerts(data.alerts))
-      .catch(console.error)
+      .then((data) => setAlerts(data?.alerts ?? []))
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load alerts. Please try again.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const getSeverityColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
+    switch ((severity ?? "").toLowerCase()) {
       case "high": return "#EF4444";
       case "medium": return "#F59E0B";
       case "low": return "#10B981";
@@ -48,12 +51,13 @@ export default function AlertsPage() {
 
               {loading ? (
                 <div className="loading-spinner">Loading alerts...</div>
+              ) : error ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>{error}</div>
               ) : (
                 <table className="data-table">
                   <thead>
                     <tr>
                       <th>Time</th>
-                      <th>Type</th>
                       <th>Severity</th>
                       <th>Message</th>
                       <th>Status</th>
@@ -62,7 +66,7 @@ export default function AlertsPage() {
                   <tbody>
                     {alerts.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                        <td colSpan={4} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
                           No active alerts found for this business.
                         </td>
                       </tr>
@@ -72,7 +76,6 @@ export default function AlertsPage() {
                           <td style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                             {new Date(alert.created_at).toLocaleString()}
                           </td>
-                          <td style={{ fontWeight: 600 }}>{alert.alert_type}</td>
                           <td>
                             <span 
                               className="status-badge" 

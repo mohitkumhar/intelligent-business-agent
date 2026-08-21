@@ -10,11 +10,18 @@ import { DashboardPeriodProvider } from "@/context/DashboardPeriodContext";
 export default function InventoryPage() {
   const [data, setData] = useState<TopProductsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.getTopProducts()
-      .then(setData)
-      .catch(console.error)
+      .then((res) => {
+        if (res?.labels) setData(res);
+        else setError("No inventory data available.");
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load inventory data.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -39,6 +46,8 @@ export default function InventoryPage() {
 
               {loading ? (
                 <div className="loading-spinner">Loading inventory...</div>
+              ) : error ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>{error}</div>
               ) : (
                 <table className="data-table">
                   <thead>
@@ -49,7 +58,13 @@ export default function InventoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data?.labels.map((name, i) => (
+                    {!data || data.labels.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                          No products found.
+                        </td>
+                      </tr>
+                    ) : data.labels.map((name, i) => (
                       <tr key={name}>
                         <td style={{ fontWeight: 500 }}>
                           <div className="flex items-center gap-2">
@@ -58,12 +73,12 @@ export default function InventoryPage() {
                           </div>
                         </td>
                         <td>
-                          <span className={`status-badge ${data.stock[i] < 20 ? 'expense' : 'revenue'}`}>
-                            {data.stock[i]} units
+                          <span className={`status-badge ${(data.stock[i] ?? 0) < 20 ? 'expense' : 'revenue'}`}>
+                            {data.stock[i] ?? 0} units
                           </span>
                         </td>
                         <td style={{ fontWeight: 600 }}>
-                          ${data.margin[i].toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          ${(data.margin[i] ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}
