@@ -11,6 +11,15 @@ from dotenv import load_dotenv
 
 from logger.logger import logger
 from llm.base_llm import base_llm
+from prompts.system_prompt import (
+    ANTI_HALLUCINATION_RULES,
+    CONFIDENCE_RULES,
+    CURRENCY_RULE,
+    DECISION_BLOCK_SPEC,
+    HEALTH_BLOCK_SPEC,
+    TONE_RULES,
+    with_system,
+)
 from db_config import execute_read_query
 from intents.database_request_graph.graph_state import DatabaseRequestGraphState
 from intents.database_request_graph.step_utils import step_guard
@@ -215,11 +224,9 @@ Earlier in this same user request, other assistants already answered related par
 {prior}
 """
 
-    prompt = f"""You are an experienced small-business advisor.
-
-Owner question: "{user_query}"
+    task = f"""Owner question: "{user_query}"
 {prior_block}
-Latest financial context from their system (JSON). Use only these figures plus prudent assumptions — do not invent specific amounts not shown:
+Latest financial context from their system (JSON). These are the only figures you may use:
 {json.dumps(ctx, indent=2, default=str)}
 
 Context fields:
@@ -227,23 +234,44 @@ Context fields:
 - rows: recent monthly financial_records (total_revenue, total_expenses, net_profit, cash_balance, loans_due, month, year). Quote these numbers when present.
 - row_count: number of monthly rows; 0 means no history yet, but business_profile may still have targets.
 
-Respond as JSON with keys (these fields are turned into markdown for the user — keep them concrete and tied to their question):
+Respond as JSON with keys (these fields are turned into markdown for the owner — keep them concrete and tied to their question):
   "query_understood": short plain-English restatement of what they asked,
+  "decision": the action they are weighing, in a few words, or null if they are not weighing an action,
+  "decision_status": one of "safe"|"risky"|"not_recommended"|"insufficient_data", or null if "decision" is null,
+  "decision_reason": 1–2 lines citing the exact figures behind that status, or null,
+  "next_step": one clear, specific next step the owner can take, or null,
+  "health_score": integer 0–100 only if they asked about overall business health AND the figures support it, else null,
+  "health_reasons": array of 2–3 strings naming the numbers behind the score, else [],
   "summary": 1–3 sentences directly answering them (this becomes the main "Answer" section),
   "recommendations": array of 2–5 actionable strings,
   "risk_level": one of "low"|"medium"|"high"|null,
+  "confidence": one of "high"|"limited"|"insufficient" — "limited" when the data is thin, "insufficient" when it cannot answer them,
+  "missing_data": array of strings naming what data would be needed, [] when confidence is "high",
   "follow_up_questions": array of 1–3 helpful follow-ups.
 
+{DECISION_BLOCK_SPEC}
+
+{HEALTH_BLOCK_SPEC}
 {risk_line}
-Rules: prefer ₹ for currency if amounts are INR-style; be concise.
+Data-usage notes:
 - If business_profile and/or rows contain numbers, you MUST base your answer on them (e.g. marketing budget as % of latest total_revenue or of monthly_target_revenue). Do not claim you have "no financial data" when row_count > 0 or business_profile is non-null.
 - If row_count is 0 but business_profile exists, use monthly_target_revenue and risk_appetite for grounded guidance.
 - Only ask for more data if both business_profile is missing and row_count is 0.
+
 Do not wrap the JSON in markdown code fences."""
 
     parsed: dict = {}
     try:
-        response = base_llm.invoke(prompt, config=config)
+        response = base_llm.invoke(
+            with_system(
+                task,
+                ANTI_HALLUCINATION_RULES,
+                CONFIDENCE_RULES,
+                TONE_RULES,
+                CURRENCY_RULE,
+            ),
+            config=config,
+        )
         content = (response.content or "").strip()
         parsed = _parse_json_loose(content)
         understood = parsed.get("query_understood") or user_query
@@ -257,6 +285,14 @@ Do not wrap the JSON in markdown code fences."""
         follow = parsed.get("follow_up_questions", [])
         if not isinstance(follow, list):
             follow = []
+        decision = _decision_from_parsed(parsed)
+        health = _health_from_parsed(parsed)
+        confidence = parsed.get("confidence")
+        if confidence not in ("high", "limited", "insufficient"):
+            confidence = None
+        missing = parsed.get("missing_data", [])
+        if not isinstance(missing, list):
+            missing = []
     except Exception as exc:
         logger.error("advisory_node LLM failed: %s", exc, exc_info=True)
         understood = user_query
@@ -264,6 +300,10 @@ Do not wrap the JSON in markdown code fences."""
         recs = ["Retry your question with any specific numbers you know."]
         risk = None
         follow = []
+        decision = None
+        health = None
+        confidence = None
+        missing = []
         parsed = {}
 
     stat = "advisory" if mode == "advisory" else "success"
@@ -278,6 +318,10 @@ Do not wrap the JSON in markdown code fences."""
         follow_ups=follow,
         query_understood_val=understood,
     )
+    envelope["result"]["decision"] = decision
+    envelope["result"]["business_health"] = health
+    envelope["result"]["confidence"] = confidence
+    envelope["result"]["missing_data"] = missing
     user_md = _advisory_to_markdown(
         user_query=user_query,
         understood=understood,
@@ -285,6 +329,10 @@ Do not wrap the JSON in markdown code fences."""
         recs=recs,
         risk=risk,
         follow=follow,
+        decision=decision,
+        health=health,
+        confidence=confidence,
+        missing=missing,
     )
     return {
         "advisory_result": json.dumps(parsed, default=str),
@@ -295,6 +343,55 @@ Do not wrap the JSON in markdown code fences."""
     }
 
 
+_STATUS_LABELS = {
+    "safe": "✅ Safe",
+    "risky": "⚠️ Risky",
+    "not_recommended": "❌ Not Recommended",
+    "insufficient_data": "❓ Not enough data to judge",
+}
+
+_CONFIDENCE_PREFIX = {
+    "limited": "Based on limited data",
+    "insufficient": "I don't have enough information to answer this correctly",
+}
+
+
+def _decision_from_parsed(parsed: dict) -> dict | None:
+    """Normalize the Decision / Status / Why / Suggestion block, or None."""
+    decision = (parsed.get("decision") or "").strip() if isinstance(parsed.get("decision"), str) else ""
+    status = parsed.get("decision_status")
+    if not decision or status not in _STATUS_LABELS:
+        return None
+    return {
+        "decision": decision,
+        "status": status,
+        "status_label": _STATUS_LABELS[status],
+        "why": (parsed.get("decision_reason") or "").strip()
+        if isinstance(parsed.get("decision_reason"), str)
+        else "",
+        "suggestion": (parsed.get("next_step") or "").strip()
+        if isinstance(parsed.get("next_step"), str)
+        else "",
+    }
+
+
+def _health_from_parsed(parsed: dict) -> dict | None:
+    """Normalize the Business Health block, or None when unscoreable."""
+    raw = parsed.get("health_score")
+    if raw is None:
+        return None
+    try:
+        score = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    if not 0 <= score <= 100:
+        return None
+    reasons = parsed.get("health_reasons", [])
+    if not isinstance(reasons, list):
+        reasons = []
+    return {"score": score, "reasons": [str(r) for r in reasons][:3]}
+
+
 def _advisory_to_markdown(
     *,
     user_query: str,
@@ -303,6 +400,10 @@ def _advisory_to_markdown(
     recs: list,
     risk: str | None,
     follow: list,
+    decision: dict | None = None,
+    health: dict | None = None,
+    confidence: str | None = None,
+    missing: list | None = None,
 ) -> str:
     """User-facing markdown from parsed advisory JSON (not the raw JSON blob)."""
     uq = (user_query or "").strip()
@@ -312,11 +413,42 @@ def _advisory_to_markdown(
         "",
         f"**How I understood it:** {und}",
         "",
-        "## Answer",
-        "",
     ]
+
+    if decision:
+        lines.extend(
+            [
+                f"**Decision:** {decision['decision']}",
+                f"**Status:** {decision['status_label']}",
+            ]
+        )
+        if decision.get("why"):
+            lines.append(f"**Why:** {decision['why']}")
+        if decision.get("suggestion"):
+            lines.append(f"**Suggestion:** {decision['suggestion']}")
+        lines.append("")
+
+    if health:
+        lines.append(f"**Business Health: {health['score']} / 100**")
+        if health["reasons"]:
+            lines.append("")
+            lines.append("**Main reasons:**")
+            for r in health["reasons"]:
+                lines.append(f"- {r}")
+        lines.append("")
+
+    lines.extend(["## Answer", ""])
     body = (summary or "").strip()
+    prefix = _CONFIDENCE_PREFIX.get(confidence or "")
+    if prefix and not body.lower().startswith(prefix.lower()[:20]):
+        body = f"_{prefix}._ {body}".strip() if body else f"_{prefix}._"
     lines.append(body if body else "_I could not produce a short summary — see below._")
+
+    if missing:
+        lines.extend(["", "**What would make this answer stronger:**"])
+        for m in missing:
+            lines.append(f"- {m}")
+
     if risk in ("low", "medium", "high"):
         lines.extend(["", f"**Risk level:** {risk.title()}"])
     if recs:
