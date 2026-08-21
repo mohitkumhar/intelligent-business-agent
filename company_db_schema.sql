@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict SVJxlCtTMmcx9hZUe8enJ95JZgCtIS05AtcATzacX81VNhGCuz1jgdf1X6LH4B7
 
 -- Dumped from database version 18.2
 -- Dumped by pg_dump version 18.2
@@ -12,7 +11,6 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -60,7 +58,6 @@ CREATE TABLE public.alerts (
 );
 
 
-ALTER TABLE public.alerts OWNER TO postgres;
 
 --
 -- TOC entry 237 (class 1259 OID 29568)
@@ -95,7 +92,6 @@ CREATE TABLE public.business_health_scores (
 );
 
 
-ALTER TABLE public.business_health_scores OWNER TO postgres;
 
 --
 -- TOC entry 239 (class 1259 OID 29586)
@@ -131,7 +127,6 @@ CREATE TABLE public.businesses (
 );
 
 
-ALTER TABLE public.businesses OWNER TO postgres;
 
 --
 -- TOC entry 228 (class 1259 OID 29487)
@@ -151,7 +146,6 @@ CREATE TABLE public.daily_transactions (
 );
 
 
-ALTER TABLE public.daily_transactions OWNER TO postgres;
 
 --
 -- TOC entry 227 (class 1259 OID 29486)
@@ -183,7 +177,6 @@ CREATE TABLE public.decision_outcomes (
 );
 
 
-ALTER TABLE public.decision_outcomes OWNER TO postgres;
 
 --
 -- TOC entry 235 (class 1259 OID 29553)
@@ -220,7 +213,6 @@ CREATE TABLE public.decisions (
 );
 
 
-ALTER TABLE public.decisions OWNER TO postgres;
 
 --
 -- TOC entry 233 (class 1259 OID 29535)
@@ -254,7 +246,6 @@ CREATE TABLE public.employees (
 );
 
 
-ALTER TABLE public.employees OWNER TO postgres;
 
 --
 -- TOC entry 231 (class 1259 OID 29520)
@@ -292,7 +283,6 @@ CREATE TABLE public.financial_records (
 );
 
 
-ALTER TABLE public.financial_records OWNER TO postgres;
 
 --
 -- TOC entry 225 (class 1259 OID 29468)
@@ -325,7 +315,6 @@ CREATE TABLE public.products (
 );
 
 
-ALTER TABLE public.products OWNER TO postgres;
 
 --
 -- TOC entry 229 (class 1259 OID 29504)
@@ -356,7 +345,6 @@ CREATE TABLE public.roles (
 );
 
 
-ALTER TABLE public.roles OWNER TO postgres;
 
 --
 -- TOC entry 221 (class 1259 OID 29422)
@@ -389,7 +377,6 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
 
 --
 -- TOC entry 223 (class 1259 OID 29441)
@@ -628,7 +615,6 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SVJxlCtTMmcx9hZUe8enJ95JZgCtIS05AtcATzacX81VNhGCuz1jgdf1X6LH4B7
 
 
 CREATE TABLE public.customers (

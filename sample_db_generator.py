@@ -9,11 +9,39 @@ fake = Faker()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://admin:root@db:5432/test_db",
+    "postgresql://admin:root@localhost:5432/test_db",
 )
 
+# Overwrite for local script execution if it reads the docker string from .env
+if "db:5432" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("db:5432", "localhost:5432")
+
 conn = psycopg2.connect(DATABASE_URL)
+conn.autocommit = True
 cursor = conn.cursor()
+
+# Attempt to load schema if tables don't exist
+cursor.execute("SELECT to_regclass('public.businesses')")
+if cursor.fetchone()[0] is None:
+    print("Schema missing. Applying company_db_schema.sql...")
+    schema_path = os.path.join(os.path.dirname(__file__), "company_db_schema.sql")
+    if os.path.exists(schema_path):
+        with open(schema_path, "r", encoding="utf-8") as f:
+            # psycopg2 cannot execute multiple statements in one call with parameters, 
+            # but it can execute a raw script string. We need to commit it.
+            cursor.execute(f.read())
+        conn.commit()
+        print("Schema applied.")
+        # Sometimes connection state is messy after executing a massive script.
+        # Re-initialize the connection.
+        cursor.close()
+        conn.close()
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor()
+    else:
+        print(f"Warning: {schema_path} not found. Script may fail if tables are missing.")
+
+conn.autocommit = False
 
 # -------------------------------
 # HELPER DATA
