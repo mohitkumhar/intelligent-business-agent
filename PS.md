@@ -1,13 +1,13 @@
 
 ## Title
 
-- AI Business Helper Chatbot for Small Business Owners
+- AI Business Helper Chatbot for Business Owners
 
 ---
 
 ## The Problem (In Simple Words)
 
-Small business owners run their business every day.  
+business owners run their business every day.  
 They have to take many decisions like:
 
 - How much money to spend on ads  

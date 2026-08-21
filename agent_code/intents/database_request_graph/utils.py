@@ -16,6 +16,14 @@ from intents.database_request_graph.subgraph import (
 )
 from db_config import get_db_schema, get_db_connection
 from intents.database_request_graph.advisory_nodes import _resolve_business_id
+from prompts.system_prompt import (
+    ANTI_HALLUCINATION_RULES,
+    CONFIDENCE_RULES,
+    CURRENCY_RULE,
+    NO_INTERNALS_RULE,
+    TONE_RULES,
+    with_system,
+)
 
 
 AVAILABLE_TABLES: list[str] = [
@@ -835,31 +843,32 @@ def business_insight_generator(state: DatabaseRequestGraphState):
     prior = (state.get("chain_prior_summaries") or "").strip()
     prior_block = f"\nEarlier analysis steps in this request already established:\n{prior}\nBuild on this; avoid contradicting concrete numbers from above unless the database data clearly supersedes them.\n" if prior else ""
 
-    prompt = f"""You are a senior business-intelligence analyst.
-
-A small-business owner asked: "{user_query}"
+    task = f"""A small-business owner asked: "{user_query}"
 {prior_block}
-Here is the data retrieved from their database:
+Here is the data retrieved from their business records — the only figures you may use:
 {processed_data}
 
 Provide:
-1. **Summary** - a clear executive summary of the findings
-2. **Key Metrics** - the most important numbers / figures
-3. **Trends** - any notable patterns
-4. **Recommendations** - practical, actionable advice for a small-business owner
-5. **Risk Flags** - any warning signs or concerns
+1. **Summary** - a clear, short answer to what they asked
+2. **Key Metrics** - the most important numbers, quoted from the data above
+3. **Trends** - only patterns the rows above actually show
+4. **Recommendations** - practical, actionable advice, each tied to a number above
+5. **Risk Flags** - any warning sign visible in the data (never hide one)
 
 Rules:
-- Be specific with numbers and percentages.
-- Compare values where possible ("revenue is 20 % higher than expenses").
-- If data is limited, acknowledge it and suggest what extra data would help.
-- Use ₹ or $ for monetary values as appropriate.
-- Flag concerning trends clearly.
+- Be specific with numbers, and show the arithmetic for any percentage or ratio you state
+  ("expenses 138,000 / revenue 180,000 = 77%").
+- Compare values only where the data supports the comparison.
+- If the data is limited, say so and name what extra data would help — do not fill the gap
+  with an estimate or an industry benchmark.
+- Leave trends empty rather than describing a pattern a single row cannot show.
 """
 
     try:
         logger.info("Invoking insight_llm to generate business insights.")
-        result = insight_llm.invoke(prompt)
+        result = insight_llm.invoke(
+            with_system(task, ANTI_HALLUCINATION_RULES, CONFIDENCE_RULES, TONE_RULES, CURRENCY_RULE)
+        )
         logger.info("Business insights generated successfully.")
         return {
             "business_insight": json.dumps({
@@ -935,8 +944,7 @@ def format_response_of_business_insight_generator(state: DatabaseRequestGraphSta
             "messages": [{"role": "assistant", "content": formatted_msg}],
         }
 
-    prompt = f"""You are a professional business assistant.  Format the following
-analysis into a clear, polished response for a small-business owner.
+    task = f"""Format the analysis below into a clear response for the business owner.
 
 ORIGINAL QUESTION : {user_query}
 
@@ -948,20 +956,23 @@ DATA SUMMARY :
 - Status        : {status}
 
 FORMATTING RULES
-1. Answer the user's question directly, first.
-2. Use bullet points and **bold** for emphasis.
-3. Show monetary values with proper symbols (₹ / $) and thousand separators.
-4. List actionable recommendations.
-5. Mention risk flags / warnings if any.
-6. If there is tabular data, show the top rows clearly.
-7. Do NOT expose SQL, table names, or any technical internals.
-8. Keep the tone professional yet friendly.
+1. Answer the owner's question directly, first, in one or two sentences.
+2. Short sections with bullet points and **bold** for emphasis — never one long paragraph.
+3. List actionable recommendations.
+4. Surface every risk flag present above; never drop one to keep the tone positive.
+5. If there is tabular data, show the top rows clearly.
+6. End with one clear next step.
+7. You are re-formatting, not re-analysing: carry over only the numbers and claims present
+   above. Do not add a figure, percentage, trend, or benchmark that is not already there.
 
 Respond ONLY with the formatted answer - no preamble, no meta-commentary."""
 
     try:
         logger.info("Invoking base_llm to format the final response.")
-        response = base_llm.invoke(prompt, config=config)
+        response = base_llm.invoke(
+            with_system(task, ANTI_HALLUCINATION_RULES, TONE_RULES, CURRENCY_RULE, NO_INTERNALS_RULE),
+            config=config,
+        )
         formatted = response.content
         logger.info("Final response formatted successfully by LLM.")
     except Exception as exc:

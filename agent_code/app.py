@@ -11,6 +11,8 @@ import uuid
 import jwt
 import bcrypt
 import hashlib
+import psycopg2
+import psycopg2.extras
 from functools import wraps
 import numpy as np
 from datetime import datetime, timedelta, date
@@ -80,10 +82,17 @@ def auth_signup():
         cur.execute("INSERT INTO businesses (business_id, business_name, industry_type, owner_name) VALUES (%s, %s, %s, %s)",
                    (biz_id, biz_name, data.get("industry", "Other"), name))
         
+        # Every user row needs a role; give the new business an Owner role first.
+        cur.execute(
+            "INSERT INTO roles (business_id, role_name, description) VALUES (%s, %s, %s) RETURNING role_id",
+            (biz_id, "Owner", "Business owner with full access"),
+        )
+        role_id = cur.fetchone()[0]
+
         # Hash password and create user
         hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-        cur.execute("INSERT INTO users (business_id, name, email, password_hash) VALUES (%s, %s, %s, %s) RETURNING user_id",
-                   (biz_id, name, email, hashed))
+        cur.execute("INSERT INTO users (business_id, role_id, name, email, password_hash) VALUES (%s, %s, %s, %s, %s) RETURNING user_id",
+                   (biz_id, role_id, name, email, hashed))
         user_id = cur.fetchone()[0]
         conn.commit()
 

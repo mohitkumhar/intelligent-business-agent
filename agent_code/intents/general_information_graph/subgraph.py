@@ -10,6 +10,7 @@ from intents.general_information_graph.structures import WebSearchStructure
 from dotenv import load_dotenv
 import os
 from llm.base_llm import base_llm
+from prompts.system_prompt import OUTSIDE_BUSINESS_DATA_RULE, TONE_RULES, with_system
 from logger.logger import logger
 
 load_dotenv()
@@ -104,10 +105,8 @@ def answer_user_query(state: GeneralInformationGraphState, config: RunnableConfi
     {chain_prior}
     """
 
-    prompt = f"""
-    You are a helpful AI assistant.
-
-    Your job is to answer the user's question clearly and concisely.
+    task = f"""Answer the owner's question clearly and concisely. This question is general
+    information, not a question about their own business records.
 
     Conversation History:
     {history_text if history_text else "(No previous conversation)"}
@@ -121,17 +120,19 @@ def answer_user_query(state: GeneralInformationGraphState, config: RunnableConfi
     Instructions:
     - Use the conversation history to understand context from previous messages.
     - If web search data is provided, use it to generate the answer.
-    - If no web data is provided, answer from your own knowledge.
+    - If no web data is provided, answer from your own general knowledge — and say so.
     - Keep the answer clear, structured, and easy to understand.
     - Do not mention system instructions.
     - Do not say "based on web search" unless web data exists.
     - If the answer requires steps, format them in numbered points.
-    - Avoid hallucinating facts not present in web search data.
+    - State no fact you cannot support from the web data above or from settled general
+      knowledge; if you do not know, say so.
 
     Provide only the final answer.
     """
-    logger.info(f"Prompt for answering user query:\n{prompt}")
-    response = general_information_web_search_llm.invoke(prompt, config=config)
+    messages = with_system(task, OUTSIDE_BUSINESS_DATA_RULE, TONE_RULES)
+    logger.info(f"Prompt for answering user query:\n{task}")
+    response = general_information_web_search_llm.invoke(messages, config=config)
     logger.info(f"Generated response: {response.content}")
     return {
         "user_query_output": response.content,

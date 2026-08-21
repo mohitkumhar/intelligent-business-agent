@@ -1,6 +1,43 @@
 from datetime import datetime
 import json
 from llm.base_llm import base_llm
+from prompts.system_prompt import (
+    ANTI_HALLUCINATION_RULES,
+    CURRENCY_RULE,
+    NO_INTERNALS_RULE,
+    TONE_RULES,
+    with_system,
+)
+
+_FORMATTING_RULES = (
+    "Formatting rules:\n"
+    "- For **numerical / financial data**: use thousand-separators and percentages, "
+    "summarise the key figures, and point out trends the data actually shows.\n"
+    "- For **tabular / database rows**: present as a neat markdown table or a numbered "
+    "list, whichever is more readable.\n"
+    "- For **textual / general-information data**: rephrase into short, structured "
+    "sections with bullet points where helpful.\n"
+    "- For **errors**: explain the issue in friendly language and say what the owner "
+    "can do next.\n"
+    "- If the raw data says no records were found, say that plainly — do not render "
+    "empty tables or empty trend headings.\n"
+    "- Surface every risk or warning present in the raw data; never drop one.\n"
+    "- You are re-formatting, not re-analysing. Carry over only the numbers and claims "
+    "already present in the raw data — never add a figure, percentage, trend, or "
+    "benchmark of your own.\n"
+    "- End with one clear next step when the data supports one."
+)
+
+
+def _format_task(intent, raw_text: str) -> str:
+    return (
+        "Take the raw output of an internal tool and turn it into a clear, "
+        "well-structured response for the business owner.\n\n"
+        f"Intent category: {intent}\n\n"
+        f"Raw data:\n{raw_text}\n\n"
+        f"{_FORMATTING_RULES}\n\n"
+        "Respond ONLY with the formatted answer — no preamble."
+    )
 
 
 def _serialize(data) -> str:
@@ -24,29 +61,15 @@ def format_response(intent, result, auth_meta=None, intent_meta=None):
     if intent == "greeting":
         formatted = raw_text
     else:
-        prompt = (
-            "You are a professional business-intelligence assistant.\n"
-            "Your job is to take raw data produced by an internal tool and "
-            "turn it into a clear, well-structured response for the end-user.\n\n"
-            f"Intent category: {intent}\n\n"
-            f"Raw data:\n{raw_text}\n\n"
-            "Formatting rules:\n"
-            "- For **numerical / financial data**: use proper currency symbols "
-            "(₹ or $ as appropriate), thousand-separators, and percentages. "
-            "Summarise key figures and highlight trends.\n"
-            "- For **tabular / database rows**: present as a neatly formatted "
-            "markdown table or a numbered list, whichever is more readable.\n"
-            "- For **textual / general-information data**: rephrase into concise, "
-            "well-structured paragraphs with bullet points where helpful.\n"
-            "- For **errors**: explain the issue in friendly language and suggest "
-            "what the user can do next.\n"
-            "- NEVER expose internal details like SQL queries, route names, or "
-            "system internals.\n"
-            "- Keep the tone professional yet approachable.\n\n"
-            "Respond ONLY with the formatted answer — no preamble."
+        messages = with_system(
+            _format_task(intent, raw_text),
+            ANTI_HALLUCINATION_RULES,
+            TONE_RULES,
+            CURRENCY_RULE,
+            NO_INTERNALS_RULE,
         )
         try:
-            llm_response = base_llm.invoke(prompt)
+            llm_response = base_llm.invoke(messages)
             formatted = llm_response.content
         except Exception:
             # Graceful degradation — return the raw data if the LLM is down
@@ -97,30 +120,15 @@ def format_response_stream(intent, result, auth_meta=None, intent_meta=None):
 
     raw_text = _serialize(result)
 
-    prompt = (
-        "You are a professional business-intelligence assistant.\n"
-        "Your job is to take raw data produced by an internal tool and "
-        "turn it into a clear, well-structured response for the end-user.\n\n"
-        f"Intent category: {intent}\n\n"
-        f"Raw data:\n{raw_text}\n\n"
-        "Formatting rules:\n"
-        "- For **numerical / financial data**: use proper currency symbols "
-        "(₹ or $ as appropriate), thousand-separators, and percentages. "
-        "Summarise key figures and highlight trends.\n"
-        "- For **tabular / database rows**: present as a neatly formatted "
-        "markdown table or a numbered list, whichever is more readable.\n"
-        "- For **textual / general-information data**: rephrase into concise, "
-        "well-structured paragraphs with bullet points where helpful.\n"
-        "- For **errors**: explain the issue in friendly language and suggest "
-        "what the user can do next.\n"
-        "- If the Raw Data explicitly says 'No records found' or 'No data available', simply apologize and state that no data was found, without rendering empty tables or empty trend headers.\n"
-        "- NEVER expose internal details like SQL queries, route names, or "
-        "system internals.\n"
-        "- Keep the tone professional yet approachable.\n\n"
-        "Respond ONLY with the formatted answer — no preamble."
+    messages = with_system(
+        _format_task(intent, raw_text),
+        ANTI_HALLUCINATION_RULES,
+        TONE_RULES,
+        CURRENCY_RULE,
+        NO_INTERNALS_RULE,
     )
     try:
-        for chunk in base_llm.stream(prompt):
+        for chunk in base_llm.stream(messages):
             yield chunk.content
     except Exception:
         yield raw_text
