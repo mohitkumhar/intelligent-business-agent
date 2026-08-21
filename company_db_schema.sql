@@ -630,3 +630,76 @@ ALTER TABLE ONLY public.users
 
 \unrestrict SVJxlCtTMmcx9hZUe8enJ95JZgCtIS05AtcATzacX81VNhGCuz1jgdf1X6LH4B7
 
+
+CREATE TABLE public.customers (
+    customer_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    name character varying(150) NOT NULL,
+    email character varying(150),
+    phone character varying(50),
+    address text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE public.suppliers (
+    supplier_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    name character varying(150) NOT NULL,
+    contact_name character varying(150),
+    phone character varying(50),
+    email character varying(150),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE public.departments (
+    department_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    name character varying(100) NOT NULL,
+    manager_id bigint REFERENCES public.employees(employee_id) ON DELETE SET NULL
+);
+
+ALTER TABLE public.employees ADD COLUMN department_id uuid REFERENCES public.departments(department_id) ON DELETE SET NULL;
+
+CREATE TABLE public.orders (
+    order_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    customer_id uuid NOT NULL REFERENCES public.customers(customer_id) ON DELETE CASCADE,
+    order_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    status character varying(50) DEFAULT 'Pending',
+    total_amount numeric(14,2) DEFAULT 0.00
+);
+
+CREATE TABLE public.order_items (
+    order_item_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    order_id uuid NOT NULL REFERENCES public.orders(order_id) ON DELETE CASCADE,
+    product_id bigint NOT NULL REFERENCES public.products(product_id) ON DELETE CASCADE,
+    quantity integer NOT NULL CHECK (quantity > 0),
+    unit_price numeric(14,2) NOT NULL,
+    total_price numeric(14,2) NOT NULL
+);
+
+CREATE TABLE public.invoices (
+    invoice_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    order_id uuid NOT NULL REFERENCES public.orders(order_id) ON DELETE CASCADE,
+    invoice_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    due_date timestamp without time zone,
+    status character varying(50) DEFAULT 'Unpaid'
+);
+
+CREATE TABLE public.payments (
+    payment_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    invoice_id uuid NOT NULL REFERENCES public.invoices(invoice_id) ON DELETE CASCADE,
+    payment_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    amount numeric(14,2) NOT NULL,
+    payment_method character varying(50)
+);
+
+CREATE TABLE public.inventory_logs (
+    log_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    product_id bigint NOT NULL REFERENCES public.products(product_id) ON DELETE CASCADE,
+    change_quantity integer NOT NULL,
+    log_type character varying(50) NOT NULL,
+    log_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    description text
+);
+
