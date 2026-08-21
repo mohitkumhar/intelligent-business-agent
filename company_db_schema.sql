@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict SVJxlCtTMmcx9hZUe8enJ95JZgCtIS05AtcATzacX81VNhGCuz1jgdf1X6LH4B7
 
 -- Dumped from database version 18.2
 -- Dumped by pg_dump version 18.2
@@ -12,7 +11,6 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -60,7 +58,6 @@ CREATE TABLE public.alerts (
 );
 
 
-ALTER TABLE public.alerts OWNER TO postgres;
 
 --
 -- TOC entry 237 (class 1259 OID 29568)
@@ -95,7 +92,6 @@ CREATE TABLE public.business_health_scores (
 );
 
 
-ALTER TABLE public.business_health_scores OWNER TO postgres;
 
 --
 -- TOC entry 239 (class 1259 OID 29586)
@@ -131,7 +127,6 @@ CREATE TABLE public.businesses (
 );
 
 
-ALTER TABLE public.businesses OWNER TO postgres;
 
 --
 -- TOC entry 228 (class 1259 OID 29487)
@@ -151,7 +146,6 @@ CREATE TABLE public.daily_transactions (
 );
 
 
-ALTER TABLE public.daily_transactions OWNER TO postgres;
 
 --
 -- TOC entry 227 (class 1259 OID 29486)
@@ -183,7 +177,6 @@ CREATE TABLE public.decision_outcomes (
 );
 
 
-ALTER TABLE public.decision_outcomes OWNER TO postgres;
 
 --
 -- TOC entry 235 (class 1259 OID 29553)
@@ -220,7 +213,6 @@ CREATE TABLE public.decisions (
 );
 
 
-ALTER TABLE public.decisions OWNER TO postgres;
 
 --
 -- TOC entry 233 (class 1259 OID 29535)
@@ -254,7 +246,6 @@ CREATE TABLE public.employees (
 );
 
 
-ALTER TABLE public.employees OWNER TO postgres;
 
 --
 -- TOC entry 231 (class 1259 OID 29520)
@@ -292,7 +283,6 @@ CREATE TABLE public.financial_records (
 );
 
 
-ALTER TABLE public.financial_records OWNER TO postgres;
 
 --
 -- TOC entry 225 (class 1259 OID 29468)
@@ -325,7 +315,6 @@ CREATE TABLE public.products (
 );
 
 
-ALTER TABLE public.products OWNER TO postgres;
 
 --
 -- TOC entry 229 (class 1259 OID 29504)
@@ -356,7 +345,6 @@ CREATE TABLE public.roles (
 );
 
 
-ALTER TABLE public.roles OWNER TO postgres;
 
 --
 -- TOC entry 221 (class 1259 OID 29422)
@@ -389,7 +377,6 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
 
 --
 -- TOC entry 223 (class 1259 OID 29441)
@@ -628,5 +615,77 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SVJxlCtTMmcx9hZUe8enJ95JZgCtIS05AtcATzacX81VNhGCuz1jgdf1X6LH4B7
+
+
+CREATE TABLE public.customers (
+    customer_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    name character varying(150) NOT NULL,
+    email character varying(150),
+    phone character varying(50),
+    address text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE public.suppliers (
+    supplier_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    name character varying(150) NOT NULL,
+    contact_name character varying(150),
+    phone character varying(50),
+    email character varying(150),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE public.departments (
+    department_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    name character varying(100) NOT NULL,
+    manager_id bigint REFERENCES public.employees(employee_id) ON DELETE SET NULL
+);
+
+ALTER TABLE public.employees ADD COLUMN department_id uuid REFERENCES public.departments(department_id) ON DELETE SET NULL;
+
+CREATE TABLE public.orders (
+    order_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    business_id uuid NOT NULL REFERENCES public.businesses(business_id) ON DELETE CASCADE,
+    customer_id uuid NOT NULL REFERENCES public.customers(customer_id) ON DELETE CASCADE,
+    order_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    status character varying(50) DEFAULT 'Pending',
+    total_amount numeric(14,2) DEFAULT 0.00
+);
+
+CREATE TABLE public.order_items (
+    order_item_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    order_id uuid NOT NULL REFERENCES public.orders(order_id) ON DELETE CASCADE,
+    product_id bigint NOT NULL REFERENCES public.products(product_id) ON DELETE CASCADE,
+    quantity integer NOT NULL CHECK (quantity > 0),
+    unit_price numeric(14,2) NOT NULL,
+    total_price numeric(14,2) NOT NULL
+);
+
+CREATE TABLE public.invoices (
+    invoice_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    order_id uuid NOT NULL REFERENCES public.orders(order_id) ON DELETE CASCADE,
+    invoice_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    due_date timestamp without time zone,
+    status character varying(50) DEFAULT 'Unpaid'
+);
+
+CREATE TABLE public.payments (
+    payment_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    invoice_id uuid NOT NULL REFERENCES public.invoices(invoice_id) ON DELETE CASCADE,
+    payment_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    amount numeric(14,2) NOT NULL,
+    payment_method character varying(50)
+);
+
+CREATE TABLE public.inventory_logs (
+    log_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    product_id bigint NOT NULL REFERENCES public.products(product_id) ON DELETE CASCADE,
+    change_quantity integer NOT NULL,
+    log_type character varying(50) NOT NULL,
+    log_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    description text
+);
 
