@@ -28,17 +28,19 @@ export async function POST(req: NextRequest) {
   const agentUrl =
     process.env.AGENT_API_URL || "http://localhost:5000";
 
-  const params = new URLSearchParams({
-    "input-query": inputQuery,
-    "thread-id": threadId,
-  });
-
   try {
     const upstream = await fetch(
-      `${agentUrl}/api/v1/query?${params.toString()}`,
+      `${agentUrl}/api/chat/send`,
       {
         method: "POST",
-        headers: { Accept: "text/event-stream" },
+        headers: { 
+          Accept: "text/event-stream",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: inputQuery,
+          conversation_id: threadId
+        }),
         // @ts-expect-error -- Node 18+ undici supports duplex
         duplex: "half",
       }
