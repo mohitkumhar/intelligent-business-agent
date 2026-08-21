@@ -139,7 +139,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.retention.time=15d"
     depends_on:
-      - backendgit
+      - backend
       - dashboard
 
 volumes:
