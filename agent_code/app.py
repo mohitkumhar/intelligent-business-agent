@@ -361,6 +361,42 @@ def whatsapp_events():
     # Full logic from app_main.py simplified for merge
     return jsonify({"ok": True})
 
+@app.route("/api/v1/whatsapp-personal/process", methods=["POST"])
+def whatsapp_personal_process():
+    data = request.json
+    from_number = data.get("from_number")
+    msg_type = data.get("type")
+    msg_body = data.get("body", "")
+    
+    bid = get_current_business_id()
+    # Use from_number as thread_id so each user gets their own history
+    thread_id = f"wa-{from_number}"
+    
+    reply_text = ""
+    try:
+        # Consume the streaming generator from query_execution
+        for line in stream_agent_sse_lines(msg_body, thread_id, bid):
+            if line.startswith("data: "):
+                payload = line[6:].strip()
+                if payload:
+                    try:
+                        evt = json.loads(payload)
+                        if evt.get("type") == "token":
+                            reply_text += evt.get("content", "")
+                        elif evt.get("type") == "error":
+                            reply_text += f"\n[Error: {evt.get('error')}]"
+                        elif evt.get("type") == "clarification":
+                            clar = evt.get("clarification")
+                            if isinstance(clar, str):
+                                reply_text += clar
+                            else:
+                                reply_text += clar.get("message", "Please clarify.")
+                    except:
+                        pass
+        return jsonify({"reply": reply_text})
+    except Exception as e:
+        return jsonify({"reply": f"Sorry, an internal error occurred: {str(e)}"}), 500
+
 @app.route("/api/v1/telegram/webhook", methods=["POST"])
 def telegram_webhook():
     # Full logic from app_main.py simplified for merge

@@ -2,6 +2,7 @@
 import random
 from faker import Faker
 from datetime import datetime, timedelta
+import calendar
 import uuid
 import os
 
@@ -58,8 +59,8 @@ alert_types = ["Cash Flow", "Revenue Drop", "High Expense", "Inventory Issue"]
 # -------------------------------
 # 1. CREATE SINGLE BUSINESS
 # -------------------------------
-# The backend expects DEFAULT_BUSINESS_ID to be 550e8400-e29b-41d4-a716-446655440000 
-business_id = "550e8400-e29b-41d4-a716-446655440000"
+# The backend expects DEFAULT_BUSINESS_ID to be 816f4134-042b-40a3-a753-a12b2c967a80 
+business_id = "816f4134-042b-40a3-a753-a12b2c967a80"
 
 # Check if business exists, if not create it
 cursor.execute("SELECT business_id FROM businesses WHERE business_id = %s", (business_id,))
@@ -217,14 +218,22 @@ conn.commit()
 # -------------------------------
 # 7. FINANCIAL RECORDS (MONTHLY)
 # -------------------------------
-for i in range(3):
-    month_date = datetime.now() - timedelta(days=30*i)
+# Generate 24 months (2 years) of historical financial records instead of just 3
+current_date = datetime.now()
+for i in range(24):
+    # Calculate the month and year by subtracting 'i' months from the current date
+    month = current_date.month - i
+    year = current_date.year
+    while month <= 0:
+        month += 12
+        year -= 1
+        
     revenue = random.randint(150000, 500000)
     expenses = random.randint(80000, 300000)
     cursor.execute("""
         INSERT INTO financial_records (business_id, month, year, total_revenue, total_expenses, net_profit, cash_balance, loans_due)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    """, (business_id, month_date.month, month_date.year, revenue, expenses, revenue - expenses, random.randint(20000, 100000), random.randint(0, 50000)))
+    """, (business_id, month, year, revenue, expenses, revenue - expenses, random.randint(20000, 100000), random.randint(0, 50000)))
 conn.commit()
 
 # -------------------------------
