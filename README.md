@@ -48,7 +48,7 @@ DOCKER COMPOSE ENDPOINTS
 Run the following command to start your Docker services:
 
 ```bash
-docker compose up -d
+   docker compose up -d
 ```
 
 This starts the PostgreSQL container in detached mode.

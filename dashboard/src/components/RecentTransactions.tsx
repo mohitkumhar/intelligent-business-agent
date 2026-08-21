@@ -26,7 +26,7 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
         limit: 10,
         period,
       });
-      setTransactions(res.transactions);
+      setTransactions(res.transactions ?? []);
     } catch (err) {
       console.error("Failed to fetch transactions:", err);
     } finally {

@@ -48,13 +48,13 @@ def token_required(f):
     def decorated(*args, **kwargs):
         # Quick bypass for demo day
         g.user_id = "demo_user"
-        g.business_id = "550e8400-e29b-41d4-a716-446655440000"
+        g.business_id = "816f4134-042b-40a3-a753-a12b2c967a80"
         return f(*args, **kwargs)
     return decorated
 
 def get_current_business_id():
-    # Force use of a FIXED demo business ID
-    return "550e8400-e29b-41d4-a716-446655440000"
+    # Force use of the seeded demo business ID
+    return "816f4134-042b-40a3-a753-a12b2c967a80"
 
 @app.route("/api/auth/signup", methods=["POST"])
 def auth_signup():
@@ -226,7 +226,7 @@ def get_period_dates(period):
     return start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")
 
 def get_current_business_id():
-    return getattr(g, "business_id", None)
+    return getattr(g, "business_id", "816f4134-042b-40a3-a753-a12b2c967a80")
 
 # --- Dashboard API Endpoints ---
 

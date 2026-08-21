@@ -10,11 +10,18 @@ import { DashboardPeriodProvider } from "@/context/DashboardPeriodContext";
 export default function StaffPage() {
   const [data, setData] = useState<EmployeeStatsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.getEmployeeStats()
-      .then(setData)
-      .catch(console.error)
+      .then((res) => {
+        if (res?.labels) setData(res);
+        else setError("No employee data available.");
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load staff data.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -39,6 +46,8 @@ export default function StaffPage() {
 
               {loading ? (
                 <div className="loading-spinner">Loading staff data...</div>
+              ) : error ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>{error}</div>
               ) : (
                 <table className="data-table">
                   <thead>
@@ -49,7 +58,13 @@ export default function StaffPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data?.labels.map((status, i) => (
+                    {!data || data.labels.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                          No employee data found.
+                        </td>
+                      </tr>
+                    ) : data.labels.map((status, i) => (
                       <tr key={status}>
                         <td style={{ fontWeight: 500 }}>
                           <div className="flex items-center gap-2">
@@ -63,7 +78,7 @@ export default function StaffPage() {
                           </span>
                         </td>
                         <td style={{ fontWeight: 600 }}>
-                          ${data.avg_salary[i].toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          ${(data.avg_salary[i] ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}
