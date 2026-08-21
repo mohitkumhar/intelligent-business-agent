@@ -11,3 +11,6 @@ __pycache__/
 agent_code/uploads/
 
 *.log
+# WhatsApp Web session cache (contains auth tokens — never commit)
+.wwebjs_auth/
+.wwebjs_cache/
