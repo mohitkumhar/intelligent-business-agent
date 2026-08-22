@@ -72,7 +72,9 @@ def extract_transactions_from_image(image_bytes: bytes, filename: str) -> list[t
 
     try:
         logger.info(f"Sending image OCR request to Gemini for {filename}...")
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        # Increased timeout to 90 seconds. Gemini image processing can be slow, 
+        # especially for larger or complex images.
+        response = requests.post(url, headers=headers, json=payload, timeout=90)
         response.raise_for_status()
         
         resp_json = response.json()
