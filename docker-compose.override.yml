@@ -1,7 +1,0 @@
-# Local-only override: macOS ControlCenter (AirPlay Receiver) already owns :5000,
-# so publish the backend on :5055 instead. Container port stays 5000.
-# `!override` replaces the base ports list instead of appending to it.
-services:
-  backend:
-    ports: !override
-      - "5055:5000"
