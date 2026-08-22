@@ -1,13 +1,13 @@
 
 ## Title
 
-- AI Business Helper Chatbot for Business Owners
+- AI Business Helper Chatbot for Beginner to Mid-Level+ Companies
 
 ---
 
 ## The Problem (In Simple Words)
 
-business owners run their business every day.  
+Founders of beginner to mid-level+ companies run their business every day.  
 They have to take many decisions like:
 
 - How much money to spend on ads  
