@@ -1,5 +1,4 @@
 "use client";
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LANDING_PAGE_URL } from "@/lib/publicUrls";
@@ -27,20 +26,13 @@ function clearProfitPilotSession() {
 export default function Sidebar() {
   const pathname = usePathname();
 
-  // Management section (Testsparkhack se Import Data add kiya)
-  const [showChatbot, setShowChatbot] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setShowChatbot(localStorage.getItem("profitpilot_show_chatbot") === "true");
-    }
-  }, []);
-
+  // Management section
   const dashboardMenu = [
     { label: "Overview", href: "/", icon: <DashboardIcon size={18} /> },
-    ...(showChatbot ? [{ label: "AI Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> }] : []),
+    { label: "AI Chatbot", href: "/chatbot", icon: <ChatbotIcon size={18} /> },
     { label: "Import Data", href: "/import", icon: <FileUpIcon size={18} /> },
   ];
+
 
   // Business section (Kushal-dev se)
   const businessMenu = [

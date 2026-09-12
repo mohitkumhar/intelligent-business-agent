@@ -53,17 +53,25 @@ export default function ImportPage() {
         headers: headers as HeadersInit,
         body: fd,
       });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server returned status ${res.status}` };
+      }
 
       setFlash({
         kind: res.ok ? "success" : "error",
         text: data.message || (res.ok ? "Imported successfully!" : data.error || "Failed."),
       });
 
-      dispatchDashboardRefresh();
-      if (res.ok) setTimeout(() => router.push("/"), 1500);
-    } catch {
-      setFlash({ kind: "error", text: "Connection error to server." });
+      if (res.ok) {
+        dispatchDashboardRefresh();
+        setTimeout(() => router.push("/"), 1500);
+      }
+    } catch (err: any) {
+      console.error("Spreadsheet upload error:", err);
+      setFlash({ kind: "error", text: err?.message || "Connection error to server." });
     } finally {
       setUploading(false);
     }
@@ -84,17 +92,23 @@ export default function ImportPage() {
         headers,
         body: fd,
       });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server returned status ${res.status}` };
+      }
 
       if (res.ok) {
         setPreviewData(data.transactions);
         setPreviewHash(data.hash);
         setFlash({ kind: "success", text: "Handwriting extracted! Please review below." });
       } else {
-        setFlash({ kind: "error", text: data.error || "Processing failed." });
+        setFlash({ kind: "error", text: data.error || data.message || "Processing failed." });
       }
-    } catch {
-      setFlash({ kind: "error", text: "Extraction service unavailable." });
+    } catch (err: any) {
+      console.error("Extraction error:", err);
+      setFlash({ kind: "error", text: err?.message || "Extraction service unavailable." });
     } finally {
       setUploading(false);
     }
@@ -113,16 +127,22 @@ export default function ImportPage() {
         },
         body: JSON.stringify({ transactions: previewData, hash: previewHash }),
       });
-      const resData = await res.json();
+      let resData: any = {};
+      try {
+        resData = await res.json();
+      } catch {
+        resData = { error: `Server returned status ${res.status}` };
+      }
       if (res.ok) {
         setFlash({ kind: "success", text: resData.message || "Saved successfully!" });
         dispatchDashboardRefresh();
         setTimeout(() => router.push("/"), 2000);
       } else {
-        setFlash({ kind: "error", text: resData.error || "Failed to save." });
+        setFlash({ kind: "error", text: resData.error || resData.message || "Failed to save." });
       }
-    } catch {
-      setFlash({ kind: "error", text: "Failed to connect to server." });
+    } catch (err: any) {
+      console.error("Confirm error:", err);
+      setFlash({ kind: "error", text: err?.message || "Failed to connect to server." });
     } finally {
       setUploading(false);
     }
