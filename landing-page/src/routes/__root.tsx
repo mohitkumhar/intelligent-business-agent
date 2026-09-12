@@ -78,7 +78,7 @@ function RootComponent() {
       <body>
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
           <div className="isolate flex flex-col items-stretch">
-            <div className="fixed z-10 top-4 md:bottom-12 md:top-auto w-full">
+            <div className="fixed z-30 top-4 left-0 right-0 w-full flex justify-center pointer-events-auto">
               <Header
                 onOpen={openHeader}
                 onClose={closeHeader}

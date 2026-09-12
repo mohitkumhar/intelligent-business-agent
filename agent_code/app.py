@@ -54,9 +54,6 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
-def get_current_business_id():
-    # Force use of the seeded demo business ID
-    return "816f4134-042b-40a3-a753-a12b2c967a80"
 
 @app.route("/api/auth/signup", methods=["POST"])
 def auth_signup():
@@ -220,19 +217,6 @@ def _analyze_transaction(tx_id: int, bid: str) -> str:
     # Quick analysis logic
     return "Analysis complete. This transaction follows your monthly trend."
 
-# --- Helper Functions (From Kushal-Dev) ---
-def get_period_dates(period):
-    now = datetime.utcnow()
-    y, m = now.year, now.month
-    if period == "this_month":
-        return datetime(y, m, 1).strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")
-    if period == "last_month":
-        last_day_prev = datetime(y, m, 1) - timedelta(days=1)
-        return datetime(last_day_prev.year, last_day_prev.month, 1).strftime("%Y-%m-%d"), last_day_prev.strftime("%Y-%m-%d")
-    if period == "ytd":
-        return datetime(y, 1, 1).strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")
-    start = now - timedelta(days=30)
-    return start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")
 
 def get_current_business_id():
     return getattr(g, "business_id", "816f4134-042b-40a3-a753-a12b2c967a80")
@@ -617,19 +601,24 @@ def api_sales_trend():
 @token_required
 def api_recent_transactions():
     bid = get_current_business_id()
-    limit = request.args.get("limit", 20, type=int)
+    limit = request.args.get("limit", 50, type=int)
     search = request.args.get("search", "").strip()
     category = request.args.get("category", "").strip()
+    period = request.args.get("period", "").strip()
     try:
         sql = "SELECT transaction_id, transaction_date, type, category, amount, description FROM daily_transactions WHERE business_id = %s"
         params = [bid]
+        if period and period != "all":
+            start_date, end_date = get_period_dates(period)
+            sql += " AND transaction_date BETWEEN %s AND %s"
+            params.extend([start_date, end_date])
         if search:
             sql += " AND (description ILIKE %s OR category ILIKE %s)"
             params.extend([f"%{search}%", f"%{search}%"])
         if category:
             sql += " AND category = %s"
             params.append(category)
-        sql += " ORDER BY transaction_date DESC LIMIT %s"
+        sql += " ORDER BY transaction_date DESC, transaction_id DESC LIMIT %s"
         params.append(limit)
         
         rows = execute_read_query_params(sql, tuple(params))
@@ -651,6 +640,8 @@ def get_period_dates(period):
         start_date = end_date - timedelta(days=7)
     elif period == "last_30_days":
         start_date = end_date - timedelta(days=30)
+    elif period == "ytd":
+        start_date = date(end_date.year, 1, 1)
     else:
         start_date = date(2000, 1, 1)
     return start_date, end_date

@@ -19,5 +19,6 @@ export const LANDING_PAGE_URL = resolveLandingPageUrl();
  * Set `NEXT_PUBLIC_AGENT_API_URL` only to force a direct URL (e.g. cross-origin debugging).
  */
 export const AGENT_API_BASE = (
-  process.env.NEXT_PUBLIC_AGENT_API_URL ?? ""
+  process.env.NEXT_PUBLIC_AGENT_API_URL ||
+  (typeof window !== "undefined" ? "http://localhost:5000" : "http://backend:5000")
 ).replace(/\/$/, "");

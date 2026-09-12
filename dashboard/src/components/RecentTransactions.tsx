@@ -15,6 +15,13 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
   const [loading, setLoading] = useState(true);
   const [localSearch, setLocalSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(period || "this_month");
+
+  useEffect(() => {
+    if (period) {
+      setSelectedPeriod(period);
+    }
+  }, [period]);
 
   const activeSearch = globalSearch || localSearch;
 
@@ -23,8 +30,8 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
       const res = await api.getRecentTransactions({
         search: activeSearch || undefined,
         category: selectedCategory || undefined,
-        limit: 10,
-        period,
+        limit: 50,
+        period: selectedPeriod,
       });
       setTransactions(res.transactions ?? []);
     } catch (err) {
@@ -32,7 +39,7 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
     } finally {
       setLoading(false);
     }
-  }, [activeSearch, selectedCategory, period, dataVersion]);
+  }, [activeSearch, selectedCategory, selectedPeriod, dataVersion]);
 
   useEffect(() => {
     api.getCategories()
@@ -70,6 +77,17 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
           </div>
           <select
             className="category-select"
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            title="Filter by period"
+          >
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="ytd">Year to Date</option>
+            <option value="all">All Time</option>
+          </select>
+          <select
+            className="category-select"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
@@ -78,9 +96,6 @@ export default function RecentTransactions({ search: globalSearch }: RecentTrans
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
-          <button className="filter-btn-icon">
-            <FilterIcon size={14} /> Filter
-          </button>
         </div>
       </div>
 
